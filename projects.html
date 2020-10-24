@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Danny Siu's Website</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom fonts for this template -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Lora:400,400i,700,700i" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="css/business-casual.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+  <h1 class="site-heading text-center text-white d-none d-lg-block">
+    <span class="site-heading-upper text-primary mb-3">Stepping through life with danny</span>
+    <span class="site-heading-lower">With You</span>
+  </h1>
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark py-lg-4" id="mainNav">
+    <div class="container">
+      <a class="navbar-brand text-uppercase text-expanded font-weight-bold d-lg-none" href="#">Data with Danny</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item px-lg-4">
+            <a class="nav-link text-uppercase text-expanded" href="index.html">Home
+              <span class="sr-only">(current)</span>
+            </a>
+          </li>
+          <li class="nav-item px-lg-4">
+            <a class="nav-link text-uppercase text-expanded" href="about.html">About Me</a>
+          </li>
+          <li class="nav-item active px-lg-4">
+            <a class="nav-link text-uppercase text-expanded" href="projects.html">Projects</a>
+          </li>
+          <li class="nav-item px-lg-4">
+            <a class="nav-link text-uppercase text-expanded" href="store.html">Contact Me</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+    
+  <section class="page-section about-heading">
+    <div class="container">
+      <div class="about-heading-content">
+        <div class="row">
+          <div class="col-xl-9 col-lg-10 mx-auto">
+            <div class="bg-faded rounded p-5">
+              <h2 class="section-heading mb-4">
+<!--                <span class="section-heading-upper">West Coast Education, Texas Roots</span>-->
+                <span class="section-heading-lower">Project Contexts</span>
+              </h2>
+                <p class="mb-0">
+                <ul type="disc">
+                  <li>Mapping NO2 Datasets with the Cohen Research Group</li>
+                  <li>Neural Sequence Labeling in INFO 159 ("Natural Language Processing")</li>
+                  <li>Pokeman Game in CS 61B ("Data Structures")</li>
+                  <li>Sociolinguistic Variation Study at UC Berkeley in LING 120 ("Sociolinguistics")</li> 
+                </ul>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="product-item">
+        <div class="product-item-title d-flex">
+          <div class="bg-faded p-5 d-flex ml-auto rounded">
+            <h2 class="section-heading mb-0">
+              <span class="section-heading-upper">Machine Learning</span>
+              <span class="section-heading-lower">Mapping NO2 datasets</span>
+            </h2>
+          </div>
+        </div>
+<!--        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/products-01.jpg" alt="">-->
+        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/NO2_NorthAmerica_HighRes.png" alt="">
+        <div class="product-item-description d-flex mr-auto">
+          <div class="bg-faded p-5 rounded">
+            <p class="mb-0">In order to accurately measure the NO2 pollutant levels in our atmosphere, the Cohen Group created the (BEHR) Berkeley High-Resolution NO2 Product to generate high-resolution NO2 measurements that corrected for spatial and seasonal variations in NO2 levels recorded by the OMI instrument onboard NASA's Aura satellite. In an effort to build on their work, I began work on a Machine Learning model that might be used to replace the computationally expensive WRF-Chem climate model that produces these measurements. In my work with the Cohen Group, I successfully aligned 47K+ WRF-Chem pixels with OMI pixels to enable better data correlation during training for an ML model.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="product-item">
+        <div class="product-item-title d-flex">
+          <div class="bg-faded p-5 d-flex mr-auto rounded">
+            <h2 class="section-heading mb-0">
+              <span class="section-heading-upper">Natural Language Processing</span>
+              <span class="section-heading-lower">Neural Sequence Labeling</span>
+            </h2>
+          </div>
+        </div>
+        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/penn_treebank.png" alt="">
+        <div class="product-item-description d-flex ml-auto">
+          <div class="bg-faded p-5 rounded">
+            <p class="mb-0">Part-of-speech tagging is the process of marking the part of speech for words, which can be performed by creating a Neural Sequence Labeling model. POS tagging is considered an integral part of NLP, in order to utilize the syntax of languages to better understand language semantics (meaning). I built a POS-tagger model by implementing an LSTM and using mini-batch stochastic gradient descent on pre-trained GloVe embeddings. I improved model accuracy by implementing a bi-directional LSTM and dropout layer, and loading the 500,000 most common 300-dimensional word embeddings. </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="product-item">
+        <div class="product-item-title d-flex">
+          <div class="bg-faded p-5 d-flex ml-auto rounded">
+            <h2 class="section-heading mb-0">
+              <span class="section-heading-upper">Game Development</span>
+              <span class="section-heading-lower">POKE-MAN</span>
+            </h2>
+          </div>
+        </div>
+        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/pokeman.png" alt="">
+        <div class="product-item-description d-flex mr-auto">
+          <div class="bg-faded p-5 rounded">
+            <p class="mb-0">I developed a simple multiplayer game, which allows the randomized generation of worlds and features Pokemon characters. I enabled gameplay saving using Git and created a HUD display and menus. </p>
+            <p class="mb-0">(Note: This project was created purely for educational purposes and is not meant to infringe on copyright of Nintendo, Game Freak, and Creatures. Credit goes to those companies for Pokemon character design.) </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+    
+  <section class="page-section">
+    <div class="container">
+      <div class="product-item">
+        <div class="product-item-title d-flex">
+          <div class="bg-faded p-5 d-flex mr-auto rounded">
+            <h2 class="section-heading mb-0">
+              <span class="section-heading-upper">Sociolinguistic Variation Study at UC Berkeley</span>
+              <span class="section-heading-lower">Analyzing Variation in Confirmation and Declination responses</span>
+            </h2>
+          </div>
+        </div>
+        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/sociolinguistic_study2.png" alt="">
+        <div class="product-item-description d-flex ml-auto">
+          <div class="bg-faded p-5 rounded">
+            <p class="mb-0">I explored the sociolinguistic variation in "yes" and "no" response variants for English speakers at UC Berkeley. By collecting auditory linguistic data over the span of two weeks, I looked for significant correlations between variant usage and social factors of gender, race, formality of relationship, and situational context. </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+    
+  
+
+  <footer class="footer text-faded text-center py-5">
+    <div class="container">
+      <p class="m-0 small">Copyright &copy; Danny Siu 2020</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
