@@ -255,3 +255,113 @@ p {
 .font-weight-light {
   font-weight: 100 !important;
 }
+
+/*---------------------------------------
+   Footer section              
+-----------------------------------------*/
+
+footer {
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+footer .footer-link ul {
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+footer .footer-link ul li {
+  list-style: none;
+  display: inline-block;
+  padding: 22px;
+  font-size: 14px
+}
+
+footer .footer-link ul li a {
+  color: #5a5a5a;
+  transition: all 0.4s ease-in-out;
+  text-decoration: none;
+}
+
+footer .footer-link ul li a:hover {
+  color: #417565;
+}
+
+footer .footer-copyright {
+  padding-top: 16px;
+}
+
+footer .footer-copyright p {
+  padding-top: 8px;
+}
+
+
+
+/*---------------------------------------
+   Social icon             
+-----------------------------------------*/
+
+.social-icon {
+    position: relative;
+    padding: 0;
+    margin: 0;
+}
+
+.social-icon li {
+    display: inline-block;
+    list-style: none;
+}
+
+.social-icon li a {
+    color: #5a5a5a;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 30px;
+    text-decoration: none;
+    transition: all 0.4s ease-in-out;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+    top: 0px;
+}
+
+.social-icon li a:hover {
+    /*background: #417565;*/
+    color: #417565;
+    /*top: -5px;*/
+}
+
+
+
+/*---------------------------------------
+   Back top         
+-----------------------------------------*/
+
+/*
+.go-top {
+  background-color: #ffffff;
+  box-shadow: 1px 1.732px 12px 0px rgba( 0, 0, 0, .14 ), 1px 1.732px 3px 0px rgba( 0, 0, 0, .12 );
+  border-radius: 2px;
+  transition : all 1s ease;
+  bottom: 2em;
+  right: 2em;
+  color: #333;
+  font-size: 22px;
+  display: none;
+  position: fixed;
+  text-decoration: none;
+  width: 35px;
+  height: 35px;
+  line-height: 30px;
+  text-align: center;
+}
+
+.go-top:hover {
+    background: #417565;
+    color: #ffffff;
+}
+*/
