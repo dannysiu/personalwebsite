@@ -129,7 +129,8 @@ footer .footer-copyright p {
 
 .social-icon li a {
     background-color: fade-out($secondary, 0.1);
-    color: #5a5a5a;
+    color: rgba(255, 255, 255, 0.6);
+/*    color: #5a5a5a;*/
 /*    color: $primary;*/
     border-radius: 100px;
     cursor: pointer;
@@ -148,8 +149,9 @@ footer .footer-copyright p {
 .social-icon li a:hover {
     /*background: #417565;*/
     /*color: #417565;*/
-    color:#279dec;
+/*    color:#279dec;*/
     /*top: -5px;*/
+    color: rgba(255, 255, 255, 0.3);
 }
 
 /*
