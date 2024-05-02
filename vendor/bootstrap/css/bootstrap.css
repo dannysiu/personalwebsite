@@ -475,6 +475,18 @@ mark,
   height: auto;
 }
 
+.img-fluid-left {
+  max-width: 50%;
+  height: 50%;
+  float: left;
+}
+
+.img-fluid-right {
+  max-width: 100%;
+  height: auto;
+  float: right;
+}
+
 .img-thumbnail {
   padding: 0.25rem;
   background-color: #fff;
