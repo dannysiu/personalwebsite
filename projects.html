@@ -79,11 +79,11 @@
               </h2>
                 <p class="mb-0">
                 <ul type="disc">
-                  <li>Mapping NO2 Datasets with the Cohen Research Group</li>
-                  <li>Part-of-Speech Tagging in INFO 159 ("Natural Language Processing")</li>
-                  <li>Poke-Man Game in CS 61B ("Data Structures")</li>
-                  <li>Sociolinguistic Variation Study Conducted at UC Berkeley in LING 120 ("Sociolinguistics")</li> 
-                  <li>Generated Compound Word Classifier in DATA 144 ("Data Mining and Analytics")</li> 
+                  <li>High-Resolution NO₂ Mapping for Climate Change Research</li>
+                  <li>Advanced Part-of-Speech Tagging with LSTM Networks</li>
+                  <li>Poke-Man: Multiplayer Game Development with Dynamic Maze Generation</li>
+                  <li>Sociolinguistic Variation in Confirmation and Declination Responses</li> 
+                  <li>Neural Network Model for Validating Compound Word Structures</li> 
                 </ul>
 
             </div>
@@ -108,7 +108,7 @@
         <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/NO2_NorthAmerica_HighRes.png" alt="">
         <div class="product-item-description d-flex mr-auto">
           <div class="bg-faded p-5 rounded">
-            <p class="mb-0">Keeping track of global NO2 levels over time is an important way for researchers to monitor climate change. In order to accurately measure the NO2 pollutant levels in our atmosphere, the Cohen Research Group created the (BEHR) Berkeley High-Resolution NO2 Product to generate high-resolution NO2 measurements. The WRF-CHEM climate model that they used to create BEHR corrected for spatial and seasonal variations in NO2 levels recorded by the OMI instrument onboard NASA's Aura satellite. In an effort to build on their work, I began the groundwork on a Machine Learning model that might be used to replace the computationally expensive WRF-CHEM climate model that produces these measurements. In my work with the Cohen Group, I successfully aligned 47K+ WRF-Chem pixels with OMI pixels to enable better data correlation during training for an ML model. I also created easily visualized maps of geolocation data measurements. </p>
+            <p class="mb-0">Tracking global NO₂ levels over time is crucial for monitoring climate change. To address this, the Cohen Research Group developed the Berkeley High-Resolution NO₂ Product (BEHR) using the WRF-CHEM climate model to generate high-resolution NO₂ measurements, accounting for spatial and seasonal variations in data recorded by NASA’s Aura satellite. Building on this work, I laid the groundwork for a Machine Learning model designed to replace the computationally intensive WRF-CHEM model. I aligned over 47K WRF-CHEM pixels with OMI pixels, improving data correlation for ML model training, and engineered the geolocation data to streamline analysis and enhance interpretability.</p>
           </div>
         </div>
       </div>
@@ -129,33 +129,7 @@
         <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/penn_treebank.png" alt="">
         <div class="product-item-description d-flex ml-auto">
           <div class="bg-faded p-5 rounded">
-            <p class="mb-0">Part-of-speech tagging is the process of marking the part of speech for words, which can be performed by creating a Neural Sequence Labeling model. POS tagging is considered an integral part of NLP, in order to utilize the syntax of languages to better understand language semantics (the study of meaning in language). I built a POS-tagger model by implementing an LSTM and using mini-batch stochastic gradient descent on pre-trained GloVe embeddings. I further improved model accuracy by implementing a bi-directional LSTM with a dropout layer and loading the 500,000 most common 300-dimensional word embeddings. I experimented with various parameters and other word embeddings before finally deciding on these specific parameters. This was a project I completed in my NLP course at UC Berkeley, and I learned a great deal about the parameters for data models from this project. </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="page-section">
-    <div class="container">
-      <div class="product-item">
-        <div class="product-item-title d-flex">
-          <div class="bg-faded p-5 d-flex ml-auto rounded">
-            <h2 class="section-heading mb-0">
-              <span class="section-heading-upper">Game Development</span>
-                <span class="section-heading-lower"><a href="https://github.com/dannysiu/PokeMan_Game" target="_blank">POKE-MAN</a></span>
-            </h2>
-          </div>
-        </div>
-        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/pokeman.png" alt="">
-        <div class="product-item-description d-flex mr-auto">
-          <div class="bg-faded p-5 rounded">
-            <p class="mb-0">I developed a multiplayer game, which allows players to use Pokemon characters to accomplish Pacman-like objectives amidst obstacles in randomly generated worlds. I was able to enable gameplay saving using Git and also created menus and a HUD display. 
-              
-              </p>
-<!--            <p class="mb-0"> ljl</p>-->
-            <p class="m-0 small">(* This project was created purely for educational purposes and is not meant to infringe on any copyright belonging to Nintendo, Game Freak, and Creatures. Credit belongs to these companies for Pokemon character design.) </p>
-          </div>
+            <p class="mb-0">Part-of-speech (POS) tagging is a key component of Natural Language Processing (NLP) that identifies the grammatical categories of words in a sentence, aiding in semantic understanding. I developed a POS tagger model using an LSTM (Long Short-Term Memory) network, trained with mini-batch stochastic gradient descent on pre-trained GloVe embeddings. To enhance model performance, I implemented a bi-directional LSTM, incorporated dropout layers to prevent overfitting, and used the 500,000 most frequent 300-dimensional word embeddings for better contextual understanding. By refining model configurations and experimenting with various parameters, I gained invaluable insights into optimizing neural network performance for real-world applications in language understanding.</p>
         </div>
       </div>
     </div>
@@ -196,8 +170,34 @@
         <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/compound_word_classifier.jpg" alt="">
         <div class="product-item-description d-flex ml-auto">
           <div class="bg-faded p-5 rounded">
-            <p class="mb-0">When words are created in a language, they follow certain patterns. My team of three classmates at UC Berkeley decided to investigate whether we could build a model to recognize whether generated compound words could exist in the English language (focusing on Standard American English). We implemented a neural network model trained on a textual dataset, specifically an NLP classifier to identify whether generated compound words exist in English. We utilized 2339 features over 7812 compound words in the LADEC dataset to train our multilayer perceptron model to over 94% accuracy. Here is our <a href="https://docs.google.com/presentation/d/1fLRW7n_sa-Ra1ri_L2tvj-miq3kaA-uZdMD26dd3ze8/edit?usp=sharing " target="_blank">final presentation</a> detailing how we created our final data model. 
-</p>
+            <p class="mb-0">Languages exhibit recognizable patterns when creating new words, and identifying these patterns can offer valuable insights into language structure. In a collaborative project at UC Berkeley, we developed a neural network model to determine whether generated compound words are valid in Standard American English. Using the LADEC dataset, we trained a multilayer perceptron with 2.3K features and 7.8K compound words. Through extensive training and optimization, we attained over 94% accuracy in accurately classifying compound words, validating the model's ability to effectively learn language patterns. This project strengthened my expertise in NLP, neural network optimization, and data-driven linguistic analysis, showcasing how machine learning can integrate computational linguistics with language structure to offer new perspectives on word formation.</p>
+            
+<!-- See our final presentation for additional details.</p> -->
+              <!-- When words are created in a language, they follow certain patterns. My team of three classmates at UC Berkeley decided to investigate whether we could build a model to recognize whether generated compound words could exist in the English language (focusing on Standard American English). We implemented a neural network model trained on a textual dataset, specifically an NLP classifier to identify whether generated compound words exist in English. We utilized 2339 features over 7812 compound words in the LADEC dataset to train our multilayer perceptron model to over 94% accuracy. Here is our <a href="https://docs.google.com/presentation/d/1fLRW7n_sa-Ra1ri_L2tvj-miq3kaA-uZdMD26dd3ze8/edit?usp=sharing " target="_blank">final presentation</a> detailing how we created our final data model.  -->
+<!-- </p> -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section class="page-section">
+    <div class="container">
+      <div class="product-item">
+        <div class="product-item-title d-flex">
+          <div class="bg-faded p-5 d-flex ml-auto rounded">
+            <h2 class="section-heading mb-0">
+              <span class="section-heading-upper">Game Development</span>
+                <span class="section-heading-lower"><a href="https://github.com/dannysiu/PokeMan_Game" target="_blank">POKE-MAN</a></span>
+            </h2>
+          </div>
+        </div>
+        <img class="product-item-img mx-auto d-flex rounded img-fluid mb-3 mb-lg-0" src="img/pokeman.png" alt="">
+        <div class="product-item-description d-flex mr-auto">
+          <div class="bg-faded p-5 rounded">
+            <p class="mb-0">I designed and developed a multiplayer game that merges the classic gameplay of Pac-Man with the iconic Pokémon universe. Players control Pokémon characters as they navigate procedurally generated mazes, completing objectives while avoiding obstacles. To elevate the user experience, I implemented gameplay saving using Git, created intuitive menus, and integrated a dynamic HUD display. This project not only honed my game development skills but also allowed me to explore the intricacies of real-time multiplayer mechanics and user interface design.</p>
+<!--            <p class="mb-0"> ljl</p>-->
+            <p class="m-0 small">(*Note: This project was created for educational purposes and does not infringe on any copyrights held by Nintendo, Game Freak, or Creatures. All credit for Pokémon character design goes to the respective companies.)</p>
           </div>
         </div>
       </div>
