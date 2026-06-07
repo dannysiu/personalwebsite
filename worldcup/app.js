@@ -14,6 +14,59 @@ Matches columns:
 date,team_a,team_b,winner_actual
 */
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAM-yGDbkDPLUdUI-NdHsCUm5vhlXG0Z3M",
+  authDomain: "world-cup-league-2026.firebaseapp.com",
+  projectId: "world-cup-league-2026",
+  storageBucket: "world-cup-league-2026.firebasestorage.app",
+  messagingSenderId: "253099908614",
+  appId: "1:253099908614:web:782fd709ac8f7056fe6d87",
+  measurementId: "G-GCP8Q7TZB3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const userInfo = document.getElementById("userInfo");
+
+loginBtn.addEventListener("click", async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Login failed:", error);
+    alert("Google login failed. Check console for details.");
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    userInfo.textContent = `Signed in as ${user.email}`;
+  } else {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    userInfo.textContent = "Not signed in";
+  }
+});
+
+
 const LEADERBOARD_CSV_URL = "PASTE_PUBLISHED_LEADERBOARD_CSV_URL_HERE";
 const MATCHES_CSV_URL = "PASTE_PUBLISHED_MATCHES_CSV_URL_HERE";
 

@@ -13,6 +13,12 @@
   </header>
 
   <main class="container">
+    <section class="card">
+      <button id="loginBtn">Sign in with Google</button>
+      <button id="logoutBtn" style="display:none;">Sign out</button>
+      <p id="userInfo">Not signed in</p>
+    </section>
+
     <section class="cards">
       <div class="card"><span id="playerCount">—</span><label>Players</label></div>
       <div class="card"><span id="matchCount">—</span><label>Matches Scored</label></div>
@@ -55,6 +61,7 @@
     Built for a private Discord pick’em league. Refreshes when the page reloads.
   </footer>
 
-  <script src="script.js"></script>
+  <!-- <script src="app.js"></script> -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
