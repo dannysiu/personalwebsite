@@ -86,3 +86,27 @@ footer {
   color: #94a3b8;
   padding: 24px;
 }
+
+#loginBtn,
+#logoutBtn {
+  background: white;
+  color: #111827;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 8px;
+}
+
+#loginBtn:hover,
+#logoutBtn:hover {
+  background: #f3f4f6;
+}
+
+#userInfo {
+  color: #e5e7eb;
+  font-size: 16px;
+  margin-top: 8px;
+}
