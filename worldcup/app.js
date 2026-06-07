@@ -15,6 +15,7 @@ date,team_a,team_b,winner_actual
 */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
 import {
   getAuth,
   GoogleAuthProvider,
@@ -22,6 +23,12 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAM-yGDbkDPLUdUI-NdHsCUm5vhlXG0Z3M",
@@ -35,6 +42,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 const loginBtn = document.getElementById("loginBtn");
@@ -51,21 +59,43 @@ loginBtn.addEventListener("click", async () => {
 });
 
 logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
 });
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
     userInfo.textContent = `Signed in as ${user.email}`;
+
+    try {
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          lastLogin: new Date().toISOString()
+        },
+        { merge: true }
+      );
+
+      console.log("User saved to Firestore:", user.email);
+    } catch (error) {
+      console.error("Failed to save user to Firestore:", error);
+      alert("Login worked, but saving user to Firestore failed. Check console.");
+    }
   } else {
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     userInfo.textContent = "Not signed in";
   }
 });
-
 
 const LEADERBOARD_CSV_URL = "PASTE_PUBLISHED_LEADERBOARD_CSV_URL_HERE";
 const MATCHES_CSV_URL = "PASTE_PUBLISHED_MATCHES_CSV_URL_HERE";
@@ -114,7 +144,9 @@ function parseCSV(text) {
   }
 
   const headers = rows.shift()?.map(h => h.trim()) || [];
-  return rows.map(row => Object.fromEntries(headers.map((h, i) => [h, row[i] || ""])));
+  return rows.map(row =>
+    Object.fromEntries(headers.map((h, i) => [h, row[i] || ""]))
+  );
 }
 
 function num(x) {
@@ -123,6 +155,8 @@ function num(x) {
 
 function renderLeaderboard(rows) {
   const tbody = document.querySelector("#leaderboard tbody");
+  if (!tbody) return;
+
   tbody.innerHTML = "";
 
   const sorted = rows
@@ -148,11 +182,14 @@ function renderLeaderboard(rows) {
     tbody.appendChild(tr);
   });
 
-  document.querySelector("#playerCount").textContent = sorted.length;
+  const playerCount = document.querySelector("#playerCount");
+  if (playerCount) playerCount.textContent = sorted.length;
 }
 
 function renderMatches(rows) {
   const tbody = document.querySelector("#matches tbody");
+  if (!tbody) return;
+
   tbody.innerHTML = "";
 
   const scored = rows.filter(r => r.winner_actual && r.winner_actual.trim());
@@ -167,7 +204,8 @@ function renderMatches(rows) {
     tbody.appendChild(tr);
   });
 
-  document.querySelector("#matchCount").textContent = scored.length;
+  const matchCount = document.querySelector("#matchCount");
+  if (matchCount) matchCount.textContent = scored.length;
 }
 
 function escapeHTML(str) {
@@ -188,10 +226,11 @@ async function init() {
 
   renderLeaderboard(leaderboard);
   renderMatches(matches);
-  document.querySelector("#lastUpdated").textContent = new Date().toLocaleString();
+
+  const lastUpdated = document.querySelector("#lastUpdated");
+  if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
 }
 
 init().catch(err => {
   console.error(err);
-  alert("Could not load league data. Check your published Google Sheet CSV URLs.");
 });
