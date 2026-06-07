@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>World Cup 2026 Pick’em League</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <h1>🌍⚽ World Cup 2026 Pick’em League</h1>
+    <p>Live leaderboard, match results, and player rankings.</p>
+  </header>
+
+  <main class="container">
+    <section class="cards">
+      <div class="card"><span id="playerCount">—</span><label>Players</label></div>
+      <div class="card"><span id="matchCount">—</span><label>Matches Scored</label></div>
+      <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
+    </section>
+
+    <section>
+      <h2>🏆 Leaderboard</h2>
+      <table id="leaderboard">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Match Points</th>
+            <th>Survey</th>
+            <th>Bonus</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>📅 Match Results</h2>
+      <table id="matches">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Match</th>
+            <th>Actual Winner</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    Built for a private Discord pick’em league. Refreshes when the page reloads.
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
