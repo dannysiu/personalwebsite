@@ -131,6 +131,7 @@ onAuthStateChanged(auth, async (user) => {
     groupPicksSection.style.display = "block";
     matchPicksSection.style.display = "block";
 
+    updateGroupRulesText();
     renderGroupPicks();
     renderMatchPicks();
 
@@ -148,6 +149,18 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+function updateGroupRulesText() {
+  const paragraph = groupPicksSection.querySelector("p");
+  if (paragraph) {
+    paragraph.innerHTML = `
+      Pick the <strong>top 2 teams</strong> from each group.
+      Scoring: <strong>2 points</strong> if your pick finishes top 2,
+      <strong>1 point</strong> if your pick finishes 3rd and qualifies as a lucky loser,
+      <strong>0 points</strong> otherwise.
+    `;
+  }
+}
+
 function renderGroupPicks() {
   groupPicksForm.innerHTML = "";
 
@@ -157,13 +170,14 @@ function renderGroupPicks() {
 
     wrapper.innerHTML = `
       <h3>Group ${groupName}</h3>
-      <label>1st place</label>
+
+      <label>Pick #1</label>
       <select id="group-${groupName}-first">
         <option value="">Select team</option>
         ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
 
-      <label>2nd place</label>
+      <label>Pick #2</label>
       <select id="group-${groupName}-second">
         <option value="">Select team</option>
         ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
@@ -213,7 +227,7 @@ saveGroupPicksBtn.addEventListener("click", async () => {
     }
 
     if (first === second) {
-      alert(`Group ${groupName}: first and second place cannot be the same team.`);
+      alert(`Group ${groupName}: your two picks cannot be the same team.`);
       return;
     }
 
@@ -228,7 +242,9 @@ saveGroupPicksBtn.addEventListener("click", async () => {
       picks,
       scoring: {
         correctTopTwoTeam: 2,
-        note: "Player gets 2 points for each correctly predicted top-2 group finisher."
+        correctThirdPlaceQualifier: 1,
+        incorrectOrEliminated: 0,
+        note: "Each player picks 2 teams per group. Each picked team earns 2 points if it finishes top 2, 1 point if it finishes 3rd and qualifies, 0 otherwise."
       },
       updatedAt: new Date().toISOString()
     },
@@ -300,6 +316,11 @@ saveMatchPicksBtn.addEventListener("click", async () => {
       uid: currentUser.uid,
       email: currentUser.email,
       picks,
+      scoring: {
+        groupStageMatchWinner: 2,
+        roundOf32AndRoundOf16: 3,
+        quarterfinalsAndLater: 5
+      },
       updatedAt: new Date().toISOString()
     },
     { merge: true }
