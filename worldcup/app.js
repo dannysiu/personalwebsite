@@ -45,6 +45,9 @@ const firebaseConfig = {
 
 const ADMIN_EMAILS = ["chat2danny@gmail.com", "jongreenofficial@gmail.com"];
 
+// June uses daylight time in Texas, so this is 2:00 PM CT/CDT.
+const GROUP_PICK_LOCK_TIME = new Date("2026-06-11T14:00:00-05:00");
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -76,6 +79,11 @@ const testMatches = [
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userInfo = document.getElementById("userInfo");
+
+const usernameBox = document.getElementById("usernameBox");
+const usernameInput = document.getElementById("usernameInput");
+const saveUsernameBtn = document.getElementById("saveUsernameBtn");
+const usernameStatus = document.getElementById("usernameStatus");
 
 const groupPicksSection = document.getElementById("groupPicksSection");
 const groupPicksForm = document.getElementById("groupPicksForm");
@@ -109,6 +117,26 @@ logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
 });
 
+saveUsernameBtn?.addEventListener("click", async () => {
+  if (!currentUser) return alert("Please sign in first.");
+
+  const username = usernameInput.value.trim();
+
+  if (!username) return alert("Username cannot be empty.");
+  if (username.length > 20) return alert("Username must be 20 characters or less.");
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    return alert("Use one word only: letters, numbers, and underscores.");
+  }
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    username,
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+
+  usernameStatus.textContent = "✅ Username saved!";
+  await renderLeaderboardFromFirestore();
+});
+
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
@@ -116,6 +144,8 @@ onAuthStateChanged(auth, async (user) => {
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     userInfo.textContent = "Not signed in";
+
+    if (usernameBox) usernameBox.style.display = "none";
     groupPicksSection.style.display = "none";
     matchPicksSection.style.display = "none";
     if (adminSection) adminSection.style.display = "none";
@@ -129,16 +159,23 @@ onAuthStateChanged(auth, async (user) => {
   await setDoc(doc(db, "users", user.uid), {
     uid: user.uid,
     email: user.email,
-    displayName: user.displayName || "",
+    googleDisplayName: user.displayName || "",
     photoURL: user.photoURL || "",
     lastLogin: new Date().toISOString()
   }, { merge: true });
+
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  if (usernameBox) usernameBox.style.display = "block";
+  if (userSnap.exists() && usernameInput) {
+    usernameInput.value = userSnap.data().username || "";
+  }
 
   groupPicksSection.style.display = "block";
   matchPicksSection.style.display = "block";
 
   renderGroupPicks();
   renderMatchPicks();
+
   await loadExistingGroupPicks();
   await loadExistingMatchPicks();
   await renderLeaderboardFromFirestore();
@@ -152,6 +189,10 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+function groupPicksAreLocked() {
+  return new Date() >= GROUP_PICK_LOCK_TIME;
+}
+
 function renderGroupPicks() {
   groupPicksForm.innerHTML = "";
 
@@ -161,7 +202,6 @@ function renderGroupPicks() {
 
     wrapper.innerHTML = `
       <h3>Group ${groupName}</h3>
-      <p class="mini-note">Pick 2 teams. Top 2 = 2 pts. 3rd-place qualifier = 1 pt.</p>
 
       <label>Pick #1</label>
       <select id="group-${groupName}-first">
@@ -178,6 +218,17 @@ function renderGroupPicks() {
 
     groupPicksForm.appendChild(wrapper);
   });
+
+  if (groupPicksAreLocked()) {
+    groupPicksStatus.textContent = "🔒 Group picks are locked.";
+    saveGroupPicksBtn.disabled = true;
+    saveGroupPicksBtn.textContent = "Group Picks Locked";
+
+    Object.keys(groups).forEach(groupName => {
+      document.getElementById(`group-${groupName}-first`).disabled = true;
+      document.getElementById(`group-${groupName}-second`).disabled = true;
+    });
+  }
 }
 
 async function loadExistingGroupPicks() {
@@ -185,15 +236,26 @@ async function loadExistingGroupPicks() {
   if (!snap.exists()) return;
 
   const data = snap.data();
+
   Object.entries(data.picks || {}).forEach(([groupName, pick]) => {
-    document.getElementById(`group-${groupName}-first`).value = pick.first || "";
-    document.getElementById(`group-${groupName}-second`).value = pick.second || "";
+    const first = document.getElementById(`group-${groupName}-first`);
+    const second = document.getElementById(`group-${groupName}-second`);
+
+    if (first) first.value = pick.first || "";
+    if (second) second.value = pick.second || "";
   });
 
-  groupPicksStatus.textContent = "Loaded saved group picks.";
+  if (!groupPicksAreLocked()) {
+    groupPicksStatus.textContent = "Loaded saved group picks.";
+  }
 }
 
 saveGroupPicksBtn.addEventListener("click", async () => {
+  if (groupPicksAreLocked()) {
+    alert("Group picks are locked.");
+    return;
+  }
+
   const picks = {};
 
   for (const groupName of Object.keys(groups)) {
@@ -319,10 +381,15 @@ async function loadExistingGroupResults() {
   const results = snap.data().results || {};
 
   Object.entries(results).forEach(([groupName, result]) => {
-    document.getElementById(`result-${groupName}-first`).value = result.first || "";
-    document.getElementById(`result-${groupName}-second`).value = result.second || "";
-    document.getElementById(`result-${groupName}-third`).value = result.third || "";
-    document.getElementById(`result-${groupName}-thirdQualified`).checked = !!result.thirdQualified;
+    const first = document.getElementById(`result-${groupName}-first`);
+    const second = document.getElementById(`result-${groupName}-second`);
+    const third = document.getElementById(`result-${groupName}-third`);
+    const thirdQualified = document.getElementById(`result-${groupName}-thirdQualified`);
+
+    if (first) first.value = result.first || "";
+    if (second) second.value = result.second || "";
+    if (third) third.value = result.third || "";
+    if (thirdQualified) thirdQualified.checked = !!result.thirdQualified;
   });
 }
 
@@ -330,12 +397,17 @@ saveGroupResultsBtn?.addEventListener("click", async () => {
   const results = {};
 
   for (const groupName of Object.keys(groups)) {
-    results[groupName] = {
-      first: document.getElementById(`result-${groupName}-first`).value,
-      second: document.getElementById(`result-${groupName}-second`).value,
-      third: document.getElementById(`result-${groupName}-third`).value,
-      thirdQualified: document.getElementById(`result-${groupName}-thirdQualified`).checked
-    };
+    const first = document.getElementById(`result-${groupName}-first`).value;
+    const second = document.getElementById(`result-${groupName}-second`).value;
+    const third = document.getElementById(`result-${groupName}-third`).value;
+    const thirdQualified = document.getElementById(`result-${groupName}-thirdQualified`).checked;
+
+    const chosen = [first, second, third].filter(Boolean);
+    if (new Set(chosen).size !== chosen.length) {
+      return alert(`Group ${groupName}: duplicate teams in official result.`);
+    }
+
+    results[groupName] = { first, second, third, thirdQualified };
   }
 
   await setDoc(doc(db, "groupResults", "official"), {
@@ -410,24 +482,33 @@ async function renderLeaderboardFromFirestore() {
   const matchResults = matchResultsSnap.exists() ? matchResultsSnap.data().results || {} : {};
 
   const users = {};
+
   usersSnap.forEach(docSnap => {
     const u = docSnap.data();
     users[u.uid] = {
-      displayName: u.displayName || u.email || "Unknown Player",
+      username: u.username || "",
+      googleDisplayName: u.googleDisplayName || "",
       email: u.email || ""
     };
   });
 
   const scores = {};
 
+  function getDisplayName(uid, fallbackEmail) {
+    return (
+      users[uid]?.username ||
+      users[uid]?.googleDisplayName ||
+      "Player"
+    );
+  }
+
   function ensurePlayer(uid, email) {
     if (!scores[uid]) {
       scores[uid] = {
         uid,
-        display_name: users[uid]?.displayName || email || "Unknown Player",
+        display_name: getDisplayName(uid, email),
         match_points: 0,
         group_points: 0,
-        survey_points: 0,
         bonus_points: 0,
         total_points: 0
       };
@@ -469,7 +550,6 @@ async function renderLeaderboardFromFirestore() {
     player.total_points =
       player.group_points +
       player.match_points +
-      player.survey_points +
       player.bonus_points;
   });
 
@@ -490,15 +570,19 @@ function renderLeaderboard(rows) {
       <td>${i + 1}</td>
       <td>${escapeHTML(r.display_name)}</td>
       <td>${r.group_points + r.match_points}</td>
-      <td>${r.survey_points}</td>
       <td>${r.bonus_points}</td>
       <td><strong>${r.total_points}</strong></td>
     `;
     tbody.appendChild(tr);
   });
 
-  document.querySelector("#playerCount").textContent = sorted.length;
-  document.querySelector("#lastUpdated").textContent = new Date().toLocaleString();
+  const playerCount = document.querySelector("#playerCount");
+  const lastUpdated = document.querySelector("#lastUpdated");
+  const matchCount = document.querySelector("#matchCount");
+
+  if (playerCount) playerCount.textContent = sorted.length;
+  if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
+  if (matchCount) matchCount.textContent = "—";
 }
 
 function escapeHTML(str) {
