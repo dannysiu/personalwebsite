@@ -152,3 +152,108 @@ footer {
   cursor: pointer;
   margin-top: 12px;
 }
+
+
+body {
+  background:
+    radial-gradient(circle at 8% 20%, rgba(34, 197, 94, 0.22), transparent 24%),
+    radial-gradient(circle at 92% 16%, rgba(59, 130, 246, 0.20), transparent 26%),
+    radial-gradient(circle at 10% 80%, rgba(250, 204, 21, 0.18), transparent 22%),
+    radial-gradient(circle at 90% 82%, rgba(239, 68, 68, 0.16), transparent 24%),
+    linear-gradient(135deg, #06131f 0%, #0f172a 45%, #111827 100%);
+  background-attachment: fixed;
+}
+
+body::before,
+body::after {
+  content: "⚽";
+  position: fixed;
+  top: 18%;
+  font-size: 160px;
+  opacity: 0.055;
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::before {
+  left: 3%;
+}
+
+body::after {
+  right: 3%;
+  top: 55%;
+}
+
+.container {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  border-radius: 20px;
+}
+
+#groupPicksForm,
+#adminGroupResultsForm,
+#matchPicksForm,
+#adminMatchResultsForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.pick-card {
+  background: rgba(31, 41, 55, 0.92);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 16px;
+  margin: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.pick-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.mini-note {
+  color: #cbd5e1;
+  font-size: 13px;
+  margin-top: 0;
+}
+
+.pick-card label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.pick-card select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  font-size: 15px;
+}
+
+.checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+#saveGroupPicksBtn,
+#saveMatchPicksBtn,
+#saveGroupResultsBtn,
+#saveMatchResultsBtn,
+#refreshLeaderboardBtn {
+  background: white;
+  color: #111827;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 14px;
+  margin-right: 8px;
+}
