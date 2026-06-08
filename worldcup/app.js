@@ -44,8 +44,6 @@ const firebaseConfig = {
 };
 
 const ADMIN_EMAILS = ["chat2danny@gmail.com", "jongreenofficial@gmail.com"];
-
-// June uses daylight time in Texas, so this is 2:00 PM CT/CDT.
 const GROUP_PICK_LOCK_TIME = new Date("2026-06-11T14:00:00-05:00");
 
 const app = initializeApp(firebaseConfig);
@@ -69,6 +67,8 @@ const groups = {
   K: ["🇵🇹 Portugal", "🇨🇩 Congo DR", "🇺🇿 Uzbekistan", "🇨🇴 Colombia"],
   L: ["🏴 England", "🇭🇷 Croatia", "🇬🇭 Ghana", "🇵🇦 Panama"]
 };
+
+const countryOptions = [...new Set(Object.values(groups).flat())];
 
 const testMatches = [
   { id: "M001", label: "🇲🇽 Mexico vs 🇿🇦 South Africa", options: ["🇲🇽 Mexico", "Draw", "🇿🇦 South Africa"] },
@@ -103,6 +103,16 @@ const adminMatchResultsForm = document.getElementById("adminMatchResultsForm");
 const saveMatchResultsBtn = document.getElementById("saveMatchResultsBtn");
 const matchResultsStatus = document.getElementById("matchResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
+
+let bonusSection;
+let bonusContent;
+let bonusForm;
+let saveBonusBtn;
+let bonusStatus;
+let adminPlayerList;
+
+injectBonusSection();
+injectAdminPlayerManagement();
 
 loginBtn.addEventListener("click", async () => {
   try {
@@ -148,6 +158,7 @@ onAuthStateChanged(auth, async (user) => {
     if (usernameBox) usernameBox.style.display = "none";
     groupPicksSection.style.display = "none";
     matchPicksSection.style.display = "none";
+    bonusSection.style.display = "none";
     if (adminSection) adminSection.style.display = "none";
     return;
   }
@@ -161,6 +172,9 @@ onAuthStateChanged(auth, async (user) => {
     email: user.email,
     googleDisplayName: user.displayName || "",
     photoURL: user.photoURL || "",
+    paid: false,
+    banned: false,
+    bonus_points: 0,
     lastLogin: new Date().toISOString()
   }, { merge: true });
 
@@ -172,12 +186,15 @@ onAuthStateChanged(auth, async (user) => {
 
   groupPicksSection.style.display = "block";
   matchPicksSection.style.display = "block";
+  bonusSection.style.display = "block";
 
   renderGroupPicks();
   renderMatchPicks();
+  renderBonusQuiz();
 
   await loadExistingGroupPicks();
   await loadExistingMatchPicks();
+  await loadExistingBonusAnswers();
   await renderLeaderboardFromFirestore();
 
   if (ADMIN_EMAILS.includes(user.email)) {
@@ -186,8 +203,58 @@ onAuthStateChanged(auth, async (user) => {
     renderAdminMatchResults();
     await loadExistingGroupResults();
     await loadExistingMatchResults();
+    await renderAdminPlayerList();
   }
 });
+
+function injectBonusSection() {
+  bonusSection = document.createElement("section");
+  bonusSection.className = "card";
+  bonusSection.id = "bonusSection";
+  bonusSection.style.display = "none";
+
+  bonusSection.innerHTML = `
+    <h2>🎯 Bonus Questions</h2>
+    <button id="toggleBonusBtn" class="secondary-btn">Show / Hide Bonus Questions</button>
+    <div id="bonusContent" style="display:none;">
+      <p>
+        Lock these in before the World Cup starts. Opening bonus questions are worth points after the tournament ends.
+        Weekly bonus questions will also appear here later.
+      </p>
+      <p class="lock-note">Bonus answers lock: <strong>June 11, 2026 at 2:00 PM CT</strong>.</p>
+      <div id="bonusForm"></div>
+      <button id="saveBonusBtn">Save Bonus Answers</button>
+      <p id="bonusStatus"></p>
+    </div>
+  `;
+
+  groupPicksSection.insertAdjacentElement("afterend", bonusSection);
+
+  bonusContent = document.getElementById("bonusContent");
+  bonusForm = document.getElementById("bonusForm");
+  saveBonusBtn = document.getElementById("saveBonusBtn");
+  bonusStatus = document.getElementById("bonusStatus");
+
+  document.getElementById("toggleBonusBtn").addEventListener("click", () => {
+    bonusContent.style.display = bonusContent.style.display === "none" ? "block" : "none";
+  });
+
+  saveBonusBtn.addEventListener("click", saveBonusAnswers);
+}
+
+function injectAdminPlayerManagement() {
+  if (!adminSection) return;
+
+  const box = document.createElement("div");
+  box.innerHTML = `
+    <h3>Player Payment / Ban Controls</h3>
+    <p class="mini-note">Only paid, non-banned players appear on the leaderboard.</p>
+    <div id="adminPlayerList"></div>
+  `;
+
+  adminSection.insertBefore(box, adminSection.firstChild);
+  adminPlayerList = document.getElementById("adminPlayerList");
+}
 
 function groupPicksAreLocked() {
   return new Date() >= GROUP_PICK_LOCK_TIME;
@@ -251,10 +318,7 @@ async function loadExistingGroupPicks() {
 }
 
 saveGroupPicksBtn.addEventListener("click", async () => {
-  if (groupPicksAreLocked()) {
-    alert("Group picks are locked.");
-    return;
-  }
+  if (groupPicksAreLocked()) return alert("Group picks are locked.");
 
   const picks = {};
 
@@ -272,17 +336,112 @@ saveGroupPicksBtn.addEventListener("click", async () => {
     uid: currentUser.uid,
     email: currentUser.email,
     picks,
-    scoring: {
-      topTwo: 2,
-      thirdPlaceQualifier: 1,
-      eliminated: 0
-    },
+    scoring: { topTwo: 2, thirdPlaceQualifier: 1, eliminated: 0 },
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
   groupPicksStatus.textContent = "✅ Group picks saved!";
   await renderLeaderboardFromFirestore();
 });
+
+function renderBonusQuiz() {
+  bonusForm.innerHTML = `
+    <div class="pick-card">
+      <label>1. Which country will score the most goals in the tournament?</label>
+      <select id="bonus-mostGoalsCountry">
+        <option value="">Select country</option>
+        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>2. How many yellow cards total in the tournament?</label>
+      <input id="bonus-yellowCards" type="number" min="0" placeholder="ex: 220" />
+    </div>
+
+    <div class="pick-card">
+      <label>3. When will the USA get knocked out?</label>
+      <select id="bonus-usaOut">
+        <option value="">Select stage</option>
+        <option value="Group Stage">Group Stage</option>
+        <option value="Round of 32">Round of 32</option>
+        <option value="Round of 16">Round of 16</option>
+        <option value="Quarterfinals">Quarterfinals</option>
+        <option value="Semifinals">Semifinals</option>
+        <option value="Final">Final</option>
+        <option value="USA wins the World Cup">USA wins the World Cup</option>
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>4. Name 1 team that will make the semifinals.</label>
+      <select id="bonus-semifinalist">
+        <option value="">Select country</option>
+        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>5. Who will win the 2026 FIFA World Cup?</label>
+      <select id="bonus-winner">
+        <option value="">Select country</option>
+        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+      </select>
+    </div>
+  `;
+
+  if (groupPicksAreLocked()) {
+    bonusStatus.textContent = "🔒 Bonus answers are locked.";
+    saveBonusBtn.disabled = true;
+    saveBonusBtn.textContent = "Bonus Answers Locked";
+    ["bonus-mostGoalsCountry", "bonus-yellowCards", "bonus-usaOut", "bonus-semifinalist", "bonus-winner"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+  }
+}
+
+async function loadExistingBonusAnswers() {
+  const snap = await getDoc(doc(db, "bonusAnswers", currentUser.uid));
+  if (!snap.exists()) return;
+
+  const answers = snap.data().answers || {};
+
+  setValue("bonus-mostGoalsCountry", answers.mostGoalsCountry);
+  setValue("bonus-yellowCards", answers.yellowCards);
+  setValue("bonus-usaOut", answers.usaOut);
+  setValue("bonus-semifinalist", answers.semifinalist);
+  setValue("bonus-winner", answers.winner);
+
+  if (!groupPicksAreLocked()) bonusStatus.textContent = "Loaded saved bonus answers.";
+}
+
+async function saveBonusAnswers() {
+  if (!currentUser) return alert("Please sign in first.");
+  if (groupPicksAreLocked()) return alert("Bonus answers are locked.");
+
+  const answers = {
+    mostGoalsCountry: getValue("bonus-mostGoalsCountry"),
+    yellowCards: getValue("bonus-yellowCards"),
+    usaOut: getValue("bonus-usaOut"),
+    semifinalist: getValue("bonus-semifinalist"),
+    winner: getValue("bonus-winner")
+  };
+
+  for (const [key, value] of Object.entries(answers)) {
+    if (!value) return alert("Please answer all bonus questions before saving.");
+  }
+
+  await setDoc(doc(db, "bonusAnswers", currentUser.uid), {
+    uid: currentUser.uid,
+    email: currentUser.email,
+    answers,
+    points: 0,
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+
+  bonusStatus.textContent = "✅ Bonus answers saved!";
+}
 
 function renderMatchPicks() {
   matchPicksForm.innerHTML = "";
@@ -381,15 +540,12 @@ async function loadExistingGroupResults() {
   const results = snap.data().results || {};
 
   Object.entries(results).forEach(([groupName, result]) => {
-    const first = document.getElementById(`result-${groupName}-first`);
-    const second = document.getElementById(`result-${groupName}-second`);
-    const third = document.getElementById(`result-${groupName}-third`);
-    const thirdQualified = document.getElementById(`result-${groupName}-thirdQualified`);
+    setValue(`result-${groupName}-first`, result.first);
+    setValue(`result-${groupName}-second`, result.second);
+    setValue(`result-${groupName}-third`, result.third);
 
-    if (first) first.value = result.first || "";
-    if (second) second.value = result.second || "";
-    if (third) third.value = result.third || "";
-    if (thirdQualified) thirdQualified.checked = !!result.thirdQualified;
+    const cb = document.getElementById(`result-${groupName}-thirdQualified`);
+    if (cb) cb.checked = !!result.thirdQualified;
   });
 }
 
@@ -397,9 +553,9 @@ saveGroupResultsBtn?.addEventListener("click", async () => {
   const results = {};
 
   for (const groupName of Object.keys(groups)) {
-    const first = document.getElementById(`result-${groupName}-first`).value;
-    const second = document.getElementById(`result-${groupName}-second`).value;
-    const third = document.getElementById(`result-${groupName}-third`).value;
+    const first = getValue(`result-${groupName}-first`);
+    const second = getValue(`result-${groupName}-second`);
+    const third = getValue(`result-${groupName}-third`);
     const thirdQualified = document.getElementById(`result-${groupName}-thirdQualified`).checked;
 
     const chosen = [first, second, third].filter(Boolean);
@@ -446,8 +602,7 @@ async function loadExistingMatchResults() {
   const results = snap.data().results || {};
 
   Object.entries(results).forEach(([matchId, result]) => {
-    const select = document.getElementById(`result-match-${matchId}`);
-    if (select) select.value = result;
+    setValue(`result-match-${matchId}`, result);
   });
 }
 
@@ -455,7 +610,7 @@ saveMatchResultsBtn?.addEventListener("click", async () => {
   const results = {};
 
   for (const match of testMatches) {
-    results[match.id] = document.getElementById(`result-match-${match.id}`).value;
+    results[match.id] = getValue(`result-match-${match.id}`);
   }
 
   await setDoc(doc(db, "matchResults", "official"), {
@@ -468,12 +623,51 @@ saveMatchResultsBtn?.addEventListener("click", async () => {
   await renderLeaderboardFromFirestore();
 });
 
-refreshLeaderboardBtn?.addEventListener("click", renderLeaderboardFromFirestore);
+async function renderAdminPlayerList() {
+  if (!adminPlayerList) return;
+
+  const usersSnap = await getDocs(collection(db, "users"));
+  adminPlayerList.innerHTML = "";
+
+  usersSnap.forEach(docSnap => {
+    const u = docSnap.data();
+    const row = document.createElement("div");
+    row.className = "admin-player-row";
+
+    row.innerHTML = `
+      <strong>${escapeHTML(u.username || u.googleDisplayName || "Player")}</strong>
+      <span>${escapeHTML(u.email || "")}</span>
+      <label><input type="checkbox" data-uid="${u.uid}" data-field="paid" ${u.paid ? "checked" : ""}/> Paid</label>
+      <label><input type="checkbox" data-uid="${u.uid}" data-field="banned" ${u.banned ? "checked" : ""}/> Banned</label>
+    `;
+
+    adminPlayerList.appendChild(row);
+  });
+
+  adminPlayerList.querySelectorAll("input[type='checkbox']").forEach(input => {
+    input.addEventListener("change", async (e) => {
+      const uid = e.target.dataset.uid;
+      const field = e.target.dataset.field;
+      await setDoc(doc(db, "users", uid), {
+        [field]: e.target.checked,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await renderLeaderboardFromFirestore();
+    });
+  });
+}
+
+refreshLeaderboardBtn?.addEventListener("click", async () => {
+  await renderAdminPlayerList();
+  await renderLeaderboardFromFirestore();
+});
 
 async function renderLeaderboardFromFirestore() {
   const usersSnap = await getDocs(collection(db, "users"));
   const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
   const matchPicksSnap = await getDocs(collection(db, "matchPicks"));
+  const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
 
   const groupResultsSnap = await getDoc(doc(db, "groupResults", "official"));
   const matchResultsSnap = await getDoc(doc(db, "matchResults", "official"));
@@ -482,42 +676,42 @@ async function renderLeaderboardFromFirestore() {
   const matchResults = matchResultsSnap.exists() ? matchResultsSnap.data().results || {} : {};
 
   const users = {};
-
   usersSnap.forEach(docSnap => {
     const u = docSnap.data();
     users[u.uid] = {
       username: u.username || "",
       googleDisplayName: u.googleDisplayName || "",
-      email: u.email || ""
+      email: u.email || "",
+      paid: !!u.paid,
+      banned: !!u.banned,
+      bonus_points: Number(u.bonus_points || 0)
     };
   });
 
   const scores = {};
 
-  function getDisplayName(uid, fallbackEmail) {
-    return (
-      users[uid]?.username ||
-      users[uid]?.googleDisplayName ||
-      "Player"
-    );
-  }
-
   function ensurePlayer(uid, email) {
+    const user = users[uid];
+    if (!user || !user.paid || user.banned) return null;
+
     if (!scores[uid]) {
       scores[uid] = {
         uid,
-        display_name: getDisplayName(uid, email),
+        display_name: user.username || user.googleDisplayName || "Player",
         match_points: 0,
         group_points: 0,
-        bonus_points: 0,
+        bonus_points: user.bonus_points || 0,
         total_points: 0
       };
     }
+
+    return scores[uid];
   }
 
   groupPicksSnap.forEach(docSnap => {
     const data = docSnap.data();
-    ensurePlayer(data.uid, data.email);
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
 
     Object.entries(data.picks || {}).forEach(([groupName, pick]) => {
       const result = groupResults[groupName];
@@ -527,9 +721,9 @@ async function renderLeaderboardFromFirestore() {
         if (!team) return;
 
         if (team === result.first || team === result.second) {
-          scores[data.uid].group_points += 2;
+          player.group_points += 2;
         } else if (team === result.third && result.thirdQualified) {
-          scores[data.uid].group_points += 1;
+          player.group_points += 1;
         }
       });
     });
@@ -537,20 +731,24 @@ async function renderLeaderboardFromFirestore() {
 
   matchPicksSnap.forEach(docSnap => {
     const data = docSnap.data();
-    ensurePlayer(data.uid, data.email);
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
 
     Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
       if (matchResults[matchId] && pick === matchResults[matchId]) {
-        scores[data.uid].match_points += 2;
+        player.match_points += 2;
       }
     });
   });
 
+  bonusAnswersSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
+  });
+
   Object.values(scores).forEach(player => {
-    player.total_points =
-      player.group_points +
-      player.match_points +
-      player.bonus_points;
+    player.total_points = player.group_points + player.match_points + player.bonus_points;
   });
 
   renderLeaderboard(Object.values(scores));
@@ -583,6 +781,15 @@ function renderLeaderboard(rows) {
   if (playerCount) playerCount.textContent = sorted.length;
   if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
   if (matchCount) matchCount.textContent = "—";
+}
+
+function getValue(id) {
+  return document.getElementById(id)?.value || "";
+}
+
+function setValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value || "";
 }
 
 function escapeHTML(str) {
