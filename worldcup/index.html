@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>World Cup 2026 Pick’em League</title>
+  <title>Danz 2026 World Cup League</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="hero">
-    <h1>🌍⚽ World Cup 2026 Pick’em League</h1>
-    <p>Live leaderboard, match results, and player rankings.</p>
+    <h1>Danz 2026 World Cup League</h1>
+    <p>Pick’em league, leaderboard, bonus questions, and World Cup bragging rights.</p>
   </header>
 
   <main class="container">
@@ -17,17 +17,30 @@
       <button id="loginBtn">Sign in with Google</button>
       <button id="logoutBtn" style="display:none;">Sign out</button>
       <p id="userInfo">Not signed in</p>
+
+      <div id="usernameBox" style="display:none;">
+        <label for="usernameInput">Leaderboard Username</label>
+        <input id="usernameInput" maxlength="20" placeholder="ex: Danz" />
+        <button id="saveUsernameBtn">Save Username</button>
+        <p id="usernameStatus"></p>
+      </div>
     </section>
 
     <section class="cards">
       <div class="card"><span id="playerCount">—</span><label>Players</label></div>
-      <div class="card"><span id="matchCount">—</span><label>Matches Scored</label></div>
+      <div class="card"><span id="matchCount">—</span><label>Results Scored</label></div>
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
     <section class="card" id="groupPicksSection" style="display:none;">
       <h2>🌍 Group Stage Pick’em</h2>
-      <p>Pick the <strong>top 2 teams</strong> from each group. Each correct team = 2 points.</p>
+      <p>
+        Pick <strong>2 teams from each group</strong>.  
+        Each pick that finishes <strong>top 2 = 2 points</strong>.  
+        If your pick finishes <strong>3rd but still qualifies = 1 point</strong>.
+      </p>
+      <p class="lock-note">Group picks lock before the opening match: <strong>June 11, 2026 at 2:00 PM CT</strong>.</p>
+
       <div id="groupPicksForm"></div>
       <button id="saveGroupPicksBtn">Save Group Picks</button>
       <p id="groupPicksStatus"></p>
@@ -35,7 +48,7 @@
 
     <section class="card" id="matchPicksSection" style="display:none;">
       <h2>⚽ Match Winner Test</h2>
-      <p>This is just to test that match-winner picks save correctly.</p>
+      <p>This is just for testing knockout-style match picks.</p>
       <div id="matchPicksForm"></div>
       <button id="saveMatchPicksBtn">Save Match Picks</button>
       <p id="matchPicksStatus"></p>
@@ -43,7 +56,6 @@
 
     <section class="card" id="adminSection" style="display:none;">
       <h2>🛠️ Admin Results</h2>
-      <p>Only admins can see this. Use this to save official results and update scoring.</p>
 
       <h3>Group Results</h3>
       <div id="adminGroupResultsForm"></div>
@@ -66,9 +78,8 @@
             <th>Rank</th>
             <th>Player</th>
             <th>Match Points</th>
-            <th>Survey</th>
-            <th>Bonus</th>
-            <th>Total</th>
+            <th>Bonus Points</th>
+            <th>Total Points</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -91,10 +102,9 @@
   </main>
 
   <footer>
-    Built for a private Discord pick’em league. Refreshes when the page reloads.
+    Built for a private Discord pick’em league.
   </footer>
 
-  <!-- <script src="app.js"></script> -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
