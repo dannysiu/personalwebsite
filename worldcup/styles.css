@@ -110,3 +110,45 @@ footer {
   font-size: 16px;
   margin-top: 8px;
 }
+
+
+.pick-card {
+  background: #1f2937;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 14px 0;
+}
+
+.pick-card h3 {
+  margin-top: 0;
+}
+
+.pick-card label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.pick-card select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  font-size: 15px;
+}
+
+#saveGroupPicksBtn,
+#saveMatchPicksBtn {
+  background: white;
+  color: #111827;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 12px;
+}

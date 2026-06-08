@@ -27,7 +27,8 @@ import {
 import {
   getFirestore,
   doc,
-  setDoc
+  setDoc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -45,9 +46,54 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+let currentUser = null;
+
+const groups = {
+  A: ["🇲🇽 Mexico", "🇿🇦 South Africa", "🇰🇷 South Korea", "🇨🇿 Czechia"],
+  B: ["🇨🇦 Canada", "🇧🇦 Bosnia and Herzegovina", "🇶🇦 Qatar", "🇨🇭 Switzerland"],
+  C: ["🇧🇷 Brazil", "🇲🇦 Morocco", "🇭🇹 Haiti", "🏴 Scotland"],
+  D: ["🇺🇸 USA", "🇵🇾 Paraguay", "🇦🇺 Australia", "🇹🇷 Türkiye"],
+  E: ["🇩🇪 Germany", "🇨🇼 Curaçao", "🇨🇮 Ivory Coast", "🇪🇨 Ecuador"],
+  F: ["🇳🇱 Netherlands", "🇯🇵 Japan", "🇹🇳 Tunisia", "🇸🇪 Sweden"],
+  G: ["🇧🇪 Belgium", "🇪🇬 Egypt", "🇮🇷 Iran", "🇳🇿 New Zealand"],
+  H: ["🇪🇸 Spain", "🇨🇻 Cape Verde", "🇸🇦 Saudi Arabia", "🇺🇾 Uruguay"],
+  I: ["🇫🇷 France", "🇸🇳 Senegal", "🇮🇶 Iraq", "🇳🇴 Norway"],
+  J: ["🇦🇷 Argentina", "🇩🇿 Algeria", "🇦🇹 Austria", "🇯🇴 Jordan"],
+  K: ["🇵🇹 Portugal", "🇨🇩 Congo DR", "🇺🇿 Uzbekistan", "🇨🇴 Colombia"],
+  L: ["🏴 England", "🇭🇷 Croatia", "🇬🇭 Ghana", "🇵🇦 Panama"]
+};
+
+const testMatches = [
+  {
+    id: "M001",
+    label: "🇲🇽 Mexico vs 🇿🇦 South Africa",
+    options: ["🇲🇽 Mexico", "Draw", "🇿🇦 South Africa"]
+  },
+  {
+    id: "M004",
+    label: "🇺🇸 USA vs 🇵🇾 Paraguay",
+    options: ["🇺🇸 USA", "Draw", "🇵🇾 Paraguay"]
+  },
+  {
+    id: "M010",
+    label: "🇳🇱 Netherlands vs 🇯🇵 Japan",
+    options: ["🇳🇱 Netherlands", "Draw", "🇯🇵 Japan"]
+  }
+];
+
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userInfo = document.getElementById("userInfo");
+
+const groupPicksSection = document.getElementById("groupPicksSection");
+const groupPicksForm = document.getElementById("groupPicksForm");
+const saveGroupPicksBtn = document.getElementById("saveGroupPicksBtn");
+const groupPicksStatus = document.getElementById("groupPicksStatus");
+
+const matchPicksSection = document.getElementById("matchPicksSection");
+const matchPicksForm = document.getElementById("matchPicksForm");
+const saveMatchPicksBtn = document.getElementById("saveMatchPicksBtn");
+const matchPicksStatus = document.getElementById("matchPicksStatus");
 
 loginBtn.addEventListener("click", async () => {
   try {
@@ -59,178 +105,205 @@ loginBtn.addEventListener("click", async () => {
 });
 
 logoutBtn.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
+  await signOut(auth);
 });
 
 onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+
   if (user) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
     userInfo.textContent = `Signed in as ${user.email}`;
 
-    try {
-      await setDoc(
-        doc(db, "users", user.uid),
-        {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || "",
-          photoURL: user.photoURL || "",
-          lastLogin: new Date().toISOString()
-        },
-        { merge: true }
-      );
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+        lastLogin: new Date().toISOString()
+      },
+      { merge: true }
+    );
 
-      console.log("User saved to Firestore:", user.email);
-    } catch (error) {
-      console.error("Failed to save user to Firestore:", error);
-      alert("Login worked, but saving user to Firestore failed. Check console.");
-    }
+    groupPicksSection.style.display = "block";
+    matchPicksSection.style.display = "block";
+
+    renderGroupPicks();
+    renderMatchPicks();
+
+    await loadExistingGroupPicks();
+    await loadExistingMatchPicks();
+
+    console.log("User saved to Firestore:", user.email);
   } else {
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     userInfo.textContent = "Not signed in";
+
+    groupPicksSection.style.display = "none";
+    matchPicksSection.style.display = "none";
   }
 });
 
-const LEADERBOARD_CSV_URL = "PASTE_PUBLISHED_LEADERBOARD_CSV_URL_HERE";
-const MATCHES_CSV_URL = "PASTE_PUBLISHED_MATCHES_CSV_URL_HERE";
+function renderGroupPicks() {
+  groupPicksForm.innerHTML = "";
 
-async function fetchCSV(url) {
-  if (!url || url.includes("PASTE_")) return [];
-  const res = await fetch(url);
-  const text = await res.text();
-  return parseCSV(text);
+  Object.entries(groups).forEach(([groupName, teams]) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+
+    wrapper.innerHTML = `
+      <h3>Group ${groupName}</h3>
+      <label>1st place</label>
+      <select id="group-${groupName}-first">
+        <option value="">Select team</option>
+        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+      </select>
+
+      <label>2nd place</label>
+      <select id="group-${groupName}-second">
+        <option value="">Select team</option>
+        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+      </select>
+    `;
+
+    groupPicksForm.appendChild(wrapper);
+  });
 }
 
-function parseCSV(text) {
-  const rows = [];
-  let current = [];
-  let value = "";
-  let inQuotes = false;
+async function loadExistingGroupPicks() {
+  if (!currentUser) return;
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
+  const ref = doc(db, "groupPicks", currentUser.uid);
+  const snap = await getDoc(ref);
 
-    if (char === '"' && inQuotes && next === '"') {
-      value += '"';
-      i++;
-    } else if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === "," && !inQuotes) {
-      current.push(value);
-      value = "";
-    } else if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (value || current.length) {
-        current.push(value);
-        rows.push(current);
-        current = [];
-        value = "";
-      }
-      if (char === "\r" && next === "\n") i++;
-    } else {
-      value += char;
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+
+  Object.entries(data.picks || {}).forEach(([groupName, pick]) => {
+    const first = document.getElementById(`group-${groupName}-first`);
+    const second = document.getElementById(`group-${groupName}-second`);
+
+    if (first) first.value = pick.first || "";
+    if (second) second.value = pick.second || "";
+  });
+
+  groupPicksStatus.textContent = "Loaded your saved group picks.";
+}
+
+saveGroupPicksBtn.addEventListener("click", async () => {
+  if (!currentUser) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  const picks = {};
+
+  for (const groupName of Object.keys(groups)) {
+    const first = document.getElementById(`group-${groupName}-first`).value;
+    const second = document.getElementById(`group-${groupName}-second`).value;
+
+    if (!first || !second) {
+      alert(`Please pick both teams for Group ${groupName}.`);
+      return;
     }
+
+    if (first === second) {
+      alert(`Group ${groupName}: first and second place cannot be the same team.`);
+      return;
+    }
+
+    picks[groupName] = { first, second };
   }
 
-  if (value || current.length) {
-    current.push(value);
-    rows.push(current);
-  }
-
-  const headers = rows.shift()?.map(h => h.trim()) || [];
-  return rows.map(row =>
-    Object.fromEntries(headers.map((h, i) => [h, row[i] || ""]))
+  await setDoc(
+    doc(db, "groupPicks", currentUser.uid),
+    {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      picks,
+      scoring: {
+        correctTopTwoTeam: 2,
+        note: "Player gets 2 points for each correctly predicted top-2 group finisher."
+      },
+      updatedAt: new Date().toISOString()
+    },
+    { merge: true }
   );
-}
 
-function num(x) {
-  return Number(x || 0);
-}
+  groupPicksStatus.textContent = "✅ Group picks saved!";
+});
 
-function renderLeaderboard(rows) {
-  const tbody = document.querySelector("#leaderboard tbody");
-  if (!tbody) return;
+function renderMatchPicks() {
+  matchPicksForm.innerHTML = "";
 
-  tbody.innerHTML = "";
+  testMatches.forEach(match => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
 
-  const sorted = rows
-    .map(r => ({
-      display_name: r.display_name,
-      match_points: num(r.match_points),
-      survey_points: num(r.survey_points),
-      bonus_points: num(r.bonus_points),
-      total_points: num(r.total_points)
-    }))
-    .sort((a, b) => b.total_points - a.total_points || b.match_points - a.match_points);
-
-  sorted.forEach((r, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${escapeHTML(r.display_name)}</td>
-      <td>${r.match_points}</td>
-      <td>${r.survey_points}</td>
-      <td>${r.bonus_points}</td>
-      <td><strong>${r.total_points}</strong></td>
+    wrapper.innerHTML = `
+      <h3>${match.label}</h3>
+      <select id="match-${match.id}">
+        <option value="">Select prediction</option>
+        ${match.options.map(option => `<option value="${option}">${option}</option>`).join("")}
+      </select>
     `;
-    tbody.appendChild(tr);
+
+    matchPicksForm.appendChild(wrapper);
+  });
+}
+
+async function loadExistingMatchPicks() {
+  if (!currentUser) return;
+
+  const ref = doc(db, "matchPicks", currentUser.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+
+  Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
+    const select = document.getElementById(`match-${matchId}`);
+    if (select) select.value = pick;
   });
 
-  const playerCount = document.querySelector("#playerCount");
-  if (playerCount) playerCount.textContent = sorted.length;
+  matchPicksStatus.textContent = "Loaded your saved match picks.";
 }
 
-function renderMatches(rows) {
-  const tbody = document.querySelector("#matches tbody");
-  if (!tbody) return;
+saveMatchPicksBtn.addEventListener("click", async () => {
+  if (!currentUser) {
+    alert("Please sign in first.");
+    return;
+  }
 
-  tbody.innerHTML = "";
+  const picks = {};
 
-  const scored = rows.filter(r => r.winner_actual && r.winner_actual.trim());
+  for (const match of testMatches) {
+    const prediction = document.getElementById(`match-${match.id}`).value;
 
-  rows.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHTML(r.date)}</td>
-      <td>${escapeHTML(r.team_a)} vs ${escapeHTML(r.team_b)}</td>
-      <td>${escapeHTML(r.winner_actual || "TBD")}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+    if (!prediction) {
+      alert(`Please pick: ${match.label}`);
+      return;
+    }
 
-  const matchCount = document.querySelector("#matchCount");
-  if (matchCount) matchCount.textContent = scored.length;
-}
+    picks[match.id] = prediction;
+  }
 
-function escapeHTML(str) {
-  return String(str || "").replace(/[&<>"']/g, s => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  }[s]));
-}
+  await setDoc(
+    doc(db, "matchPicks", currentUser.uid),
+    {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      picks,
+      updatedAt: new Date().toISOString()
+    },
+    { merge: true }
+  );
 
-async function init() {
-  const [leaderboard, matches] = await Promise.all([
-    fetchCSV(LEADERBOARD_CSV_URL),
-    fetchCSV(MATCHES_CSV_URL)
-  ]);
-
-  renderLeaderboard(leaderboard);
-  renderMatches(matches);
-
-  const lastUpdated = document.querySelector("#lastUpdated");
-  if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
-}
-
-init().catch(err => {
-  console.error(err);
+  matchPicksStatus.textContent = "✅ Match picks saved!";
 });
