@@ -271,6 +271,12 @@ footer {
   margin-top: -4px;
 }
 
+.yellow-note {
+  font-size: inherit;
+  font-weight: normal;
+  color: inherit;
+}
+
 /* Main site button */
 
 .home-link {
