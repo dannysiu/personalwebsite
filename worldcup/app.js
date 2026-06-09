@@ -10,7 +10,8 @@ Scoring notes:
 - Group pick that finishes top 2 = 2 points
 - Group pick that finishes 3rd and qualifies = 1 point
 - Test match picks currently score as 2 points each
-- Bonus points are stored on the user record as bonus_points
+- Opening bonus quiz = 1 point per correct answer
+- Yellow card bonus question is correct if within 10 of the official total
 */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -68,7 +69,6 @@ const groups = {
 };
 
 function cleanCountryName(team) {
-  // Removes flag/emoji characters so alphabetical sorting is based on country name.
   return team.replace(/^[^\p{L}\p{N}]+/u, "").trim();
 }
 
@@ -120,9 +120,13 @@ let bonusForm;
 let saveBonusBtn;
 let bonusStatus;
 let adminPlayerList;
+let adminBonusResultsForm;
+let saveBonusResultsBtn;
+let bonusResultsStatus;
 
 injectBonusSection();
 injectAdminPlayerManagement();
+injectAdminBonusResults();
 
 loginBtn.addEventListener("click", async () => {
   try {
@@ -184,7 +188,6 @@ onAuthStateChanged(auth, async (user) => {
     photoURL: user.photoURL || "",
     paid: false,
     banned: false,
-    bonus_points: 0,
     lastLogin: new Date().toISOString()
   }, { merge: true });
 
@@ -211,8 +214,10 @@ onAuthStateChanged(auth, async (user) => {
     adminSection.style.display = "block";
     renderAdminGroupResults();
     renderAdminMatchResults();
+    renderAdminBonusResults();
     await loadExistingGroupResults();
     await loadExistingMatchResults();
+    await loadExistingBonusResults();
     await renderAdminPlayerList();
   }
 });
@@ -264,6 +269,27 @@ function injectAdminPlayerManagement() {
 
   adminSection.insertBefore(box, adminSection.firstChild);
   adminPlayerList = document.getElementById("adminPlayerList");
+}
+
+function injectAdminBonusResults() {
+  if (!adminSection) return;
+
+  const box = document.createElement("div");
+  box.innerHTML = `
+    <h3>Bonus Answer Key</h3>
+    <p class="mini-note">Set the correct bonus answers here. Each correct answer is worth 1 point.</p>
+    <div id="adminBonusResultsForm"></div>
+    <button id="saveBonusResultsBtn">Save Bonus Answer Key</button>
+    <p id="bonusResultsStatus"></p>
+  `;
+
+  adminSection.appendChild(box);
+
+  adminBonusResultsForm = document.getElementById("adminBonusResultsForm");
+  saveBonusResultsBtn = document.getElementById("saveBonusResultsBtn");
+  bonusResultsStatus = document.getElementById("bonusResultsStatus");
+
+  saveBonusResultsBtn.addEventListener("click", saveBonusResults);
 }
 
 function groupPicksAreLocked() {
@@ -366,7 +392,7 @@ function renderBonusQuiz() {
     </div>
 
     <div class="pick-card">
-      <label>2. How many yellow cards total in the tournament?</label>
+      <label>2. How many yellow cards total in the tournament? <span class="mini-note">(within 10 = correct)</span></label>
       <input id="bonus-yellowCards" type="number" min="0" placeholder="ex: 220" />
     </div>
 
@@ -439,7 +465,7 @@ async function saveBonusAnswers() {
     winner: getValue("bonus-winner")
   };
 
-  for (const [key, value] of Object.entries(answers)) {
+  for (const value of Object.values(answers)) {
     if (!value) return alert("Please answer all bonus questions before saving.");
   }
 
@@ -447,11 +473,133 @@ async function saveBonusAnswers() {
     uid: currentUser.uid,
     email: currentUser.email,
     answers,
-    points: 0,
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
   bonusStatus.textContent = "✅ Bonus answers saved!";
+}
+
+function renderAdminBonusResults() {
+  adminBonusResultsForm.innerHTML = `
+    <div class="pick-card">
+      <label>1. Country with most tournament goals</label>
+      <select id="result-bonus-mostGoalsCountry">
+        <option value="">Select country</option>
+        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>2. Official yellow card total</label>
+      <input id="result-bonus-yellowCards" type="number" min="0" placeholder="ex: 220" />
+    </div>
+
+    <div class="pick-card">
+      <label>3. USA knockout stage</label>
+      <select id="result-bonus-usaOut">
+        <option value="">Select stage</option>
+        <option value="Group Stage">Group Stage</option>
+        <option value="Round of 32">Round of 32</option>
+        <option value="Round of 16">Round of 16</option>
+        <option value="Quarterfinals">Quarterfinals</option>
+        <option value="Semifinals">Semifinals</option>
+        <option value="Final">Final</option>
+        <option value="USA wins the World Cup">USA wins the World Cup</option>
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>4. Semifinalists</label>
+      <select id="result-bonus-semi1"><option value="">Semi team 1</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+      <select id="result-bonus-semi2"><option value="">Semi team 2</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+      <select id="result-bonus-semi3"><option value="">Semi team 3</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+      <select id="result-bonus-semi4"><option value="">Semi team 4</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+    </div>
+
+    <div class="pick-card">
+      <label>5. World Cup winner</label>
+      <select id="result-bonus-winner">
+        <option value="">Select country</option>
+        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+      </select>
+    </div>
+  `;
+}
+
+async function loadExistingBonusResults() {
+  const snap = await getDoc(doc(db, "bonusResults", "official"));
+  if (!snap.exists()) return;
+
+  const results = snap.data().results || {};
+
+  setValue("result-bonus-mostGoalsCountry", results.mostGoalsCountry);
+  setValue("result-bonus-yellowCards", results.yellowCards);
+  setValue("result-bonus-usaOut", results.usaOut);
+  setValue("result-bonus-winner", results.winner);
+
+  const semis = results.semifinalists || [];
+  setValue("result-bonus-semi1", semis[0]);
+  setValue("result-bonus-semi2", semis[1]);
+  setValue("result-bonus-semi3", semis[2]);
+  setValue("result-bonus-semi4", semis[3]);
+}
+
+async function saveBonusResults() {
+  const semifinalists = [
+    getValue("result-bonus-semi1"),
+    getValue("result-bonus-semi2"),
+    getValue("result-bonus-semi3"),
+    getValue("result-bonus-semi4")
+  ].filter(Boolean);
+
+  if (new Set(semifinalists).size !== semifinalists.length) {
+    return alert("Duplicate semifinalists selected.");
+  }
+
+  const results = {
+    mostGoalsCountry: getValue("result-bonus-mostGoalsCountry"),
+    yellowCards: getValue("result-bonus-yellowCards"),
+    usaOut: getValue("result-bonus-usaOut"),
+    semifinalists,
+    winner: getValue("result-bonus-winner")
+  };
+
+  await setDoc(doc(db, "bonusResults", "official"), {
+    results,
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser.email
+  }, { merge: true });
+
+  bonusResultsStatus.textContent = "✅ Bonus answer key saved!";
+  await renderLeaderboardFromFirestore();
+}
+
+function scoreBonusAnswers(answers, results) {
+  if (!answers || !results) return 0;
+
+  let points = 0;
+
+  if (answers.mostGoalsCountry && answers.mostGoalsCountry === results.mostGoalsCountry) points += 1;
+
+  const guessYellow = Number(answers.yellowCards);
+  const actualYellow = Number(results.yellowCards);
+  if (!Number.isNaN(guessYellow) && !Number.isNaN(actualYellow)) {
+    if (Math.abs(guessYellow - actualYellow) <= 10) points += 1;
+  }
+
+  if (answers.usaOut && answers.usaOut === results.usaOut) points += 1;
+
+  if (
+    answers.semifinalist &&
+    Array.isArray(results.semifinalists) &&
+    results.semifinalists.includes(answers.semifinalist)
+  ) {
+    points += 1;
+  }
+
+  if (answers.winner && answers.winner === results.winner) points += 1;
+
+  return points;
 }
 
 function renderMatchPicks() {
@@ -683,9 +831,11 @@ async function renderLeaderboardFromFirestore() {
 
   const groupResultsSnap = await getDoc(doc(db, "groupResults", "official"));
   const matchResultsSnap = await getDoc(doc(db, "matchResults", "official"));
+  const bonusResultsSnap = await getDoc(doc(db, "bonusResults", "official"));
 
   const groupResults = groupResultsSnap.exists() ? groupResultsSnap.data().results || {} : {};
   const matchResults = matchResultsSnap.exists() ? matchResultsSnap.data().results || {} : {};
+  const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
 
   const users = {};
   usersSnap.forEach(docSnap => {
@@ -695,8 +845,7 @@ async function renderLeaderboardFromFirestore() {
       googleDisplayName: u.googleDisplayName || "",
       email: u.email || "",
       paid: !!u.paid,
-      banned: !!u.banned,
-      bonus_points: Number(u.bonus_points || 0)
+      banned: !!u.banned
     };
   });
 
@@ -712,7 +861,7 @@ async function renderLeaderboardFromFirestore() {
         display_name: user.username || user.googleDisplayName || "Player",
         match_points: 0,
         group_points: 0,
-        bonus_points: user.bonus_points || 0,
+        bonus_points: 0,
         total_points: 0
       };
     }
@@ -757,6 +906,8 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+
+    player.bonus_points += scoreBonusAnswers(data.answers, bonusResults);
   });
 
   Object.values(scores).forEach(player => {
