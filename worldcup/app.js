@@ -1,17 +1,16 @@
 /*
-SETUP:
-1. Create a Google Sheet with tabs named:
-   - Leaderboard
-   - Matches
-2. File -> Share -> Publish to web.
-3. Publish each tab as CSV.
-4. Replace the two URLs below.
+Danz World Cup League 2026
+Main client-side app for:
+- Google login with Firebase Auth
+- Firestore saves for users, group picks, match picks, bonus answers, and admin results
+- Admin controls for paid/banned players
+- Leaderboard scoring
 
-Leaderboard columns:
-display_name,match_points,survey_points,bonus_points,total_points
-
-Matches columns:
-date,team_a,team_b,winner_actual
+Scoring notes:
+- Group pick that finishes top 2 = 2 points
+- Group pick that finishes 3rd and qualifies = 1 point
+- Test match picks currently score as 2 points each
+- Bonus points are stored on the user record as bonus_points
 */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -68,7 +67,18 @@ const groups = {
   L: ["🏴 England", "🇭🇷 Croatia", "🇬🇭 Ghana", "🇵🇦 Panama"]
 };
 
-const countryOptions = [...new Set(Object.values(groups).flat())];
+function cleanCountryName(team) {
+  // Removes flag/emoji characters so alphabetical sorting is based on country name.
+  return team.replace(/^[^\p{L}\p{N}]+/u, "").trim();
+}
+
+function sortTeamsAlphabetically(teams) {
+  return [...teams].sort((a, b) =>
+    cleanCountryName(a).localeCompare(cleanCountryName(b))
+  );
+}
+
+const countryOptions = sortTeamsAlphabetically([...new Set(Object.values(groups).flat())]);
 
 const testMatches = [
   { id: "M001", label: "🇲🇽 Mexico vs 🇿🇦 South Africa", options: ["🇲🇽 Mexico", "Draw", "🇿🇦 South Africa"] },
@@ -264,6 +274,7 @@ function renderGroupPicks() {
   groupPicksForm.innerHTML = "";
 
   Object.entries(groups).forEach(([groupName, teams]) => {
+    const sortedTeams = sortTeamsAlphabetically(teams);
     const wrapper = document.createElement("div");
     wrapper.className = "pick-card";
 
@@ -273,13 +284,13 @@ function renderGroupPicks() {
       <label>Pick #1</label>
       <select id="group-${groupName}-first">
         <option value="">Select team</option>
-        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+        ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
 
       <label>Pick #2</label>
       <select id="group-${groupName}-second">
         <option value="">Select team</option>
-        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+        ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
     `;
 
@@ -499,6 +510,7 @@ function renderAdminGroupResults() {
   adminGroupResultsForm.innerHTML = "";
 
   Object.entries(groups).forEach(([groupName, teams]) => {
+    const sortedTeams = sortTeamsAlphabetically(teams);
     const wrapper = document.createElement("div");
     wrapper.className = "pick-card";
 
@@ -508,19 +520,19 @@ function renderAdminGroupResults() {
       <label>1st place</label>
       <select id="result-${groupName}-first">
         <option value="">Select team</option>
-        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+        ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
 
       <label>2nd place</label>
       <select id="result-${groupName}-second">
         <option value="">Select team</option>
-        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+        ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
 
       <label>3rd place</label>
       <select id="result-${groupName}-third">
         <option value="">Select team</option>
-        ${teams.map(team => `<option value="${team}">${team}</option>`).join("")}
+        ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
 
       <label class="checkbox-row">
