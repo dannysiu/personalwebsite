@@ -43,7 +43,7 @@
 
     <section class="cards">
       <div class="card"><span id="playerCount">—</span><label>Players</label></div>
-      <div class="card"><span id="matchCount">—</span><label>Results Scored</label></div>
+      <div class="card"><span id="matchCount">Live</span><label>League Status</label></div>
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
@@ -61,14 +61,6 @@
       <p id="groupPicksStatus"></p>
     </section>
 
-    <section class="card" id="matchPicksSection" style="display:none;">
-      <h2>⚽ Match Winner Test</h2>
-      <p>This is just for testing knockout-style match picks.</p>
-      <div id="matchPicksForm"></div>
-      <button id="saveMatchPicksBtn">Save Match Picks</button>
-      <p id="matchPicksStatus"></p>
-    </section>
-
     <section class="card" id="adminSection" style="display:none;">
       <h2>🛠️ Admin Results</h2>
 
@@ -76,11 +68,6 @@
       <div id="adminGroupResultsForm"></div>
       <button id="saveGroupResultsBtn">Save Group Results</button>
       <p id="groupResultsStatus"></p>
-
-      <h3>Match Results Test</h3>
-      <div id="adminMatchResultsForm"></div>
-      <button id="saveMatchResultsBtn">Save Match Results</button>
-      <p id="matchResultsStatus"></p>
 
       <button id="refreshLeaderboardBtn">Refresh Leaderboard</button>
     </section>
@@ -95,20 +82,6 @@
             <th>Match Points</th>
             <th>Bonus Points</th>
             <th>Total Points</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section>
-      <h2>📅 Match Results</h2>
-      <table id="matches">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Match</th>
-            <th>Actual Winner</th>
           </tr>
         </thead>
         <tbody></tbody>
