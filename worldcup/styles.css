@@ -221,6 +221,8 @@ footer {
 #saveMatchPicksBtn,
 #saveGroupResultsBtn,
 #saveMatchResultsBtn,
+#resetGroupResultsBtn,
+#resetMatchResultsBtn,
 #refreshLeaderboardBtn {
   background: white;
   color: #111827;

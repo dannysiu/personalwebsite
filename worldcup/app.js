@@ -123,10 +123,14 @@ let adminPlayerList;
 let adminBonusResultsForm;
 let saveBonusResultsBtn;
 let bonusResultsStatus;
+let resetGroupResultsBtn;
+let resetMatchResultsBtn;
 
 injectBonusSection();
 injectAdminPlayerManagement();
 injectAdminBonusResults();
+injectAdminResetButtons();
+moveRefreshLeaderboardButton();
 
 loginBtn.addEventListener("click", async () => {
   try {
@@ -290,6 +294,28 @@ function injectAdminBonusResults() {
   bonusResultsStatus = document.getElementById("bonusResultsStatus");
 
   saveBonusResultsBtn.addEventListener("click", saveBonusResults);
+}
+
+function injectAdminResetButtons() {
+  if (!adminSection) return;
+
+  resetGroupResultsBtn = document.createElement("button");
+  resetGroupResultsBtn.textContent = "Reset Group Results";
+
+  resetMatchResultsBtn = document.createElement("button");
+  resetMatchResultsBtn.textContent = "Reset Match Results";
+
+  saveGroupResultsBtn.insertAdjacentElement("afterend", resetGroupResultsBtn);
+  saveMatchResultsBtn.insertAdjacentElement("afterend", resetMatchResultsBtn);
+
+  resetGroupResultsBtn.addEventListener("click", resetGroupResults);
+  resetMatchResultsBtn.addEventListener("click", resetMatchResults);
+}
+
+function moveRefreshLeaderboardButton() {
+  if (!refreshLeaderboardBtn || !adminSection) return;
+
+  adminSection.appendChild(refreshLeaderboardBtn);
 }
 
 function groupPicksAreLocked() {
@@ -822,6 +848,40 @@ refreshLeaderboardBtn?.addEventListener("click", async () => {
   await renderAdminPlayerList();
   await renderLeaderboardFromFirestore();
 });
+
+async function resetGroupResults() {
+  if (!confirm("Reset all group results?")) return;
+
+  await setDoc(doc(db, "groupResults", "official"), {
+    results: {},
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser.email
+  });
+
+  renderAdminGroupResults();
+
+  groupResultsStatus.textContent =
+    "✅ Group results reset.";
+
+  await renderLeaderboardFromFirestore();
+}
+
+async function resetMatchResults() {
+  if (!confirm("Reset all match results?")) return;
+
+  await setDoc(doc(db, "matchResults", "official"), {
+    results: {},
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser.email
+  });
+
+  renderAdminMatchResults();
+
+  matchResultsStatus.textContent =
+    "✅ Match results reset.";
+
+  await renderLeaderboardFromFirestore();
+}
 
 async function renderLeaderboardFromFirestore() {
   const usersSnap = await getDocs(collection(db, "users"));
