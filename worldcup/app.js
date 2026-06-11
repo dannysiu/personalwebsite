@@ -3,7 +3,7 @@ Danz World Cup League 2026
 Main client-side app for:
 - Google login with Firebase Auth
 - Firestore saves for users, group picks, bonus answers, and admin results
-- Admin controls for paid/banned players
+- Admin controls for banned players
 - Leaderboard scoring
 
 Scoring notes:
@@ -153,10 +153,9 @@ saveUsernameBtn?.addEventListener("click", async () => {
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
-  usernameStatus.textContent = `✅ Username changed to ${username}!`;
-
   // Show the updated username immediately for the signed-in user.
   // Admins also update the public leaderboard snapshot.
+  usernameStatus.textContent = `✅ Username changed to ${username}!`;
   await renderLeaderboardFromFirestore();
 });
 
@@ -190,7 +189,6 @@ onAuthStateChanged(auth, async (user) => {
       email: user.email,
       googleDisplayName: user.displayName || "",
       photoURL: user.photoURL || "",
-      paid: false,
       banned: false,
       lastLogin: new Date().toISOString()
     });
@@ -274,7 +272,7 @@ function injectAdminPlayerManagement() {
   const box = document.createElement("div");
   box.innerHTML = `
     <h3>Player Payment / Ban Controls</h3>
-    <p class="mini-note">Only paid, non-banned players appear on the leaderboard.</p>
+    <p class="mini-note">All signed-in players appear on the leaderboard unless banned.</p>
     <div id="adminPlayerList"></div>
   `;
 
@@ -726,7 +724,6 @@ async function renderAdminPlayerList() {
     row.innerHTML = `
       <strong>${escapeHTML(u.username || u.googleDisplayName || "Player")}</strong>
       <span>${escapeHTML(u.email || "")}</span>
-      <label><input type="checkbox" data-uid="${u.uid}" data-field="paid" ${u.paid ? "checked" : ""}/> Paid</label>
       <label><input type="checkbox" data-uid="${u.uid}" data-field="banned" ${u.banned ? "checked" : ""}/> Banned</label>
     `;
 
@@ -799,7 +796,6 @@ async function renderLeaderboardFromFirestore() {
       username: u.username || "",
       googleDisplayName: u.googleDisplayName || "",
       email: u.email || "",
-      paid: !!u.paid,
       banned: !!u.banned
     };
   });
@@ -808,7 +804,7 @@ async function renderLeaderboardFromFirestore() {
 
   function ensurePlayer(uid, email) {
     const user = users[uid];
-    if (!user || !user.paid || user.banned) return null;
+    if (!user || user.banned) return null;
 
     if (!scores[uid]) {
       scores[uid] = {
