@@ -129,6 +129,14 @@ logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
 });
 
+async function refreshLeaderboardSafely() {
+  if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) {
+    await renderLeaderboardFromFirestore();
+  } else {
+    await renderPublicLeaderboard();
+  }
+}
+
 saveUsernameBtn?.addEventListener("click", async () => {
   if (!currentUser) return alert("Please sign in first.");
 
@@ -146,7 +154,7 @@ saveUsernameBtn?.addEventListener("click", async () => {
   }, { merge: true });
 
   usernameStatus.textContent = "✅ Username saved!";
-  await renderLeaderboardFromFirestore();
+  await refreshLeaderboardSafely();
 });
 
 onAuthStateChanged(auth, async (user) => {
@@ -394,7 +402,7 @@ saveGroupPicksBtn.addEventListener("click", async () => {
   }, { merge: true });
 
   groupPicksStatus.textContent = "✅ Group picks saved!";
-  await renderLeaderboardFromFirestore();
+  await refreshLeaderboardSafely();
 });
 
 function renderBonusQuiz() {
@@ -493,6 +501,7 @@ async function saveBonusAnswers() {
   }, { merge: true });
 
   bonusStatus.textContent = "✅ Bonus answers saved!";
+  await refreshLeaderboardSafely();
 }
 
 function renderAdminBonusResults() {
