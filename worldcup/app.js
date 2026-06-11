@@ -953,10 +953,20 @@ async function loadWorldCupTicker() {
 }
 
 function renderTickerMatch(match) {
-  const localTime = new Date(match.date).toLocaleTimeString([], {
+  const matchDate = new Date(match.date);
+
+  const localDay = matchDate.toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+
+  const localTime = matchDate.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit"
   });
+
+  const dateTimeLabel = `${localDay} • ${localTime}`;
 
   const status = match.status || {};
   const isLive = status.type === "live";
@@ -976,7 +986,7 @@ function renderTickerMatch(match) {
     <div class="match-card ${escapeHTML(status.type || "")}">
       <div class="match-card-top">
         <span>${statusLabel}</span>
-        <span>${isUpcoming ? localTime : escapeHTML(status.detail || "")}</span>
+        <span>${isUpcoming ? dateTimeLabel : escapeHTML(status.detail || "")}</span>
       </div>
 
       <div class="matchup">
@@ -994,7 +1004,7 @@ function renderTickerMatch(match) {
       </div>
 
       <div class="match-footer">
-        ${isUpcoming ? "Kickoff" : "Score"} · ${localTime}
+        ${isUpcoming ? "Kickoff" : "Score"} · ${dateTimeLabel}
       </div>
     </div>
   `;
