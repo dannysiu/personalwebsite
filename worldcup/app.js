@@ -764,26 +764,51 @@ async function renderAdminPlayerList() {
   if (!adminPlayerList) return;
 
   const usersSnap = await getDocs(collection(db, "users"));
-  adminPlayerList.innerHTML = "";
+  const users = [];
 
   usersSnap.forEach(docSnap => {
-    const u = docSnap.data();
-    const row = document.createElement("div");
-    row.className = "admin-player-row";
-
-    row.innerHTML = `
-      <strong>${escapeHTML(u.username || u.googleDisplayName || "Player")}</strong>
-      <span>${escapeHTML(u.email || "")}</span>
-      <label><input type="checkbox" data-uid="${u.uid}" data-field="banned" ${u.banned ? "checked" : ""}/> Banned</label>
-    `;
-
-    adminPlayerList.appendChild(row);
+    users.push(docSnap.data());
   });
+
+  users.sort((a, b) =>
+    (a.username || a.googleDisplayName || "Player").localeCompare(
+      b.username || b.googleDisplayName || "Player"
+    )
+  );
+
+  adminPlayerList.innerHTML = `
+    <table class="admin-player-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Username</th>
+          <th>Gmail</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${users.map((u, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHTML(u.username || u.googleDisplayName || "Player")}</td>
+            <td>${escapeHTML(u.email || "")}</td>
+            <td>
+              <label class="admin-ban-cell">
+                <input type="checkbox" data-uid="${u.uid}" data-field="banned" ${u.banned ? "checked" : ""}/>
+                Banned
+              </label>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
 
   adminPlayerList.querySelectorAll("input[type='checkbox']").forEach(input => {
     input.addEventListener("change", async (e) => {
       const uid = e.target.dataset.uid;
       const field = e.target.dataset.field;
+
       await setDoc(doc(db, "users", uid), {
         [field]: e.target.checked,
         updatedAt: new Date().toISOString()

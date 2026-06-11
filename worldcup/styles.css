@@ -431,3 +431,51 @@ footer {
   color: #94a3b8;
   font-size: 13px;
 }
+
+.admin-player-table {
+  width: 100%;
+  margin-top: 12px;
+  border-collapse: collapse;
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-player-table th,
+.admin-player-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #334155;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-player-table th {
+  background: #1f2937;
+  color: #f8fafc;
+  font-weight: 800;
+}
+
+.admin-player-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-player-table td:first-child,
+.admin-player-table th:first-child {
+  width: 42px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.admin-ban-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.admin-ban-cell input {
+  width: 16px;
+  height: 16px;
+}
