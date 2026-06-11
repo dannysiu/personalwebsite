@@ -971,7 +971,6 @@ function renderTickerMatch(match) {
   const status = match.status || {};
   const isLive = status.type === "live";
   const isFinal = status.type === "final";
-  const isUpcoming = status.type === "upcoming";
 
   const statusLabel = isLive
     ? `<span class="live-pill">LIVE</span>`
@@ -986,7 +985,7 @@ function renderTickerMatch(match) {
     <div class="match-card ${escapeHTML(status.type || "")}">
       <div class="match-card-top">
         <span>${statusLabel}</span>
-        <span>${isUpcoming ? dateTimeLabel : escapeHTML(status.detail || "")}</span>
+        <span>${isLive ? escapeHTML(status.detail || "") : ""}</span>
       </div>
 
       <div class="matchup">
@@ -1004,7 +1003,7 @@ function renderTickerMatch(match) {
       </div>
 
       <div class="match-footer">
-        ${isUpcoming ? "Kickoff" : "Score"} · ${dateTimeLabel}
+        ${isLive || isFinal ? "Kickoff" : "Kickoff"} · ${dateTimeLabel}
       </div>
     </div>
   `;
