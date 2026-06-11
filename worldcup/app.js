@@ -161,6 +161,8 @@ onAuthStateChanged(auth, async (user) => {
     groupPicksSection.style.display = "none";
     bonusSection.style.display = "none";
     if (adminSection) adminSection.style.display = "none";
+
+    await renderPublicLeaderboard();
     return;
   }
 
@@ -168,17 +170,31 @@ onAuthStateChanged(auth, async (user) => {
   logoutBtn.style.display = "inline-block";
   userInfo.textContent = `Signed in as ${user.email}`;
 
-  await setDoc(doc(db, "users", user.uid), {
-    uid: user.uid,
-    email: user.email,
-    googleDisplayName: user.displayName || "",
-    photoURL: user.photoURL || "",
-    paid: false,
-    banned: false,
-    lastLogin: new Date().toISOString()
-  }, { merge: true });
+  const userRef = doc(db, "users", user.uid);
+  let userSnap = await getDoc(userRef);
 
-  const userSnap = await getDoc(doc(db, "users", user.uid));
+  if (!userSnap.exists()) {
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      googleDisplayName: user.displayName || "",
+      photoURL: user.photoURL || "",
+      paid: false,
+      banned: false,
+      lastLogin: new Date().toISOString()
+    });
+  } else {
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      googleDisplayName: user.displayName || "",
+      photoURL: user.photoURL || "",
+      lastLogin: new Date().toISOString()
+    }, { merge: true });
+  }
+
+  userSnap = await getDoc(userRef);
+
   if (usernameBox) usernameBox.style.display = "block";
   if (userSnap.exists() && usernameInput) {
     usernameInput.value = userSnap.data().username || "";
@@ -739,6 +755,18 @@ async function resetGroupResults() {
   await renderLeaderboardFromFirestore();
 }
 
+async function renderPublicLeaderboard() {
+  const snap = await getDoc(doc(db, "publicLeaderboard", "current"));
+
+  if (!snap.exists()) {
+    renderLeaderboard([]);
+    return;
+  }
+
+  const rows = snap.data().rows || [];
+  renderLeaderboard(rows);
+}
+
 async function renderLeaderboardFromFirestore() {
   const usersSnap = await getDocs(collection(db, "users"));
   const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
@@ -815,7 +843,16 @@ async function renderLeaderboardFromFirestore() {
     player.total_points = player.group_points + player.match_points + player.bonus_points;
   });
 
-  renderLeaderboard(Object.values(scores));
+  const rows = Object.values(scores);
+  renderLeaderboard(rows);
+
+  if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) {
+    await setDoc(doc(db, "publicLeaderboard", "current"), {
+      rows,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser.email
+    });
+  }
 }
 
 function renderLeaderboard(rows) {
