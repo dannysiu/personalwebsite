@@ -43,7 +43,10 @@ const firebaseConfig = {
 };
 
 const ADMIN_EMAILS = ["chat2danny@gmail.com", "jongreenofficial@gmail.com"];
-const GROUP_PICK_LOCK_TIME = new Date("2026-06-11T14:00:00-05:00");
+const BONUS_LOCK_TIME = new Date("2026-06-11T14:00:00-05:00");
+const GROUP_LOCKS_URL = "https://worldcup-score-ticker.chat2danny21.workers.dev/group-locks";
+
+let groupLockTimes = {};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -207,6 +210,7 @@ onAuthStateChanged(auth, async (user) => {
   groupPicksSection.style.display = "block";
   bonusSection.style.display = "block";
 
+  await loadGroupLockTimes();
   renderGroupPicks();
   renderBonusQuiz();
 
@@ -238,6 +242,8 @@ function injectBonusSection() {
     <div id="bonusContent" style="display:none;">
       <p>
         Lock these in before the World Cup starts. Opening bonus questions are worth points after the tournament ends.
+      </p>
+      <p>
         Weekly bonus questions will also appear here later.
       </p>
       <p class="lock-note">Bonus answers lock: <strong>June 11, 2026 at 2:00 PM CT</strong>.</p>
@@ -312,8 +318,46 @@ function moveRefreshLeaderboardButton() {
   adminSection.appendChild(refreshLeaderboardBtn);
 }
 
-function groupPicksAreLocked() {
-  return new Date() >= GROUP_PICK_LOCK_TIME;
+async function loadGroupLockTimes() {
+  try {
+    const res = await fetch(GROUP_LOCKS_URL);
+    const data = await res.json();
+    groupLockTimes = data.locks || {};
+  } catch (err) {
+    console.error("Failed to load group lock times:", err);
+    groupLockTimes = {};
+  }
+}
+
+function groupIsLocked(groupName) {
+  const lockTime = groupLockTimes[groupName];
+  if (!lockTime) return false;
+
+  return new Date() >= new Date(lockTime);
+}
+
+function allGroupPicksAreLocked() {
+  return Object.keys(groups).every(groupName => groupIsLocked(groupName));
+}
+
+function groupLockLabel(groupName) {
+  const lockTime = groupLockTimes[groupName];
+
+  if (!lockTime) {
+    return "Locks when this group's first match starts.";
+  }
+
+  return new Date(lockTime).toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function bonusAnswersAreLocked() {
+  return new Date() >= BONUS_LOCK_TIME;
 }
 
 function renderGroupPicks() {
@@ -321,20 +365,23 @@ function renderGroupPicks() {
 
   Object.entries(groups).forEach(([groupName, teams]) => {
     const sortedTeams = sortTeamsAlphabetically(teams);
+    const locked = groupIsLocked(groupName);
+
     const wrapper = document.createElement("div");
     wrapper.className = "pick-card";
 
     wrapper.innerHTML = `
-      <h3>Group ${groupName}</h3>
+      <h3>Group ${groupName} ${locked ? "🔒" : ""}</h3>
+      <p class="lock-note">Locks: <strong>${groupLockLabel(groupName)}</strong></p>
 
       <label>Pick #1</label>
-      <select id="group-${groupName}-first">
+      <select id="group-${groupName}-first" ${locked ? "disabled" : ""}>
         <option value="">Select team</option>
         ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
 
       <label>Pick #2</label>
-      <select id="group-${groupName}-second">
+      <select id="group-${groupName}-second" ${locked ? "disabled" : ""}>
         <option value="">Select team</option>
         ${sortedTeams.map(team => `<option value="${team}">${team}</option>`).join("")}
       </select>
@@ -343,15 +390,13 @@ function renderGroupPicks() {
     groupPicksForm.appendChild(wrapper);
   });
 
-  if (groupPicksAreLocked()) {
-    groupPicksStatus.textContent = "🔒 Group picks are locked.";
+  if (allGroupPicksAreLocked()) {
+    groupPicksStatus.textContent = "🔒 All group picks are locked.";
     saveGroupPicksBtn.disabled = true;
     saveGroupPicksBtn.textContent = "Group Picks Locked";
-
-    Object.keys(groups).forEach(groupName => {
-      document.getElementById(`group-${groupName}-first`).disabled = true;
-      document.getElementById(`group-${groupName}-second`).disabled = true;
-    });
+  } else {
+    saveGroupPicksBtn.disabled = false;
+    saveGroupPicksBtn.textContent = "Save Group Picks";
   }
 }
 
@@ -369,17 +414,24 @@ async function loadExistingGroupPicks() {
     if (second) second.value = pick.second || "";
   });
 
-  if (!groupPicksAreLocked()) {
+  if (allGroupPicksAreLocked()) {
+    groupPicksStatus.textContent = "🔒 All group picks are locked.";
+  } else {
     groupPicksStatus.textContent = "Loaded saved group picks.";
   }
 }
 
 saveGroupPicksBtn.addEventListener("click", async () => {
-  if (groupPicksAreLocked()) return alert("Group picks are locked.");
+  if (allGroupPicksAreLocked()) return alert("All group picks are locked.");
 
-  const picks = {};
+  const existingSnap = await getDoc(doc(db, "groupPicks", currentUser.uid));
+  const picks = existingSnap.exists() ? existingSnap.data().picks || {} : {};
+
+  let savedAnyUnlockedGroup = false;
 
   for (const groupName of Object.keys(groups)) {
+    if (groupIsLocked(groupName)) continue;
+
     const first = document.getElementById(`group-${groupName}-first`).value;
     const second = document.getElementById(`group-${groupName}-second`).value;
 
@@ -387,6 +439,11 @@ saveGroupPicksBtn.addEventListener("click", async () => {
     if (first === second) return alert(`Group ${groupName}: picks cannot be the same.`);
 
     picks[groupName] = { first, second };
+    savedAnyUnlockedGroup = true;
+  }
+
+  if (!savedAnyUnlockedGroup) {
+    return alert("No unlocked groups are available to save.");
   }
 
   await setDoc(doc(db, "groupPicks", currentUser.uid), {
@@ -446,7 +503,7 @@ function renderBonusQuiz() {
     </div>
   `;
 
-  if (groupPicksAreLocked()) {
+  if (bonusAnswersAreLocked()) {
     bonusStatus.textContent = "🔒 Bonus answers are locked.";
     saveBonusBtn.disabled = true;
     saveBonusBtn.textContent = "Bonus Answers Locked";
@@ -469,12 +526,12 @@ async function loadExistingBonusAnswers() {
   setValue("bonus-semifinalist", answers.semifinalist);
   setValue("bonus-winner", answers.winner);
 
-  if (!groupPicksAreLocked()) bonusStatus.textContent = "Loaded saved bonus answers.";
+  if (!bonusAnswersAreLocked()) bonusStatus.textContent = "Loaded saved bonus answers.";
 }
 
 async function saveBonusAnswers() {
   if (!currentUser) return alert("Please sign in first.");
-  if (groupPicksAreLocked()) return alert("Bonus answers are locked.");
+  if (bonusAnswersAreLocked()) return alert("Bonus answers are locked.");
 
   const answers = {
     mostGoalsCountry: getValue("bonus-mostGoalsCountry"),
