@@ -886,6 +886,90 @@ function renderLeaderboard(rows) {
   if (matchCount) matchCount.textContent = "Live";
 }
 
+const MATCH_TICKER_URL = "https://worldcup-score-ticker.chat2danny21.workers.dev/matches";
+
+async function loadWorldCupTicker() {
+  const ticker = document.getElementById("matchTicker");
+  const updated = document.getElementById("tickerUpdated");
+  if (!ticker) return;
+
+  try {
+    const res = await fetch(MATCH_TICKER_URL);
+    const data = await res.json();
+    const matches = data.matches || [];
+
+    if (!matches.length) {
+      ticker.textContent = "No World Cup matches found right now.";
+      if (updated) updated.textContent = "No matches";
+      return;
+    }
+
+    ticker.innerHTML = matches.map(renderTickerMatch).join("");
+
+    if (updated && data.updatedAt) {
+      updated.textContent = `Updated ${new Date(data.updatedAt).toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      })}`;
+    }
+  } catch (err) {
+    console.error("Failed to load match ticker:", err);
+    ticker.textContent = "Could not load match ticker.";
+    if (updated) updated.textContent = "Error";
+  }
+}
+
+function renderTickerMatch(match) {
+  const localTime = new Date(match.date).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+
+  const status = match.status || {};
+  const isLive = status.type === "live";
+  const isFinal = status.type === "final";
+  const isUpcoming = status.type === "upcoming";
+
+  const statusLabel = isLive
+    ? `<span class="live-pill">LIVE</span>`
+    : isFinal
+      ? `<span class="final-pill">FINAL</span>`
+      : "UPCOMING";
+
+  const scoreHome = match.home.score ?? "";
+  const scoreAway = match.away.score ?? "";
+
+  return `
+    <div class="match-card ${escapeHTML(status.type || "")}">
+      <div class="match-card-top">
+        <span>${statusLabel}</span>
+        <span>${isUpcoming ? localTime : escapeHTML(status.detail || "")}</span>
+      </div>
+
+      <div class="matchup">
+        <div class="team-flag">${escapeHTML(match.home.flag)}</div>
+        <div class="team-code">${escapeHTML(match.home.code)}</div>
+        <div class="team-name">${escapeHTML(match.home.name)}</div>
+        <div class="team-score">${escapeHTML(scoreHome)}</div>
+      </div>
+
+      <div class="matchup">
+        <div class="team-flag">${escapeHTML(match.away.flag)}</div>
+        <div class="team-code">${escapeHTML(match.away.code)}</div>
+        <div class="team-name">${escapeHTML(match.away.name)}</div>
+        <div class="team-score">${escapeHTML(scoreAway)}</div>
+      </div>
+
+      <div class="match-footer">
+        ${isUpcoming ? "Kickoff" : "Score"} · ${localTime}
+      </div>
+    </div>
+  `;
+}
+
+loadWorldCupTicker();
+setInterval(loadWorldCupTicker, 120000);
+
 function getValue(id) {
   return document.getElementById(id)?.value || "";
 }

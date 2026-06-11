@@ -320,3 +320,114 @@ footer {
 .site-footer a:hover {
   text-decoration: underline;
 }
+
+/* World Cup match ticker */
+
+.ticker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.ticker-header h2 {
+  margin: 0;
+}
+
+#tickerUpdated {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.match-ticker {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 6px;
+}
+
+.match-card {
+  min-width: 285px;
+  background: rgba(31, 41, 55, 0.94);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.match-card.live {
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.match-card.final {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.match-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.live-pill {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.final-pill {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.matchup {
+  display: grid;
+  grid-template-columns: 36px 48px 1fr 38px;
+  gap: 8px;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.matchup + .matchup {
+  margin-top: 8px;
+}
+
+.team-flag {
+  font-size: 22px;
+  text-align: center;
+}
+
+.team-code {
+  text-align: left;
+  letter-spacing: 0.04em;
+}
+
+.team-name {
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.team-score {
+  text-align: right;
+  font-size: 22px;
+  color: #f8fafc;
+}
+
+.match-footer {
+  margin-top: 12px;
+  color: #94a3b8;
+  font-size: 13px;
+}
