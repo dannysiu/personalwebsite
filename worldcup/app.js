@@ -129,14 +129,6 @@ logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
 });
 
-async function refreshLeaderboardSafely() {
-  if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) {
-    await renderLeaderboardFromFirestore();
-  } else {
-    await renderPublicLeaderboard();
-  }
-}
-
 saveUsernameBtn?.addEventListener("click", async () => {
   if (!currentUser) return alert("Please sign in first.");
 
@@ -153,10 +145,13 @@ saveUsernameBtn?.addEventListener("click", async () => {
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
-  // Show the updated username immediately for the signed-in user.
-  // Admins also update the public leaderboard snapshot.
   usernameStatus.textContent = `✅ Username changed to ${username}!`;
-  await renderLeaderboardFromFirestore();
+
+  if (ADMIN_EMAILS.includes(currentUser.email)) {
+    await renderLeaderboardFromFirestore();
+  } else {
+    await renderPublicLeaderboard();
+  }
 });
 
 onAuthStateChanged(auth, async (user) => {
