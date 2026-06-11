@@ -2,14 +2,13 @@
 Danz World Cup League 2026
 Main client-side app for:
 - Google login with Firebase Auth
-- Firestore saves for users, group picks, match picks, bonus answers, and admin results
+- Firestore saves for users, group picks, bonus answers, and admin results
 - Admin controls for paid/banned players
 - Leaderboard scoring
 
 Scoring notes:
 - Group pick that finishes top 2 = 2 points
 - Group pick that finishes 3rd and qualifies = 1 point
-- Test match picks currently score as 2 points each
 - Opening bonus quiz = 1 point per correct answer
 - Yellow card bonus question is correct if within 10 of the official total
 */
@@ -80,12 +79,6 @@ function sortTeamsAlphabetically(teams) {
 
 const countryOptions = sortTeamsAlphabetically([...new Set(Object.values(groups).flat())]);
 
-const testMatches = [
-  { id: "M001", label: "🇲🇽 Mexico vs 🇿🇦 South Africa", options: ["🇲🇽 Mexico", "Draw", "🇿🇦 South Africa"] },
-  { id: "M004", label: "🇺🇸 USA vs 🇵🇾 Paraguay", options: ["🇺🇸 USA", "Draw", "🇵🇾 Paraguay"] },
-  { id: "M010", label: "🇳🇱 Netherlands vs 🇯🇵 Japan", options: ["🇳🇱 Netherlands", "Draw", "🇯🇵 Japan"] }
-];
-
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userInfo = document.getElementById("userInfo");
@@ -100,18 +93,10 @@ const groupPicksForm = document.getElementById("groupPicksForm");
 const saveGroupPicksBtn = document.getElementById("saveGroupPicksBtn");
 const groupPicksStatus = document.getElementById("groupPicksStatus");
 
-const matchPicksSection = document.getElementById("matchPicksSection");
-const matchPicksForm = document.getElementById("matchPicksForm");
-const saveMatchPicksBtn = document.getElementById("saveMatchPicksBtn");
-const matchPicksStatus = document.getElementById("matchPicksStatus");
-
 const adminSection = document.getElementById("adminSection");
 const adminGroupResultsForm = document.getElementById("adminGroupResultsForm");
 const saveGroupResultsBtn = document.getElementById("saveGroupResultsBtn");
 const groupResultsStatus = document.getElementById("groupResultsStatus");
-const adminMatchResultsForm = document.getElementById("adminMatchResultsForm");
-const saveMatchResultsBtn = document.getElementById("saveMatchResultsBtn");
-const matchResultsStatus = document.getElementById("matchResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
 
 let bonusSection;
@@ -124,7 +109,6 @@ let adminBonusResultsForm;
 let saveBonusResultsBtn;
 let bonusResultsStatus;
 let resetGroupResultsBtn;
-let resetMatchResultsBtn;
 
 injectBonusSection();
 injectAdminPlayerManagement();
@@ -175,7 +159,6 @@ onAuthStateChanged(auth, async (user) => {
 
     if (usernameBox) usernameBox.style.display = "none";
     groupPicksSection.style.display = "none";
-    matchPicksSection.style.display = "none";
     bonusSection.style.display = "none";
     if (adminSection) adminSection.style.display = "none";
     return;
@@ -202,25 +185,20 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   groupPicksSection.style.display = "block";
-  matchPicksSection.style.display = "block";
   bonusSection.style.display = "block";
 
   renderGroupPicks();
-  renderMatchPicks();
   renderBonusQuiz();
 
   await loadExistingGroupPicks();
-  await loadExistingMatchPicks();
   await loadExistingBonusAnswers();
   await renderLeaderboardFromFirestore();
 
   if (ADMIN_EMAILS.includes(user.email)) {
     adminSection.style.display = "block";
     renderAdminGroupResults();
-    renderAdminMatchResults();
     renderAdminBonusResults();
     await loadExistingGroupResults();
-    await loadExistingMatchResults();
     await loadExistingBonusResults();
     await renderAdminPlayerList();
   }
@@ -302,14 +280,8 @@ function injectAdminResetButtons() {
   resetGroupResultsBtn = document.createElement("button");
   resetGroupResultsBtn.textContent = "Reset Group Results";
 
-  resetMatchResultsBtn = document.createElement("button");
-  resetMatchResultsBtn.textContent = "Reset Match Results";
-
   saveGroupResultsBtn.insertAdjacentElement("afterend", resetGroupResultsBtn);
-  saveMatchResultsBtn.insertAdjacentElement("afterend", resetMatchResultsBtn);
-
   resetGroupResultsBtn.addEventListener("click", resetGroupResults);
-  resetMatchResultsBtn.addEventListener("click", resetMatchResults);
 }
 
 function moveRefreshLeaderboardButton() {
@@ -418,8 +390,8 @@ function renderBonusQuiz() {
     </div>
 
     <div class="pick-card">
-      <label>2. How many yellow cards total in the tournament? <span class="mini-note">(within 10 = correct)</span></label>
-      <input id="bonus-yellowCards" type="number" min="0" placeholder="ex: 220" />
+      <label>2. How many yellow cards total in the tournament? <span class="yellow-note">(within 10 = correct)</span></label>
+      <input id="bonus-yellowCards" type="number" min="0" />
     </div>
 
     <div class="pick-card">
@@ -517,7 +489,7 @@ function renderAdminBonusResults() {
 
     <div class="pick-card">
       <label>2. Official yellow card total</label>
-      <input id="result-bonus-yellowCards" type="number" min="0" placeholder="ex: 220" />
+      <input id="result-bonus-yellowCards" type="number" min="0" />
     </div>
 
     <div class="pick-card">
@@ -628,59 +600,7 @@ function scoreBonusAnswers(answers, results) {
   return points;
 }
 
-function renderMatchPicks() {
-  matchPicksForm.innerHTML = "";
-
-  testMatches.forEach(match => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "pick-card";
-
-    wrapper.innerHTML = `
-      <h3>${match.label}</h3>
-      <select id="match-${match.id}">
-        <option value="">Select prediction</option>
-        ${match.options.map(option => `<option value="${option}">${option}</option>`).join("")}
-      </select>
-    `;
-
-    matchPicksForm.appendChild(wrapper);
-  });
-}
-
-async function loadExistingMatchPicks() {
-  const snap = await getDoc(doc(db, "matchPicks", currentUser.uid));
-  if (!snap.exists()) return;
-
-  const data = snap.data();
-  Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
-    const select = document.getElementById(`match-${matchId}`);
-    if (select) select.value = pick;
-  });
-
-  matchPicksStatus.textContent = "Loaded saved match picks.";
-}
-
-saveMatchPicksBtn.addEventListener("click", async () => {
-  const picks = {};
-
-  for (const match of testMatches) {
-    const prediction = document.getElementById(`match-${match.id}`).value;
-    if (!prediction) return alert(`Pick: ${match.label}`);
-    picks[match.id] = prediction;
-  }
-
-  await setDoc(doc(db, "matchPicks", currentUser.uid), {
-    uid: currentUser.uid,
-    email: currentUser.email,
-    picks,
-    updatedAt: new Date().toISOString()
-  }, { merge: true });
-
-  matchPicksStatus.textContent = "✅ Match picks saved!";
-  await renderLeaderboardFromFirestore();
-});
-
-function renderAdminGroupResults() {
+async function renderAdminGroupResults() {
   adminGroupResultsForm.innerHTML = "";
 
   Object.entries(groups).forEach(([groupName, teams]) => {
@@ -762,53 +682,6 @@ saveGroupResultsBtn?.addEventListener("click", async () => {
   await renderLeaderboardFromFirestore();
 });
 
-function renderAdminMatchResults() {
-  adminMatchResultsForm.innerHTML = "";
-
-  testMatches.forEach(match => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "pick-card";
-
-    wrapper.innerHTML = `
-      <h3>${match.label}</h3>
-      <select id="result-match-${match.id}">
-        <option value="">Select winner/result</option>
-        ${match.options.map(option => `<option value="${option}">${option}</option>`).join("")}
-      </select>
-    `;
-
-    adminMatchResultsForm.appendChild(wrapper);
-  });
-}
-
-async function loadExistingMatchResults() {
-  const snap = await getDoc(doc(db, "matchResults", "official"));
-  if (!snap.exists()) return;
-
-  const results = snap.data().results || {};
-
-  Object.entries(results).forEach(([matchId, result]) => {
-    setValue(`result-match-${matchId}`, result);
-  });
-}
-
-saveMatchResultsBtn?.addEventListener("click", async () => {
-  const results = {};
-
-  for (const match of testMatches) {
-    results[match.id] = getValue(`result-match-${match.id}`);
-  }
-
-  await setDoc(doc(db, "matchResults", "official"), {
-    results,
-    updatedAt: new Date().toISOString(),
-    updatedBy: currentUser.email
-  }, { merge: true });
-
-  matchResultsStatus.textContent = "✅ Match results saved!";
-  await renderLeaderboardFromFirestore();
-});
-
 async function renderAdminPlayerList() {
   if (!adminPlayerList) return;
 
@@ -866,35 +739,15 @@ async function resetGroupResults() {
   await renderLeaderboardFromFirestore();
 }
 
-async function resetMatchResults() {
-  if (!confirm("Reset all match results?")) return;
-
-  await setDoc(doc(db, "matchResults", "official"), {
-    results: {},
-    updatedAt: new Date().toISOString(),
-    updatedBy: currentUser.email
-  });
-
-  renderAdminMatchResults();
-
-  matchResultsStatus.textContent =
-    "✅ Match results reset.";
-
-  await renderLeaderboardFromFirestore();
-}
-
 async function renderLeaderboardFromFirestore() {
   const usersSnap = await getDocs(collection(db, "users"));
   const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
-  const matchPicksSnap = await getDocs(collection(db, "matchPicks"));
   const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
 
   const groupResultsSnap = await getDoc(doc(db, "groupResults", "official"));
-  const matchResultsSnap = await getDoc(doc(db, "matchResults", "official"));
   const bonusResultsSnap = await getDoc(doc(db, "bonusResults", "official"));
 
   const groupResults = groupResultsSnap.exists() ? groupResultsSnap.data().results || {} : {};
-  const matchResults = matchResultsSnap.exists() ? matchResultsSnap.data().results || {} : {};
   const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
 
   const users = {};
@@ -947,18 +800,6 @@ async function renderLeaderboardFromFirestore() {
           player.group_points += 1;
         }
       });
-    });
-  });
-
-  matchPicksSnap.forEach(docSnap => {
-    const data = docSnap.data();
-    const player = ensurePlayer(data.uid, data.email);
-    if (!player) return;
-
-    Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
-      if (matchResults[matchId] && pick === matchResults[matchId]) {
-        player.match_points += 2;
-      }
     });
   });
 
