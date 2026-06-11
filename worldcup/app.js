@@ -153,8 +153,11 @@ saveUsernameBtn?.addEventListener("click", async () => {
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
-  usernameStatus.textContent = "✅ Username saved!";
-  await refreshLeaderboardSafely();
+  usernameStatus.textContent = `✅ Username changed to ${username}!`;
+
+  // Show the updated username immediately for the signed-in user.
+  // Admins also update the public leaderboard snapshot.
+  await renderLeaderboardFromFirestore();
 });
 
 onAuthStateChanged(auth, async (user) => {
