@@ -403,7 +403,6 @@ saveGroupPicksBtn.addEventListener("click", async () => {
   }, { merge: true });
 
   groupPicksStatus.textContent = "✅ Group picks saved!";
-  await refreshLeaderboardSafely();
 });
 
 function renderBonusQuiz() {
@@ -502,7 +501,6 @@ async function saveBonusAnswers() {
   }, { merge: true });
 
   bonusStatus.textContent = "✅ Bonus answers saved!";
-  await refreshLeaderboardSafely();
 }
 
 function renderAdminBonusResults() {
