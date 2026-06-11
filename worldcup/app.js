@@ -208,7 +208,6 @@ onAuthStateChanged(auth, async (user) => {
 
   await loadExistingGroupPicks();
   await loadExistingBonusAnswers();
-  await renderLeaderboardFromFirestore();
 
   if (ADMIN_EMAILS.includes(user.email)) {
     adminSection.style.display = "block";
@@ -217,6 +216,9 @@ onAuthStateChanged(auth, async (user) => {
     await loadExistingGroupResults();
     await loadExistingBonusResults();
     await renderAdminPlayerList();
+    await renderLeaderboardFromFirestore();
+  } else {
+    await renderPublicLeaderboard();
   }
 });
 
@@ -881,7 +883,7 @@ function renderLeaderboard(rows) {
 
   if (playerCount) playerCount.textContent = sorted.length;
   if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
-  if (matchCount) matchCount.textContent = "—";
+  if (matchCount) matchCount.textContent = "Live";
 }
 
 function getValue(id) {
