@@ -1029,6 +1029,7 @@ function renderTickerMatch(match) {
   const status = match.status || {};
   const isLive = status.type === "live";
   const isFinal = status.type === "final";
+  const showScore = isLive || isFinal;
 
   const statusLabel = isLive
     ? `<span class="live-pill">LIVE</span>`
@@ -1036,8 +1037,8 @@ function renderTickerMatch(match) {
       ? `<span class="final-pill">FINAL</span>`
       : "UPCOMING";
 
-  const scoreHome = match.home.score ?? "";
-  const scoreAway = match.away.score ?? "";
+  const scoreHome = showScore ? Number(match.home.score ?? 0) : "";
+  const scoreAway = showScore ? Number(match.away.score ?? 0) : "";
 
   return `
     <div class="match-card ${escapeHTML(status.type || "")}">
@@ -1061,7 +1062,7 @@ function renderTickerMatch(match) {
       </div>
 
       <div class="match-footer">
-        ${isLive || isFinal ? "Kickoff" : "Kickoff"} · ${dateTimeLabel}
+        ${showScore ? "Score" : "Kickoff"} · ${dateTimeLabel}
       </div>
     </div>
   `;
@@ -1079,7 +1080,7 @@ function setValue(id, value) {
 }
 
 function escapeHTML(str) {
-  return String(str || "").replace(/[&<>"']/g, s => ({
+  return String(str ?? "").replace(/[&<>"']/g, s => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
