@@ -887,6 +887,37 @@ function renderLeaderboard(rows) {
 }
 
 const MATCH_TICKER_URL = "https://worldcup-score-ticker.chat2danny21.workers.dev/matches";
+let tickerRefreshTimer = null;
+
+function getNextTickerRefreshDelay(matches) {
+  const now = Date.now();
+
+  const hasLiveMatch = matches.some(match => match.status?.type === "live");
+
+  const hasMatchStartingSoon = matches.some(match => {
+    const kickoffTime = new Date(match.date).getTime();
+    const diff = kickoffTime - now;
+    return diff > 0 && diff <= 2 * 60 * 60 * 1000;
+  });
+
+  if (hasLiveMatch || hasMatchStartingSoon) {
+    return 5 * 60 * 1000;
+  }
+
+  return 30 * 60 * 1000;
+}
+
+function scheduleNextTickerRefresh(matches = []) {
+  if (tickerRefreshTimer) {
+    clearTimeout(tickerRefreshTimer);
+  }
+
+  const delay = getNextTickerRefreshDelay(matches);
+
+  tickerRefreshTimer = setTimeout(async () => {
+    await loadWorldCupTicker();
+  }, delay);
+}
 
 async function loadWorldCupTicker() {
   const ticker = document.getElementById("matchTicker");
@@ -901,10 +932,12 @@ async function loadWorldCupTicker() {
     if (!matches.length) {
       ticker.textContent = "No World Cup matches found right now.";
       if (updated) updated.textContent = "No matches";
+      scheduleNextTickerRefresh([]);
       return;
     }
 
     ticker.innerHTML = matches.map(renderTickerMatch).join("");
+    scheduleNextTickerRefresh(matches);
 
     if (updated && data.updatedAt) {
       updated.textContent = `Updated ${new Date(data.updatedAt).toLocaleTimeString([], {
@@ -968,7 +1001,6 @@ function renderTickerMatch(match) {
 }
 
 loadWorldCupTicker();
-setInterval(loadWorldCupTicker, 120000);
 
 function getValue(id) {
   return document.getElementById(id)?.value || "";
