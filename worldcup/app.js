@@ -763,19 +763,26 @@ saveGroupResultsBtn?.addEventListener("click", async () => {
 async function renderAdminPlayerList() {
   if (!adminPlayerList) return;
 
+  await loadGroupLockTimes();
+
   const usersSnap = await getDocs(collection(db, "users"));
   const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
   const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
+
+  const unlockedGroups = Object.keys(groups).filter(groupName => !groupIsLocked(groupName));
 
   const groupPickUserIds = new Set();
   groupPicksSnap.forEach(docSnap => {
     const data = docSnap.data();
     const picks = data.picks || {};
-    const hasAllGroupPicks = Object.keys(groups).every(groupName =>
-      picks[groupName]?.first && picks[groupName]?.second
-    );
 
-    if (hasAllGroupPicks) {
+    const hasSavedAvailableGroupPicks =
+      unlockedGroups.length > 0 &&
+      unlockedGroups.every(groupName =>
+        picks[groupName]?.first && picks[groupName]?.second
+      );
+
+    if (hasSavedAvailableGroupPicks) {
       groupPickUserIds.add(data.uid || docSnap.id);
     }
   });
@@ -784,6 +791,7 @@ async function renderAdminPlayerList() {
   bonusAnswersSnap.forEach(docSnap => {
     const data = docSnap.data();
     const answers = data.answers || {};
+
     const hasAllBonusAnswers =
       answers.mostGoalsCountry &&
       answers.yellowCards &&
@@ -830,8 +838,16 @@ async function renderAdminPlayerList() {
               <td>${index + 1}</td>
               <td>${escapeHTML(u.username || u.googleDisplayName || "Player")}</td>
               <td>${escapeHTML(u.email || "")}</td>
-              <td><span class="${groupDone ? "status-good" : "status-bad"}">${groupDone ? "✅ Saved" : "❌ Missing"}</span></td>
-              <td><span class="${bonusDone ? "status-good" : "status-bad"}">${bonusDone ? "✅ Complete" : "❌ Missing"}</span></td>
+              <td>
+                <span class="${groupDone ? "status-good" : "status-bad"}">
+                  ${groupDone ? "✅ Saved" : "❌ Missing"}
+                </span>
+              </td>
+              <td>
+                <span class="${bonusDone ? "status-good" : "status-bad"}">
+                  ${bonusDone ? "✅ Complete" : "❌ Missing"}
+                </span>
+              </td>
               <td>
                 <label class="admin-ban-cell">
                   <input type="checkbox" data-uid="${uid}" data-field="banned" ${u.banned ? "checked" : ""}/>
@@ -856,6 +872,7 @@ async function renderAdminPlayerList() {
       }, { merge: true });
 
       await renderLeaderboardFromFirestore();
+      await renderAdminPlayerList();
     });
   });
 }
