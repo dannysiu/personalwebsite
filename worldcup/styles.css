@@ -479,3 +479,13 @@ footer {
   width: 16px;
   height: 16px;
 }
+
+.status-good {
+  color: #bbf7d0;
+  font-weight: 800;
+}
+
+.status-bad {
+  color: #fecaca;
+  font-weight: 800;
+}

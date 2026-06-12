@@ -764,8 +764,39 @@ async function renderAdminPlayerList() {
   if (!adminPlayerList) return;
 
   const usersSnap = await getDocs(collection(db, "users"));
-  const users = [];
+  const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
+  const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
 
+  const groupPickUserIds = new Set();
+  groupPicksSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const picks = data.picks || {};
+    const hasAllGroupPicks = Object.keys(groups).every(groupName =>
+      picks[groupName]?.first && picks[groupName]?.second
+    );
+
+    if (hasAllGroupPicks) {
+      groupPickUserIds.add(data.uid || docSnap.id);
+    }
+  });
+
+  const bonusAnswerUserIds = new Set();
+  bonusAnswersSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const answers = data.answers || {};
+    const hasAllBonusAnswers =
+      answers.mostGoalsCountry &&
+      answers.yellowCards &&
+      answers.usaOut &&
+      answers.semifinalist &&
+      answers.winner;
+
+    if (hasAllBonusAnswers) {
+      bonusAnswerUserIds.add(data.uid || docSnap.id);
+    }
+  });
+
+  const users = [];
   usersSnap.forEach(docSnap => {
     users.push(docSnap.data());
   });
@@ -783,23 +814,33 @@ async function renderAdminPlayerList() {
           <th>#</th>
           <th>Username</th>
           <th>Gmail</th>
+          <th>Group Picks</th>
+          <th>Bonus Answers</th>
           <th>Status</th>
         </tr>
       </thead>
       <tbody>
-        ${users.map((u, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${escapeHTML(u.username || u.googleDisplayName || "Player")}</td>
-            <td>${escapeHTML(u.email || "")}</td>
-            <td>
-              <label class="admin-ban-cell">
-                <input type="checkbox" data-uid="${u.uid}" data-field="banned" ${u.banned ? "checked" : ""}/>
-                Banned
-              </label>
-            </td>
-          </tr>
-        `).join("")}
+        ${users.map((u, index) => {
+          const uid = u.uid;
+          const groupDone = groupPickUserIds.has(uid);
+          const bonusDone = bonusAnswerUserIds.has(uid);
+
+          return `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${escapeHTML(u.username || u.googleDisplayName || "Player")}</td>
+              <td>${escapeHTML(u.email || "")}</td>
+              <td><span class="${groupDone ? "status-good" : "status-bad"}">${groupDone ? "✅ Saved" : "❌ Missing"}</span></td>
+              <td><span class="${bonusDone ? "status-good" : "status-bad"}">${bonusDone ? "✅ Complete" : "❌ Missing"}</span></td>
+              <td>
+                <label class="admin-ban-cell">
+                  <input type="checkbox" data-uid="${uid}" data-field="banned" ${u.banned ? "checked" : ""}/>
+                  Banned
+                </label>
+              </td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
