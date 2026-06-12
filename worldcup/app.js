@@ -1145,7 +1145,7 @@ function renderTickerMatch(match) {
       </div>
 
       <div class="match-footer">
-        ${showScore ? "Score" : "Kickoff"} · ${dateTimeLabel}
+        ${isLive ? "Ongoing" : isFinal ? "Final" : "Kickoff"} · ${dateTimeLabel}
       </div>
     </div>
   `;
