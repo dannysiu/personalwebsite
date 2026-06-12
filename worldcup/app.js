@@ -1127,7 +1127,7 @@ function renderTickerMatch(match) {
     <div class="match-card ${escapeHTML(status.type || "")}">
       <div class="match-card-top">
         <span>${statusLabel}</span>
-        <span>${isLive ? escapeHTML(status.detail || "") : ""}</span>
+        <span></span>
       </div>
 
       <div class="matchup">
