@@ -102,6 +102,11 @@ const saveGroupResultsBtn = document.getElementById("saveGroupResultsBtn");
 const groupResultsStatus = document.getElementById("groupResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
 
+const playerPicksViewer = document.getElementById("playerPicksViewer");
+const playerPicksTitle = document.getElementById("playerPicksTitle");
+const playerPicksContent = document.getElementById("playerPicksContent");
+const closePlayerPicksBtn = document.getElementById("closePlayerPicksBtn");
+
 let bonusSection;
 let bonusContent;
 let bonusForm;
@@ -1010,12 +1015,24 @@ function renderLeaderboard(rows) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${i + 1}</td>
-      <td>${escapeHTML(r.display_name)}</td>
+      <td>
+        ${
+          r.uid
+            ? `<button class="player-pick-link" data-uid="${escapeHTML(r.uid)}" data-name="${escapeHTML(r.display_name)}">${escapeHTML(r.display_name)}</button>`
+            : escapeHTML(r.display_name)
+        }
+      </td>
       <td>${r.group_points + r.match_points}</td>
       <td>${r.bonus_points}</td>
       <td><strong>${r.total_points}</strong></td>
     `;
     tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".player-pick-link").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await showPlayerGroupPicks(btn.dataset.uid, btn.dataset.name);
+    });
   });
 
   const playerCount = document.querySelector("#playerCount");
@@ -1026,6 +1043,63 @@ function renderLeaderboard(rows) {
   if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
   if (matchCount) matchCount.textContent = "Live";
 }
+
+async function showPlayerGroupPicks(uid, displayName) {
+  if (!currentUser) {
+    alert("Please sign in to view player picks.");
+    return;
+  }
+
+  await loadGroupLockTimes();
+
+  const snap = await getDoc(doc(db, "groupPicks", uid));
+
+  if (!snap.exists()) {
+    playerPicksTitle.textContent = `${displayName}'s Group Picks`;
+    playerPicksContent.innerHTML = `<p class="mini-note">No group picks found for this player.</p>`;
+    playerPicksViewer.style.display = "block";
+    playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  const picks = snap.data().picks || {};
+  const lockedGroups = Object.keys(groups).filter(groupName => groupIsLocked(groupName));
+
+  playerPicksTitle.textContent = `${displayName}'s Group Picks`;
+
+  if (!lockedGroups.length) {
+    playerPicksContent.innerHTML = `<p class="mini-note">No groups are locked yet, so picks are hidden for now.</p>`;
+  } else {
+    playerPicksContent.innerHTML = `
+      <div class="public-picks-grid">
+        ${lockedGroups.map(groupName => {
+          const pick = picks[groupName];
+
+          return `
+            <div class="public-pick-card">
+              <h3>Group ${groupName}</h3>
+              ${
+                pick?.first && pick?.second
+                  ? `
+                    <p><strong>Pick #1:</strong> ${escapeHTML(pick.first)}</p>
+                    <p><strong>Pick #2:</strong> ${escapeHTML(pick.second)}</p>
+                  `
+                  : `<p class="mini-note">No saved pick for this group.</p>`
+              }
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  playerPicksViewer.style.display = "block";
+  playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+closePlayerPicksBtn?.addEventListener("click", () => {
+  playerPicksViewer.style.display = "none";
+});
 
 const MATCH_TICKER_URL = "https://worldcup-score-ticker.chat2danny21.workers.dev/matches";
 let tickerRefreshTimer = null;

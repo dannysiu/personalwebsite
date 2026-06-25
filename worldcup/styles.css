@@ -489,3 +489,48 @@ footer {
   color: #fecaca;
   font-weight: 800;
 }
+
+.player-pick-link {
+  background: none;
+  border: none;
+  color: #bfdbfe;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.player-pick-link:hover {
+  color: #dbeafe;
+}
+
+.public-picks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.public-pick-card {
+  background: rgba(31, 41, 55, 0.92);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: left;
+}
+
+.public-pick-card h3 {
+  margin-top: 0;
+}
+
+#closePlayerPicksBtn {
+  background: white;
+  color: #111827;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 14px;
+}
