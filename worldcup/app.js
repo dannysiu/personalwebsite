@@ -58,6 +58,7 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 let currentUser = null;
+let latestLeaderboardRows = [];
 
 const ENGLAND_FLAG = "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
 const LEGACY_ENGLAND_OPTION = "🏴 England";
@@ -635,6 +636,10 @@ saveGroupPicksBtn.addEventListener("click", async () => {
 
 function round32MatchIsLocked(match) {
   return new Date() >= new Date(match.startTime);
+}
+
+function round32PickIsRevealable(match, results = {}) {
+  return round32MatchIsLocked(match) || !!results[match.id]?.winner;
 }
 
 function allRound32MatchesAreLocked() {
@@ -1771,6 +1776,9 @@ async function renderLeaderboardFromFirestore() {
 
   const groupResults = groupResultsSnap.exists() ? groupResultsSnap.data().results || {} : {};
   const round32Results = round32ResultsSnap.exists() ? round32ResultsSnap.data().results || {} : {};
+  const publicRound32RevealableMatchIds = round32Matches
+    .filter(match => round32PickIsRevealable(match, round32Results))
+    .map(match => match.id);
   const round32BonusResults =
     round32BonusResultsSnap.exists() ? round32BonusResultsSnap.data().results || {} : {};
   const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
@@ -1798,6 +1806,8 @@ async function renderLeaderboardFromFirestore() {
         uid,
         display_name: user.username || user.googleDisplayName || "Player",
         rootingForCountries: user.rootingForCountries,
+        publicRound32Picks: {},
+        publicRound32RevealableMatchIds,
         match_points: 0,
         group_points: 0,
         bonus_points: 0,
@@ -1836,6 +1846,15 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+
+    Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
+      if (!pick?.winner) return;
+
+      player.publicRound32Picks[matchId] = {
+        winner: pick.winner,
+        extraTimeOrPenalties: !!pick.extraTimeOrPenalties
+      };
+    });
 
     player.match_points += scoreRound32Picks(data.picks, round32Results);
   });
@@ -1879,6 +1898,7 @@ function renderLeaderboard(rows) {
   tbody.innerHTML = "";
 
   const sorted = rows.sort((a, b) => b.total_points - a.total_points);
+  latestLeaderboardRows = sorted;
 
   sorted.forEach((r, i) => {
     const tr = document.createElement("tr");
@@ -1930,8 +1950,10 @@ function renderRootingForFlags(rootingForCountries = []) {
 }
 
 async function showPlayerRound32Picks(uid, displayName) {
+  const publicRow = latestLeaderboardRows.find(row => row.uid === uid);
+
   if (!currentUser) {
-    alert("Please sign in to view player Round of 32 picks.");
+    showPublicRound32PicksFromLeaderboard(publicRow, displayName);
     return;
   }
 
@@ -1954,7 +1976,9 @@ async function showPlayerRound32Picks(uid, displayName) {
   playerPicksTitle.textContent = `${displayName}'s Round of 32 Picks`;
   playerPicksContent.innerHTML = `
     <div class="public-picks-grid">
-      ${round32Matches.map(match => renderPublicRound32PickCard(match, picks[match.id], results[match.id])).join("")}
+      ${round32Matches.map(match =>
+        renderPublicRound32PickCard(match, picks[match.id], round32PickIsRevealable(match, results))
+      ).join("")}
     </div>
   `;
 
@@ -1962,15 +1986,40 @@ async function showPlayerRound32Picks(uid, displayName) {
   playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderPublicRound32PickCard(match, pick, result) {
-  const matchupLabel = round32MatchupLabel(match);
-  const resultIsEntered = !!result?.winner;
+function showPublicRound32PicksFromLeaderboard(row, displayName) {
+  playerPicksTitle.textContent = `${displayName}'s Round of 32 Picks`;
 
-  if (!resultIsEntered) {
+  if (!row) {
+    playerPicksContent.innerHTML = `<p class="mini-note">Could not find this player on the public leaderboard.</p>`;
+  } else {
+    const picks = row.publicRound32Picks || {};
+    const revealableMatchIds = Array.isArray(row.publicRound32RevealableMatchIds)
+      ? row.publicRound32RevealableMatchIds
+      : Array.isArray(row.publicRound32FinishedMatchIds)
+        ? row.publicRound32FinishedMatchIds
+      : [];
+
+    playerPicksContent.innerHTML = `
+      <div class="public-picks-grid">
+        ${round32Matches.map(match =>
+          renderPublicRound32PickCard(match, picks[match.id], revealableMatchIds.includes(match.id))
+        ).join("")}
+      </div>
+    `;
+  }
+
+  playerPicksViewer.style.display = "block";
+  playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderPublicRound32PickCard(match, pick, isRevealable) {
+  const matchupLabel = round32MatchupLabel(match);
+
+  if (!isRevealable) {
     return `
       <div class="public-pick-card public-pick-hidden">
         <h3>${escapeHTML(matchupLabel)}</h3>
-        <p class="hidden-pick-marker">Hidden until match is finished</p>
+        <p class="hidden-pick-marker">Hidden until match has started</p>
       </div>
     `;
   }
