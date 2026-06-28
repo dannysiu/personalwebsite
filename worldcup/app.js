@@ -59,6 +59,9 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 
+const ENGLAND_FLAG = "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
+const LEGACY_ENGLAND_OPTION = "🏴 England";
+
 const groups = {
   A: ["🇲🇽 Mexico", "🇿🇦 South Africa", "🇰🇷 South Korea", "🇨🇿 Czechia"],
   B: ["🇨🇦 Canada", "🇧🇦 Bosnia and Herzegovina", "🇶🇦 Qatar", "🇨🇭 Switzerland"],
@@ -71,7 +74,7 @@ const groups = {
   I: ["🇫🇷 France", "🇸🇳 Senegal", "🇮🇶 Iraq", "🇳🇴 Norway"],
   J: ["🇦🇷 Argentina", "🇩🇿 Algeria", "🇦🇹 Austria", "🇯🇴 Jordan"],
   K: ["🇵🇹 Portugal", "🇨🇩 Congo DR", "🇺🇿 Uzbekistan", "🇨🇴 Colombia"],
-  L: ["🏴 England", "🇭🇷 Croatia", "🇬🇭 Ghana", "🇵🇦 Panama"]
+  L: [LEGACY_ENGLAND_OPTION, "🇭🇷 Croatia", "🇬🇭 Ghana", "🇵🇦 Panama"]
 };
 
 function cleanCountryName(team) {
@@ -85,6 +88,30 @@ function sortTeamsAlphabetically(teams) {
 }
 
 const countryOptions = sortTeamsAlphabetically([...new Set(Object.values(groups).flat())]);
+
+function countryOptionLabel(country) {
+  return cleanCountryName(country) === "England" ? `${ENGLAND_FLAG} England` : country;
+}
+
+function renderCountryOptions() {
+  return countryOptions
+    .map(country => `<option value="${escapeHTML(country)}">${escapeHTML(countryOptionLabel(country))}</option>`)
+    .join("");
+}
+
+function sameCountryOption(a, b) {
+  if (!a || !b) return false;
+  return cleanCountryName(a) === cleanCountryName(b);
+}
+
+function normalizeCountryOptionValue(country) {
+  return cleanCountryName(country) === "England" ? LEGACY_ENGLAND_OPTION : country;
+}
+
+function countryFlagFromOption(country) {
+  if (cleanCountryName(country) === "England") return ENGLAND_FLAG;
+  return country.replace(cleanCountryName(country), "").trim();
+}
 
 const round32Flags = {
   "Algeria": "🇩🇿",
@@ -101,7 +128,7 @@ const round32Flags = {
   "Croatia": "🇭🇷",
   "Ecuador": "🇪🇨",
   "Egypt": "🇪🇬",
-  "England": "🇬🇧",
+  "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
   "France": "🇫🇷",
   "Germany": "🇩🇪",
   "Ghana": "🇬🇭",
@@ -157,10 +184,15 @@ const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userInfo = document.getElementById("userInfo");
 
+const profileSettingsBox = document.getElementById("profileSettingsBox");
+const profileSettingsContent = document.getElementById("profileSettingsContent");
+const toggleProfileSettingsBtn = document.getElementById("toggleProfileSettingsBtn");
 const usernameBox = document.getElementById("usernameBox");
 const usernameInput = document.getElementById("usernameInput");
 const saveUsernameBtn = document.getElementById("saveUsernameBtn");
 const usernameStatus = document.getElementById("usernameStatus");
+const saveRootingForBtn = document.getElementById("saveRootingForBtn");
+const rootingForStatus = document.getElementById("rootingForStatus");
 
 const groupPicksSection = document.getElementById("groupPicksSection");
 const groupPicksContent = document.getElementById("groupPicksContent");
@@ -200,6 +232,8 @@ let bonusContent;
 let bonusForm;
 let saveBonusBtn;
 let bonusStatus;
+let rootingCountry1;
+let rootingCountry2;
 let adminPlayerList;
 let adminRound32PlayerList;
 let adminBonusResultsForm;
@@ -217,6 +251,12 @@ toggleGroupPicksBtn?.addEventListener("click", () => {
   const isHidden = groupPicksContent.style.display === "none";
   groupPicksContent.style.display = isHidden ? "block" : "none";
   toggleGroupPicksBtn.textContent = isHidden ? "Minimize" : "Expand";
+});
+
+toggleProfileSettingsBtn?.addEventListener("click", () => {
+  const isHidden = profileSettingsContent.style.display === "none";
+  profileSettingsContent.style.display = isHidden ? "block" : "none";
+  toggleProfileSettingsBtn.textContent = isHidden ? "Minimize" : "Expand";
 });
 
 loginBtn.addEventListener("click", async () => {
@@ -257,6 +297,8 @@ saveUsernameBtn?.addEventListener("click", async () => {
   }
 });
 
+saveRootingForBtn?.addEventListener("click", saveRootingForCountries);
+
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
@@ -265,7 +307,7 @@ onAuthStateChanged(auth, async (user) => {
     logoutBtn.style.display = "none";
     userInfo.textContent = "Not signed in";
 
-    if (usernameBox) usernameBox.style.display = "none";
+    if (profileSettingsBox) profileSettingsBox.style.display = "none";
     groupPicksSection.style.display = "none";
     round32PicksSection.style.display = "none";
     round32BonusSection.style.display = "none";
@@ -304,7 +346,9 @@ onAuthStateChanged(auth, async (user) => {
 
   userSnap = await getDoc(userRef);
 
-  if (usernameBox) usernameBox.style.display = "block";
+  if (profileSettingsBox) profileSettingsBox.style.display = "block";
+  if (profileSettingsContent) profileSettingsContent.style.display = "block";
+  if (toggleProfileSettingsBtn) toggleProfileSettingsBtn.textContent = "Minimize";
   if (userSnap.exists() && usernameInput) {
     usernameInput.value = userSnap.data().username || "";
   }
@@ -319,11 +363,13 @@ onAuthStateChanged(auth, async (user) => {
   renderRound32Picks();
   renderRound32BonusQuestions();
   renderBonusQuiz();
+  renderRootingForPicker();
 
   await loadExistingGroupPicks();
   await loadExistingRound32Picks();
   await loadExistingRound32BonusAnswers();
   await loadExistingBonusAnswers();
+  loadExistingRootingForCountries(userSnap.data());
 
   if (ADMIN_EMAILS.includes(user.email)) {
     adminSection.style.display = "block";
@@ -733,11 +779,11 @@ function renderRound32BonusQuestions() {
       <p class="mini-note">Each correct team = 2 points.</p>
       <select id="round32-bonus-threeGoalWinner1">
         <option value="">Select team #1</option>
-        ${countryOptions.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(team)}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
       <select id="round32-bonus-threeGoalWinner2">
         <option value="">Select team #2</option>
-        ${countryOptions.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(team)}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
     </div>
   `;
@@ -861,7 +907,7 @@ function renderBonusQuiz() {
       <label>1. Which country will score the most goals in the tournament?</label>
       <select id="bonus-mostGoalsCountry">
         <option value="">Select country</option>
-        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
     </div>
 
@@ -888,7 +934,7 @@ function renderBonusQuiz() {
       <label>4. Name 1 team that will make the semifinals.</label>
       <select id="bonus-semifinalist">
         <option value="">Select country</option>
-        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
     </div>
 
@@ -896,7 +942,7 @@ function renderBonusQuiz() {
       <label>5. Who will win the 2026 FIFA World Cup?</label>
       <select id="bonus-winner">
         <option value="">Select country</option>
-        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
     </div>
   `;
@@ -953,13 +999,77 @@ async function saveBonusAnswers() {
   bonusStatus.textContent = "✅ Bonus answers saved!";
 }
 
+function renderRootingForPicker() {
+  const form = document.getElementById("rootingForForm");
+  if (!form) return;
+
+  form.innerHTML = `
+    <select id="rooting-country-1">
+      <option value="">Select country #1</option>
+      ${renderCountryOptions()}
+    </select>
+    <select id="rooting-country-2">
+      <option value="">Select country #2 optional</option>
+      ${renderCountryOptions()}
+    </select>
+  `;
+
+  rootingCountry1 = document.getElementById("rooting-country-1");
+  rootingCountry2 = document.getElementById("rooting-country-2");
+}
+
+function loadExistingRootingForCountries(userData = {}) {
+  const rootingForCountries = Array.isArray(userData.rootingForCountries)
+    ? userData.rootingForCountries
+    : [];
+
+  setValue("rooting-country-1", rootingForCountries[0]);
+  setValue("rooting-country-2", rootingForCountries[1]);
+
+  if (rootingForCountries.length && rootingForStatus) {
+    rootingForStatus.className = "status-message status-info";
+    rootingForStatus.textContent = "Loaded saved rooting-for countries.";
+  }
+}
+
+async function saveRootingForCountries() {
+  if (!currentUser) return alert("Please sign in first.");
+
+  const rootingForCountries = [
+    getValue("rooting-country-1"),
+    getValue("rooting-country-2")
+  ].filter(Boolean);
+
+  if (!rootingForCountries.length) {
+    return alert("Pick at least one country you're rooting for.");
+  }
+
+  if (new Set(rootingForCountries).size !== rootingForCountries.length) {
+    return alert("Choose two different countries, or leave the second one blank.");
+  }
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    rootingForCountries,
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+
+  rootingForStatus.className = "status-message status-success";
+  rootingForStatus.textContent = "✅ Rooting-for countries saved!";
+
+  if (ADMIN_EMAILS.includes(currentUser.email)) {
+    await renderLeaderboardFromFirestore();
+  } else {
+    await renderPublicLeaderboard();
+  }
+}
+
 function renderAdminBonusResults() {
   adminBonusResultsForm.innerHTML = `
     <div class="pick-card">
       <label>1. Country with most tournament goals</label>
       <select id="result-bonus-mostGoalsCountry">
         <option value="">Select country</option>
-        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
     </div>
 
@@ -984,17 +1094,17 @@ function renderAdminBonusResults() {
 
     <div class="pick-card">
       <label>4. Semifinalists</label>
-      <select id="result-bonus-semi1"><option value="">Semi team 1</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
-      <select id="result-bonus-semi2"><option value="">Semi team 2</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
-      <select id="result-bonus-semi3"><option value="">Semi team 3</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
-      <select id="result-bonus-semi4"><option value="">Semi team 4</option>${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+      <select id="result-bonus-semi1"><option value="">Semi team 1</option>${renderCountryOptions()}</select>
+      <select id="result-bonus-semi2"><option value="">Semi team 2</option>${renderCountryOptions()}</select>
+      <select id="result-bonus-semi3"><option value="">Semi team 3</option>${renderCountryOptions()}</select>
+      <select id="result-bonus-semi4"><option value="">Semi team 4</option>${renderCountryOptions()}</select>
     </div>
 
     <div class="pick-card">
       <label>5. World Cup winner</label>
       <select id="result-bonus-winner">
         <option value="">Select country</option>
-        ${countryOptions.map(c => `<option value="${c}">${c}</option>`).join("")}
+        ${renderCountryOptions()}
       </select>
     </div>
   `;
@@ -1053,7 +1163,7 @@ function scoreBonusAnswers(answers, results) {
 
   let points = 0;
 
-  if (answers.mostGoalsCountry && answers.mostGoalsCountry === results.mostGoalsCountry) points += 1;
+  if (sameCountryOption(answers.mostGoalsCountry, results.mostGoalsCountry)) points += 1;
 
   const guessYellow = Number(answers.yellowCards);
   const actualYellow = Number(results.yellowCards);
@@ -1066,12 +1176,12 @@ function scoreBonusAnswers(answers, results) {
   if (
     answers.semifinalist &&
     Array.isArray(results.semifinalists) &&
-    results.semifinalists.includes(answers.semifinalist)
+    results.semifinalists.some(team => sameCountryOption(answers.semifinalist, team))
   ) {
     points += 1;
   }
 
-  if (answers.winner && answers.winner === results.winner) points += 1;
+  if (sameCountryOption(answers.winner, results.winner)) points += 1;
 
   return points;
 }
@@ -1274,7 +1384,7 @@ function renderAdminRound32BonusResults() {
         ${countryOptions.map(team => `
           <label class="checkbox-row">
             <input type="checkbox" data-round32-bonus-team="${escapeHTML(team)}" />
-            ${escapeHTML(team)}
+            ${escapeHTML(countryOptionLabel(team))}
           </label>
         `).join("")}
       </div>
@@ -1295,7 +1405,9 @@ async function loadExistingRound32BonusResults() {
   adminRound32BonusResultsForm
     .querySelectorAll("[data-round32-bonus-team]")
     .forEach(input => {
-      input.checked = threeGoalWinners.has(input.dataset.round32BonusTeam);
+      input.checked = Array.from(threeGoalWinners).some(team =>
+        sameCountryOption(team, input.dataset.round32BonusTeam)
+      );
     });
 }
 
@@ -1338,7 +1450,7 @@ function scoreRound32BonusAnswers(answers, results) {
   if (Array.isArray(results.threeGoalWinners)) {
     const uniquePicks = [...new Set(userThreeGoalWinners.filter(Boolean))];
     uniquePicks.forEach(team => {
-      if (results.threeGoalWinners.includes(team)) {
+      if (results.threeGoalWinners.some(resultTeam => sameCountryOption(team, resultTeam))) {
         points += 2;
       }
     });
@@ -1584,8 +1696,26 @@ async function renderPublicLeaderboard() {
     return;
   }
 
-  const rows = snap.data().rows || [];
+  let rows = snap.data().rows || [];
+  if (currentUser) rows = await attachRootingForCountries(rows);
   renderLeaderboard(rows);
+}
+
+async function attachRootingForCountries(rows) {
+  const usersSnap = await getDocs(collection(db, "users"));
+  const rootingByUid = {};
+
+  usersSnap.forEach(docSnap => {
+    const user = docSnap.data();
+    if (user.uid && Array.isArray(user.rootingForCountries)) {
+      rootingByUid[user.uid] = user.rootingForCountries;
+    }
+  });
+
+  return rows.map(row => ({
+    ...row,
+    rootingForCountries: rootingByUid[row.uid] || row.rootingForCountries || []
+  }));
 }
 
 async function renderLeaderboardFromFirestore() {
@@ -1613,6 +1743,7 @@ async function renderLeaderboardFromFirestore() {
       username: u.username || "",
       googleDisplayName: u.googleDisplayName || "",
       email: u.email || "",
+      rootingForCountries: Array.isArray(u.rootingForCountries) ? u.rootingForCountries : [],
       banned: !!u.banned
     };
   });
@@ -1627,6 +1758,7 @@ async function renderLeaderboardFromFirestore() {
       scores[uid] = {
         uid,
         display_name: user.username || user.googleDisplayName || "Player",
+        rootingForCountries: user.rootingForCountries,
         match_points: 0,
         group_points: 0,
         bonus_points: 0,
@@ -1649,9 +1781,12 @@ async function renderLeaderboardFromFirestore() {
       [pick.first, pick.second].forEach(team => {
         if (!team) return;
 
-        if (team === result.first || team === result.second) {
+        if (
+          sameCountryOption(team, result.first) ||
+          sameCountryOption(team, result.second)
+        ) {
           player.group_points += 2;
-        } else if (team === result.third && result.thirdQualified) {
+        } else if (sameCountryOption(team, result.third) && result.thirdQualified) {
           player.group_points += 1;
         }
       });
@@ -1710,6 +1845,7 @@ function renderLeaderboard(rows) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${i + 1}</td>
+      <td class="leaderboard-country-cell">${renderRootingForFlags(r.rootingForCountries)}</td>
       <td>
         ${
           r.uid
@@ -1737,6 +1873,21 @@ function renderLeaderboard(rows) {
   if (playerCount) playerCount.textContent = sorted.length;
   if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
   if (matchCount) matchCount.textContent = "Live";
+}
+
+function renderRootingForFlags(rootingForCountries = []) {
+  if (!Array.isArray(rootingForCountries) || !rootingForCountries.length) {
+    return `<span class="rooting-flags-empty">—</span>`;
+  }
+
+  const flags = rootingForCountries
+    .slice(0, 2)
+    .map(countryFlagFromOption)
+    .filter(Boolean);
+
+  return flags.length
+    ? `<span class="rooting-flags">${flags.map(flag => escapeHTML(flag)).join(" ")}</span>`
+    : `<span class="rooting-flags-empty">—</span>`;
 }
 
 async function showPlayerGroupPicks(uid, displayName) {
@@ -1928,7 +2079,16 @@ function getValue(id) {
 
 function setValue(id, value) {
   const el = document.getElementById(id);
-  if (el) el.value = value || "";
+  if (!el) return;
+
+  const nextValue = value || "";
+  el.value = nextValue;
+
+  if (el.tagName === "SELECT" && nextValue && el.value !== nextValue) {
+    const normalizedValue = normalizeCountryOptionValue(nextValue);
+    const hasNormalizedOption = Array.from(el.options).some(option => option.value === normalizedValue);
+    if (hasNormalizedOption) el.value = normalizedValue;
+  }
 }
 
 function escapeHTML(str) {

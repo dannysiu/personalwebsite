@@ -166,9 +166,23 @@ footer {
   margin-top: 8px;
 }
 
+.profile-settings-header {
+  margin-top: 16px;
+}
+
+.profile-settings-header h2 {
+  font-size: 22px;
+  margin: 0;
+}
+
+#profileSettingsContent {
+  text-align: left;
+}
+
 #groupPicksForm,
 #round32PicksForm,
 #round32BonusForm,
+#rootingForForm,
 #adminGroupResultsForm,
 #adminRound32ResultsForm,
 #adminRound32BonusResultsForm,
@@ -222,6 +236,48 @@ footer {
   border-radius: 8px;
   border: 1px solid #475569;
   font-size: 15px;
+}
+
+.rooting-for-box {
+  border-top: 1px solid rgba(148, 163, 184, 0.24);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.rooting-for-box h3 {
+  margin-top: 0;
+  margin-bottom: 6px;
+  color: #f8fafc;
+}
+
+.rooting-for-form {
+  margin: 12px 0;
+}
+
+.rooting-for-form select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  font-size: 15px;
+}
+
+.leaderboard-country-heading,
+.leaderboard-country-cell {
+  width: 92px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rooting-flags {
+  display: inline-block;
+  font-size: 20px;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.rooting-flags-empty {
+  color: #64748b;
 }
 
 .announcement-card {
@@ -338,7 +394,7 @@ footer {
 }
 
 #usernameBox {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 #usernameBox label {

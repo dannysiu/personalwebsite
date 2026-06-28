@@ -47,16 +47,33 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card profile-card">
       <button id="loginBtn">Sign in with Google</button>
       <button id="logoutBtn" style="display:none;">Sign out</button>
       <p id="userInfo">Not signed in</p>
 
-      <div id="usernameBox" style="display:none;">
-        <label for="usernameInput">Leaderboard Username</label>
-        <input id="usernameInput" maxlength="20" placeholder="ex: Danz" />
-        <button id="saveUsernameBtn">Save Username</button>
-        <p id="usernameStatus"></p>
+      <div id="profileSettingsBox" style="display:none;">
+        <div class="section-header profile-settings-header">
+          <h2>Profile Settings</h2>
+          <button id="toggleProfileSettingsBtn" class="secondary-btn">Minimize</button>
+        </div>
+
+        <div id="profileSettingsContent">
+          <div id="usernameBox">
+            <label for="usernameInput">Leaderboard Username</label>
+            <input id="usernameInput" maxlength="20" placeholder="ex: Danz" />
+            <button id="saveUsernameBtn">Save Username</button>
+            <p id="usernameStatus"></p>
+          </div>
+
+          <div class="rooting-for-box">
+            <h3>Who are you rooting for?</h3>
+            <p class="mini-note">Pick 1-2 countries. This is just for fun and can be changed anytime.</p>
+            <div id="rootingForForm" class="rooting-for-form"></div>
+            <button id="saveRootingForBtn">Save Rooting For</button>
+            <p id="rootingForStatus" role="status" aria-live="polite"></p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -148,6 +165,7 @@
         <thead>
           <tr>
             <th>Rank</th>
+            <th class="leaderboard-country-heading">Rooting For</th>
             <th>Player</th>
             <th>Match Points</th>
             <th>Bonus Points</th>
@@ -178,6 +196,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=round32-bonus"></script>
+  <script type="module" src="app.js?v=profile-rooting-settings"></script>
 </body>
 </html>
