@@ -28,6 +28,15 @@
   </header>
 
   <main class="container">
+    <section class="card announcement-card">
+      <h2>🚨 Round of 32 Picks are open!</h2>
+      <p>
+        ✅ Pick the winner of every Round of 32 match.<br>
+        ⭐ Answer the 3 bonus questions for a chance to earn extra points.<br>
+        Good luck! ⚽
+      </p>
+    </section>
+
     <section class="card" id="matchTickerSection">
       <div class="ticker-header">
         <h2>🌍 World Cup Matches</h2>
@@ -69,6 +78,15 @@
       <p id="round32PicksStatus"></p>
     </section>
 
+    <section class="card" id="round32BonusSection" style="display:none;">
+      <h2>🎯 Round of 32 Bonus Questions</h2>
+      <p class="lock-note">Round of 32 bonus answers lock when the first Round of 32 match begins.</p>
+
+      <div id="round32BonusForm"></div>
+      <button id="saveRound32BonusBtn">Save Round of 32 Bonus Answers</button>
+      <p id="round32BonusStatus" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="card" id="groupPicksSection" style="display:none;">
       <div class="section-header">
         <h2>🌍 Group Stage Pick’em</h2>
@@ -103,6 +121,12 @@
       <div id="adminRound32ResultsForm"></div>
       <button id="saveRound32ResultsBtn">Save Round of 32 Results</button>
       <p id="round32ResultsStatus"></p>
+
+      <h3>Round of 32 Bonus Results</h3>
+      <p class="mini-note">Set official counts and choose every team that won a Round of 32 match by 3+ goals.</p>
+      <div id="adminRound32BonusResultsForm"></div>
+      <button id="saveRound32BonusResultsBtn">Save Round of 32 Bonus Results</button>
+      <p id="round32BonusResultsStatus"></p>
 
       <button id="refreshLeaderboardBtn">Refresh Leaderboard</button>
     </section>
@@ -143,6 +167,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=round32-ui"></script>
+  <script type="module" src="app.js?v=round32-bonus"></script>
 </body>
 </html>
