@@ -1234,12 +1234,21 @@ function scoreRound32Picks(picks, results) {
     const result = results[matchId];
     if (!pick || !result?.winner) return;
 
+    // Winner prediction
     if (pick.winner === result.winner) {
       points += 3;
     }
 
-    if (!!pick.extraTimeOrPenalties === !!result.extraTimeOrPenalties) {
-      points += 1;
+    // Extra Time / Penalties prediction
+    // Checked & correct = +1
+    // Checked & wrong = -1
+    // Unchecked = 0
+    if (pick.extraTimeOrPenalties) {
+      if (result.extraTimeOrPenalties) {
+        points += 1;
+      } else {
+        points -= 1;
+      }
     }
   });
 
