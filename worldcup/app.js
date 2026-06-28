@@ -1048,10 +1048,26 @@ async function saveRootingForCountries() {
     return alert("Choose two different countries, or leave the second one blank.");
   }
 
-  await setDoc(doc(db, "users", currentUser.uid), {
-    rootingForCountries,
-    updatedAt: new Date().toISOString()
-  }, { merge: true });
+  const updatedAt = new Date().toISOString();
+
+  try {
+    await setDoc(doc(db, "users", currentUser.uid), {
+      rootingForCountries,
+      updatedAt
+    }, { merge: true });
+
+    await setDoc(doc(db, "publicRootingFor", currentUser.uid), {
+      uid: currentUser.uid,
+      rootingForCountries,
+      updatedAt
+    }, { merge: true });
+  } catch (error) {
+    console.error("Failed to save rooting-for countries:", error);
+    rootingForStatus.className = "status-message status-error";
+    rootingForStatus.textContent =
+      "Rooting-for countries were not saved. Check Firestore rules for publicRootingFor.";
+    return;
+  }
 
   rootingForStatus.className = "status-message status-success";
   rootingForStatus.textContent = "✅ Rooting-for countries saved!";
@@ -1697,8 +1713,31 @@ async function renderPublicLeaderboard() {
   }
 
   let rows = snap.data().rows || [];
+  rows = await attachPublicRootingForCountries(rows);
   if (currentUser) rows = await attachRootingForCountries(rows);
   renderLeaderboard(rows);
+}
+
+async function attachPublicRootingForCountries(rows) {
+  try {
+    const rootingSnap = await getDocs(collection(db, "publicRootingFor"));
+    const rootingByUid = {};
+
+    rootingSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.uid && Array.isArray(data.rootingForCountries)) {
+        rootingByUid[data.uid] = data.rootingForCountries;
+      }
+    });
+
+    return rows.map(row => ({
+      ...row,
+      rootingForCountries: rootingByUid[row.uid] || row.rootingForCountries || []
+    }));
+  } catch (error) {
+    console.warn("Could not load public rooting-for flags:", error);
+    return rows;
+  }
 }
 
 async function attachRootingForCountries(rows) {
