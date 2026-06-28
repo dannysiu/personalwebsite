@@ -84,6 +84,31 @@ function sortTeamsAlphabetically(teams) {
 
 const countryOptions = sortTeamsAlphabetically([...new Set(Object.values(groups).flat())]);
 
+const round32Flags = {
+  "Argentina": "🇦🇷",
+  "Australia": "🇦🇺",
+  "Belgium": "🇧🇪",
+  "Bosnia and Herzegovina": "🇧🇦",
+  "Brazil": "🇧🇷",
+  "Canada": "🇨🇦",
+  "Cape Verde": "🇨🇻",
+  "Egypt": "🇪🇬",
+  "France": "🇫🇷",
+  "Germany": "🇩🇪",
+  "Ivory Coast": "🇨🇮",
+  "Japan": "🇯🇵",
+  "Mexico": "🇲🇽",
+  "Morocco": "🇲🇦",
+  "Netherlands": "🇳🇱",
+  "Norway": "🇳🇴",
+  "Paraguay": "🇵🇾",
+  "South Africa": "🇿🇦",
+  "Spain": "🇪🇸",
+  "Sweden": "🇸🇪",
+  "Switzerland": "🇨🇭",
+  "United States": "🇺🇸"
+};
+
 const round32Matches = [
   {
     id: "73",
@@ -214,6 +239,15 @@ const round32Matches = [
     venue: "Kansas City"
   }
 ];
+
+function round32TeamLabel(team) {
+  const flag = round32Flags[team];
+  return flag ? `${flag} ${team}` : team;
+}
+
+function round32MatchupLabel(match) {
+  return `${round32TeamLabel(match.home)} vs ${round32TeamLabel(match.away)}`;
+}
 
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -642,17 +676,19 @@ function renderRound32Picks() {
     const locked = round32MatchIsLocked(match);
     const wrapper = document.createElement("div");
     wrapper.className = "pick-card";
+    const matchupLabel = round32MatchupLabel(match);
+    const homeLabel = round32TeamLabel(match.home);
+    const awayLabel = round32TeamLabel(match.away);
 
     wrapper.innerHTML = `
-      <h3>${match.label} ${locked ? "🔒" : ""}</h3>
-      <p class="mini-note">${escapeHTML(match.home)} vs ${escapeHTML(match.away)}</p>
+      <h3>${escapeHTML(matchupLabel)} ${locked ? "🔒" : ""}</h3>
       <p class="lock-note">Kickoff: <strong>${round32MatchTimeLabel(match)}</strong> · ${escapeHTML(match.venue)}</p>
 
       <label>Winner</label>
       <select id="round32-${match.id}-winner" ${locked ? "disabled" : ""}>
         <option value="">Select winner</option>
-        <option value="${escapeHTML(match.home)}">${escapeHTML(match.home)}</option>
-        <option value="${escapeHTML(match.away)}">${escapeHTML(match.away)}</option>
+        <option value="${escapeHTML(match.home)}">${escapeHTML(homeLabel)}</option>
+        <option value="${escapeHTML(match.away)}">${escapeHTML(awayLabel)}</option>
       </select>
 
       <label class="checkbox-row">
@@ -1042,16 +1078,18 @@ function renderAdminRound32Results() {
   round32Matches.forEach(match => {
     const wrapper = document.createElement("div");
     wrapper.className = "pick-card";
+    const matchupLabel = round32MatchupLabel(match);
+    const homeLabel = round32TeamLabel(match.home);
+    const awayLabel = round32TeamLabel(match.away);
 
     wrapper.innerHTML = `
-      <h3>${match.label} Official Result</h3>
-      <p class="mini-note">${escapeHTML(match.home)} vs ${escapeHTML(match.away)}</p>
+      <h3>${escapeHTML(matchupLabel)} Official Result</h3>
 
       <label>Winner</label>
       <select id="result-round32-${match.id}-winner">
         <option value="">Select winner</option>
-        <option value="${escapeHTML(match.home)}">${escapeHTML(match.home)}</option>
-        <option value="${escapeHTML(match.away)}">${escapeHTML(match.away)}</option>
+        <option value="${escapeHTML(match.home)}">${escapeHTML(homeLabel)}</option>
+        <option value="${escapeHTML(match.away)}">${escapeHTML(awayLabel)}</option>
       </select>
 
       <label class="checkbox-row">

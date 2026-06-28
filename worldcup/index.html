@@ -57,6 +57,18 @@
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
+    <section class="card" id="round32PicksSection" style="display:none;">
+      <h2>🏟️ Round of 32 Pick’em</h2>
+      <p>
+        Pick the winner of each Round of 32 match. Correct winner = <strong>3 points</strong>. Correctly predicting extra time or penalties = <strong>+1 point</strong>.
+      </p>
+      <p class="lock-note">Each match locks at its official kickoff time.</p>
+
+      <div id="round32PicksForm"></div>
+      <button id="saveRound32PicksBtn">Save Round of 32 Picks</button>
+      <p id="round32PicksStatus"></p>
+    </section>
+
     <section class="card" id="groupPicksSection" style="display:none;">
       <div class="section-header">
         <h2>🌍 Group Stage Pick’em</h2>
@@ -77,18 +89,6 @@
         <button id="saveGroupPicksBtn">Save Group Picks</button>
         <p id="groupPicksStatus"></p>
       </div>
-    </section>
-
-    <section class="card" id="round32PicksSection" style="display:none;">
-      <h2>🏟️ Round of 32 Pick’em</h2>
-      <p>
-        Pick the winner of each Round of 32 match. Correct winner = <strong>3 points</strong>. Correctly predicting extra time or penalties = <strong>+1 point</strong>.
-      </p>
-      <p class="lock-note">Each match locks at its official kickoff time.</p>
-
-      <div id="round32PicksForm"></div>
-      <button id="saveRound32PicksBtn">Save Round of 32 Picks</button>
-      <p id="round32PicksStatus"></p>
     </section>
 
     <section class="card" id="adminSection" style="display:none;">
@@ -143,6 +143,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=round32-ui"></script>
 </body>
 </html>
