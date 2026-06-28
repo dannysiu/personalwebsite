@@ -816,6 +816,7 @@ saveRound32PicksBtn?.addEventListener("click", async () => {
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
+  round32PicksStatus.className = "status-message status-success";
   round32PicksStatus.textContent =
     "✅ Round of 32 picks saved! Now select your Round of 32 bonus answers below.";
   round32BonusSection?.scrollIntoView({ behavior: "smooth", block: "start" });
