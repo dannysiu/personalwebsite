@@ -533,6 +533,28 @@ footer {
   font-size: 13px;
 }
 
+.admin-panel {
+  border-top: 2px solid rgba(148, 163, 184, 0.28);
+  margin-top: 26px;
+  padding-top: 22px;
+  text-align: left;
+}
+
+.admin-panel h3 {
+  margin-top: 6px;
+  margin-bottom: 8px;
+  color: #f8fafc;
+}
+
+.admin-panel-label {
+  display: inline-block;
+  color: #fde68a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .admin-player-table {
   width: 100%;
   margin-top: 12px;

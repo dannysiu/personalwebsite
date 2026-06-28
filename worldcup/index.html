@@ -112,21 +112,30 @@
     <section class="card" id="adminSection" style="display:none;">
       <h2>🛠️ Admin Results</h2>
 
-      <h3>Group Results</h3>
-      <div id="adminGroupResultsForm"></div>
-      <button id="saveGroupResultsBtn">Save Group Results</button>
-      <p id="groupResultsStatus"></p>
+      <div class="admin-panel">
+        <span class="admin-panel-label">Group stage</span>
+        <h3>Group Results</h3>
+        <div id="adminGroupResultsForm"></div>
+        <button id="saveGroupResultsBtn">Save Group Results</button>
+        <p id="groupResultsStatus"></p>
+      </div>
 
-      <h3>Round of 32 Results</h3>
-      <div id="adminRound32ResultsForm"></div>
-      <button id="saveRound32ResultsBtn">Save Round of 32 Results</button>
-      <p id="round32ResultsStatus"></p>
+      <div class="admin-panel">
+        <span class="admin-panel-label">Round of 32</span>
+        <h3>Round of 32 Results</h3>
+        <div id="adminRound32ResultsForm"></div>
+        <button id="saveRound32ResultsBtn">Save Round of 32 Results</button>
+        <p id="round32ResultsStatus"></p>
+      </div>
 
-      <h3>Round of 32 Bonus Results</h3>
-      <p class="mini-note">Set official counts and choose every team that won a Round of 32 match by 3+ goals.</p>
-      <div id="adminRound32BonusResultsForm"></div>
-      <button id="saveRound32BonusResultsBtn">Save Round of 32 Bonus Results</button>
-      <p id="round32BonusResultsStatus"></p>
+      <div class="admin-panel">
+        <span class="admin-panel-label">Round of 32 bonus</span>
+        <h3>Round of 32 Bonus Results</h3>
+        <p class="mini-note">Set official counts and choose every team that won a Round of 32 match by 3+ goals.</p>
+        <div id="adminRound32BonusResultsForm"></div>
+        <button id="saveRound32BonusResultsBtn">Save Round of 32 Bonus Results</button>
+        <p id="round32BonusResultsStatus"></p>
+      </div>
 
       <button id="refreshLeaderboardBtn">Refresh Leaderboard</button>
     </section>

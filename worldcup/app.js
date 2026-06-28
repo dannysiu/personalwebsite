@@ -496,16 +496,27 @@ function injectAdminPlayerManagement() {
 
   const box = document.createElement("div");
   box.innerHTML = `
-    <h3>Player Payment / Ban Controls</h3>
-    <p class="mini-note">All signed-in players appear on the leaderboard unless banned.</p>
-    <div id="adminPlayerList"></div>
+    <div class="admin-panel">
+      <span class="admin-panel-label">Players</span>
+      <h3>Player Payment / Ban Controls</h3>
+      <p class="mini-note">All signed-in players appear on the leaderboard unless banned.</p>
+      <div id="adminPlayerList"></div>
+    </div>
 
-    <h3>Round of 32 Pick Status</h3>
-    <p class="mini-note">Quick check for who has saved every Round of 32 winner pick and completed the Round of 32 bonus questions.</p>
-    <div id="adminRound32PlayerList"></div>
+    <div class="admin-panel">
+      <span class="admin-panel-label">Round of 32 tracking</span>
+      <h3>Round of 32 Pick Status</h3>
+      <p class="mini-note">Quick check for who has saved every Round of 32 winner pick and completed the Round of 32 bonus questions.</p>
+      <div id="adminRound32PlayerList"></div>
+    </div>
   `;
 
-  adminSection.insertBefore(box, adminSection.firstChild);
+  const adminTitle = adminSection.querySelector("h2");
+  if (adminTitle) {
+    adminTitle.insertAdjacentElement("afterend", box);
+  } else {
+    adminSection.insertBefore(box, adminSection.firstChild);
+  }
   adminPlayerList = document.getElementById("adminPlayerList");
   adminRound32PlayerList = document.getElementById("adminRound32PlayerList");
 }
@@ -514,7 +525,9 @@ function injectAdminBonusResults() {
   if (!adminSection) return;
 
   const box = document.createElement("div");
+  box.className = "admin-panel";
   box.innerHTML = `
+    <span class="admin-panel-label">Opening bonus</span>
     <h3>Bonus Answer Key</h3>
     <p class="mini-note">Set the correct bonus answers here. Each correct answer is worth 1 point.</p>
     <div id="adminBonusResultsForm"></div>
