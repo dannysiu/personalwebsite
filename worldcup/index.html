@@ -58,20 +58,37 @@
     </section>
 
     <section class="card" id="groupPicksSection" style="display:none;">
-      <h2>🌍 Group Stage Pick’em</h2>
-      <p>
-        Pick <strong>2 teams from each group</strong>.  
-        Each pick that finishes <strong>top 2 = 2 points</strong>.  
-        If your pick finishes <strong>3rd but still qualifies = 1 point</strong>.
-      </p>
-      <!-- <p class="lock-note">Group picks lock before the opening match: <strong>June 11, 2026 at 2:00 PM CT</strong>.</p> -->
-      <p class="lock-note">
-        Group picks lock when that group's first match begins. Late entrants may still make picks for groups that haven't started yet.
-      </p>
+      <div class="section-header">
+        <h2>🌍 Group Stage Pick’em</h2>
+        <button id="toggleGroupPicksBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="groupPicksContent">
+        <p>
+          Pick <strong>2 teams from each group</strong>.
+          Each pick that finishes <strong>top 2 = 2 points</strong>.
+          If your pick finishes <strong>3rd but still qualifies = 1 point</strong>.
+        </p>
+        <!-- <p class="lock-note">Group picks lock before the opening match: <strong>June 11, 2026 at 2:00 PM CT</strong>.</p> -->
+        <p class="lock-note">
+          Group picks lock when that group's first match begins. Late entrants may still make picks for groups that haven't started yet.
+        </p>
 
-      <div id="groupPicksForm"></div>
-      <button id="saveGroupPicksBtn">Save Group Picks</button>
-      <p id="groupPicksStatus"></p>
+        <div id="groupPicksForm"></div>
+        <button id="saveGroupPicksBtn">Save Group Picks</button>
+        <p id="groupPicksStatus"></p>
+      </div>
+    </section>
+
+    <section class="card" id="round32PicksSection" style="display:none;">
+      <h2>🏟️ Round of 32 Pick’em</h2>
+      <p>
+        Pick the winner of each Round of 32 match. Correct winner = <strong>3 points</strong>. Correctly predicting extra time or penalties = <strong>+1 point</strong>.
+      </p>
+      <p class="lock-note">Each match locks at its official kickoff time.</p>
+
+      <div id="round32PicksForm"></div>
+      <button id="saveRound32PicksBtn">Save Round of 32 Picks</button>
+      <p id="round32PicksStatus"></p>
     </section>
 
     <section class="card" id="adminSection" style="display:none;">
@@ -81,6 +98,11 @@
       <div id="adminGroupResultsForm"></div>
       <button id="saveGroupResultsBtn">Save Group Results</button>
       <p id="groupResultsStatus"></p>
+
+      <h3>Round of 32 Results</h3>
+      <div id="adminRound32ResultsForm"></div>
+      <button id="saveRound32ResultsBtn">Save Round of 32 Results</button>
+      <p id="round32ResultsStatus"></p>
 
       <button id="refreshLeaderboardBtn">Refresh Leaderboard</button>
     </section>

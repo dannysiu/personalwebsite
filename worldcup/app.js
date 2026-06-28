@@ -9,6 +9,8 @@ Main client-side app for:
 Scoring notes:
 - Group pick that finishes top 2 = 2 points
 - Group pick that finishes 3rd and qualifies = 1 point
+- Round of 32 correct winner = 3 points
+- Round of 32 correct extra time / penalties pick = 1 point
 - Opening bonus quiz = 1 point per correct answer
 - Yellow card bonus question is correct if within 10 of the official total
 */
@@ -82,6 +84,137 @@ function sortTeamsAlphabetically(teams) {
 
 const countryOptions = sortTeamsAlphabetically([...new Set(Object.values(groups).flat())]);
 
+const round32Matches = [
+  {
+    id: "73",
+    label: "Match 73",
+    home: "South Africa",
+    away: "Canada",
+    startTime: "2026-06-28T12:00:00-07:00",
+    venue: "Los Angeles"
+  },
+  {
+    id: "76",
+    label: "Match 76",
+    home: "Brazil",
+    away: "Japan",
+    startTime: "2026-06-29T12:00:00-05:00",
+    venue: "Houston"
+  },
+  {
+    id: "74",
+    label: "Match 74",
+    home: "Germany",
+    away: "Paraguay",
+    startTime: "2026-06-29T16:30:00-04:00",
+    venue: "Boston"
+  },
+  {
+    id: "75",
+    label: "Match 75",
+    home: "Netherlands",
+    away: "Morocco",
+    startTime: "2026-06-29T19:00:00-06:00",
+    venue: "Monterrey"
+  },
+  {
+    id: "78",
+    label: "Match 78",
+    home: "Ivory Coast",
+    away: "Norway",
+    startTime: "2026-06-30T12:00:00-05:00",
+    venue: "Dallas"
+  },
+  {
+    id: "77",
+    label: "Match 77",
+    home: "France",
+    away: "Sweden",
+    startTime: "2026-06-30T17:00:00-04:00",
+    venue: "New York / New Jersey"
+  },
+  {
+    id: "79",
+    label: "Match 79",
+    home: "Mexico",
+    away: "3rd Group C/E",
+    startTime: "2026-06-30T19:00:00-06:00",
+    venue: "Mexico City"
+  },
+  {
+    id: "80",
+    label: "Match 80",
+    home: "Winner Group L",
+    away: "3rd Group I/J/K",
+    startTime: "2026-07-01T12:00:00-04:00",
+    venue: "Atlanta"
+  },
+  {
+    id: "82",
+    label: "Match 82",
+    home: "Belgium",
+    away: "3rd Group A/I/J",
+    startTime: "2026-07-01T13:00:00-07:00",
+    venue: "Santa Clara"
+  },
+  {
+    id: "81",
+    label: "Match 81",
+    home: "United States",
+    away: "Bosnia and Herzegovina",
+    startTime: "2026-07-01T17:00:00-07:00",
+    venue: "Seattle"
+  },
+  {
+    id: "84",
+    label: "Match 84",
+    home: "Spain",
+    away: "Runner-up Group J",
+    startTime: "2026-07-02T12:00:00-07:00",
+    venue: "Los Angeles"
+  },
+  {
+    id: "83",
+    label: "Match 83",
+    home: "Runner-up Group K",
+    away: "Runner-up Group L",
+    startTime: "2026-07-02T19:00:00-04:00",
+    venue: "Toronto"
+  },
+  {
+    id: "85",
+    label: "Match 85",
+    home: "Switzerland",
+    away: "3rd Group G/J",
+    startTime: "2026-07-02T20:00:00-07:00",
+    venue: "Vancouver"
+  },
+  {
+    id: "88",
+    label: "Match 88",
+    home: "Australia",
+    away: "Egypt",
+    startTime: "2026-07-03T13:00:00-05:00",
+    venue: "Dallas"
+  },
+  {
+    id: "86",
+    label: "Match 86",
+    home: "Argentina",
+    away: "Cape Verde",
+    startTime: "2026-07-03T18:00:00-04:00",
+    venue: "Miami"
+  },
+  {
+    id: "87",
+    label: "Match 87",
+    home: "Winner Group K",
+    away: "3rd Group E/I/L",
+    startTime: "2026-07-03T20:30:00-05:00",
+    venue: "Kansas City"
+  }
+];
+
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userInfo = document.getElementById("userInfo");
@@ -92,14 +225,24 @@ const saveUsernameBtn = document.getElementById("saveUsernameBtn");
 const usernameStatus = document.getElementById("usernameStatus");
 
 const groupPicksSection = document.getElementById("groupPicksSection");
+const groupPicksContent = document.getElementById("groupPicksContent");
+const toggleGroupPicksBtn = document.getElementById("toggleGroupPicksBtn");
 const groupPicksForm = document.getElementById("groupPicksForm");
 const saveGroupPicksBtn = document.getElementById("saveGroupPicksBtn");
 const groupPicksStatus = document.getElementById("groupPicksStatus");
+
+const round32PicksSection = document.getElementById("round32PicksSection");
+const round32PicksForm = document.getElementById("round32PicksForm");
+const saveRound32PicksBtn = document.getElementById("saveRound32PicksBtn");
+const round32PicksStatus = document.getElementById("round32PicksStatus");
 
 const adminSection = document.getElementById("adminSection");
 const adminGroupResultsForm = document.getElementById("adminGroupResultsForm");
 const saveGroupResultsBtn = document.getElementById("saveGroupResultsBtn");
 const groupResultsStatus = document.getElementById("groupResultsStatus");
+const adminRound32ResultsForm = document.getElementById("adminRound32ResultsForm");
+const saveRound32ResultsBtn = document.getElementById("saveRound32ResultsBtn");
+const round32ResultsStatus = document.getElementById("round32ResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
 
 const playerPicksViewer = document.getElementById("playerPicksViewer");
@@ -123,6 +266,12 @@ injectAdminPlayerManagement();
 injectAdminBonusResults();
 injectAdminResetButtons();
 moveRefreshLeaderboardButton();
+
+toggleGroupPicksBtn?.addEventListener("click", () => {
+  const isHidden = groupPicksContent.style.display === "none";
+  groupPicksContent.style.display = isHidden ? "block" : "none";
+  toggleGroupPicksBtn.textContent = isHidden ? "Minimize" : "Expand";
+});
 
 loginBtn.addEventListener("click", async () => {
   try {
@@ -172,6 +321,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (usernameBox) usernameBox.style.display = "none";
     groupPicksSection.style.display = "none";
+    round32PicksSection.style.display = "none";
     bonusSection.style.display = "none";
     if (adminSection) adminSection.style.display = "none";
 
@@ -213,20 +363,25 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   groupPicksSection.style.display = "block";
+  round32PicksSection.style.display = "block";
   bonusSection.style.display = "block";
 
   await loadGroupLockTimes();
   renderGroupPicks();
+  renderRound32Picks();
   renderBonusQuiz();
 
   await loadExistingGroupPicks();
+  await loadExistingRound32Picks();
   await loadExistingBonusAnswers();
 
   if (ADMIN_EMAILS.includes(user.email)) {
     adminSection.style.display = "block";
     renderAdminGroupResults();
+    renderAdminRound32Results();
     renderAdminBonusResults();
     await loadExistingGroupResults();
+    await loadExistingRound32Results();
     await loadExistingBonusResults();
     await renderAdminPlayerList();
     await renderLeaderboardFromFirestore();
@@ -460,6 +615,122 @@ saveGroupPicksBtn.addEventListener("click", async () => {
   }, { merge: true });
 
   groupPicksStatus.textContent = "✅ Group picks saved!";
+});
+
+function round32MatchIsLocked(match) {
+  return new Date() >= new Date(match.startTime);
+}
+
+function allRound32MatchesAreLocked() {
+  return round32Matches.every(match => round32MatchIsLocked(match));
+}
+
+function round32MatchTimeLabel(match) {
+  return new Date(match.startTime).toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function renderRound32Picks() {
+  round32PicksForm.innerHTML = "";
+
+  round32Matches.forEach(match => {
+    const locked = round32MatchIsLocked(match);
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+
+    wrapper.innerHTML = `
+      <h3>${match.label} ${locked ? "🔒" : ""}</h3>
+      <p class="mini-note">${escapeHTML(match.home)} vs ${escapeHTML(match.away)}</p>
+      <p class="lock-note">Kickoff: <strong>${round32MatchTimeLabel(match)}</strong> · ${escapeHTML(match.venue)}</p>
+
+      <label>Winner</label>
+      <select id="round32-${match.id}-winner" ${locked ? "disabled" : ""}>
+        <option value="">Select winner</option>
+        <option value="${escapeHTML(match.home)}">${escapeHTML(match.home)}</option>
+        <option value="${escapeHTML(match.away)}">${escapeHTML(match.away)}</option>
+      </select>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="round32-${match.id}-extraTimeOrPenalties" ${locked ? "disabled" : ""} />
+        Goes to extra time or penalties
+      </label>
+    `;
+
+    round32PicksForm.appendChild(wrapper);
+  });
+
+  if (allRound32MatchesAreLocked()) {
+    round32PicksStatus.textContent = "🔒 All Round of 32 picks are locked.";
+    saveRound32PicksBtn.disabled = true;
+    saveRound32PicksBtn.textContent = "Round of 32 Picks Locked";
+  } else {
+    saveRound32PicksBtn.disabled = false;
+    saveRound32PicksBtn.textContent = "Save Round of 32 Picks";
+  }
+}
+
+async function loadExistingRound32Picks() {
+  const snap = await getDoc(doc(db, "round32Picks", currentUser.uid));
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+
+  Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
+    setValue(`round32-${matchId}-winner`, pick.winner);
+
+    const extraTimeOrPenalties = document.getElementById(`round32-${matchId}-extraTimeOrPenalties`);
+    if (extraTimeOrPenalties) {
+      extraTimeOrPenalties.checked = !!pick.extraTimeOrPenalties;
+    }
+  });
+
+  if (allRound32MatchesAreLocked()) {
+    round32PicksStatus.textContent = "🔒 All Round of 32 picks are locked.";
+  } else {
+    round32PicksStatus.textContent = "Loaded saved Round of 32 picks.";
+  }
+}
+
+saveRound32PicksBtn?.addEventListener("click", async () => {
+  if (!currentUser) return alert("Please sign in first.");
+  if (allRound32MatchesAreLocked()) return alert("All Round of 32 picks are locked.");
+
+  const existingSnap = await getDoc(doc(db, "round32Picks", currentUser.uid));
+  const picks = existingSnap.exists() ? existingSnap.data().picks || {} : {};
+
+  let savedAnyUnlockedMatch = false;
+
+  for (const match of round32Matches) {
+    if (round32MatchIsLocked(match)) continue;
+
+    const winner = getValue(`round32-${match.id}-winner`);
+    const extraTimeOrPenalties =
+      document.getElementById(`round32-${match.id}-extraTimeOrPenalties`)?.checked || false;
+
+    if (!winner) return alert(`Pick a winner for ${match.label}.`);
+
+    picks[match.id] = { winner, extraTimeOrPenalties };
+    savedAnyUnlockedMatch = true;
+  }
+
+  if (!savedAnyUnlockedMatch) {
+    return alert("No unlocked Round of 32 matches are available to save.");
+  }
+
+  await setDoc(doc(db, "round32Picks", currentUser.uid), {
+    uid: currentUser.uid,
+    email: currentUser.email,
+    picks,
+    scoring: { winner: 3, extraTimeOrPenalties: 1 },
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+
+  round32PicksStatus.textContent = "✅ Round of 32 picks saved!";
 });
 
 function renderBonusQuiz() {
@@ -765,6 +1036,92 @@ saveGroupResultsBtn?.addEventListener("click", async () => {
   await renderLeaderboardFromFirestore();
 });
 
+function renderAdminRound32Results() {
+  adminRound32ResultsForm.innerHTML = "";
+
+  round32Matches.forEach(match => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+
+    wrapper.innerHTML = `
+      <h3>${match.label} Official Result</h3>
+      <p class="mini-note">${escapeHTML(match.home)} vs ${escapeHTML(match.away)}</p>
+
+      <label>Winner</label>
+      <select id="result-round32-${match.id}-winner">
+        <option value="">Select winner</option>
+        <option value="${escapeHTML(match.home)}">${escapeHTML(match.home)}</option>
+        <option value="${escapeHTML(match.away)}">${escapeHTML(match.away)}</option>
+      </select>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="result-round32-${match.id}-extraTimeOrPenalties" />
+        Went to extra time or penalties
+      </label>
+    `;
+
+    adminRound32ResultsForm.appendChild(wrapper);
+  });
+}
+
+async function loadExistingRound32Results() {
+  const snap = await getDoc(doc(db, "round32Results", "official"));
+  if (!snap.exists()) return;
+
+  const results = snap.data().results || {};
+
+  Object.entries(results).forEach(([matchId, result]) => {
+    setValue(`result-round32-${matchId}-winner`, result.winner);
+
+    const extraTimeOrPenalties = document.getElementById(`result-round32-${matchId}-extraTimeOrPenalties`);
+    if (extraTimeOrPenalties) {
+      extraTimeOrPenalties.checked = !!result.extraTimeOrPenalties;
+    }
+  });
+}
+
+saveRound32ResultsBtn?.addEventListener("click", async () => {
+  const results = {};
+
+  for (const match of round32Matches) {
+    const winner = getValue(`result-round32-${match.id}-winner`);
+    const extraTimeOrPenalties =
+      document.getElementById(`result-round32-${match.id}-extraTimeOrPenalties`)?.checked || false;
+
+    results[match.id] = { winner, extraTimeOrPenalties };
+  }
+
+  await setDoc(doc(db, "round32Results", "official"), {
+    results,
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser.email
+  }, { merge: true });
+
+  round32ResultsStatus.textContent = "✅ Round of 32 results saved!";
+  await renderLeaderboardFromFirestore();
+});
+
+function scoreRound32Picks(picks, results) {
+  if (!picks || !results) return 0;
+
+  let points = 0;
+
+  Object.entries(picks).forEach(([matchId, pick]) => {
+    const result = results[matchId];
+    if (!pick || !result?.winner) return;
+
+    if (pick.winner === result.winner) {
+      points += 3;
+    }
+
+    if (!!pick.extraTimeOrPenalties === !!result.extraTimeOrPenalties) {
+      points += 1;
+    }
+  });
+
+  return points;
+}
+
 async function renderAdminPlayerList() {
   if (!adminPlayerList) return;
 
@@ -919,12 +1276,15 @@ async function renderPublicLeaderboard() {
 async function renderLeaderboardFromFirestore() {
   const usersSnap = await getDocs(collection(db, "users"));
   const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
+  const round32PicksSnap = await getDocs(collection(db, "round32Picks"));
   const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
 
   const groupResultsSnap = await getDoc(doc(db, "groupResults", "official"));
+  const round32ResultsSnap = await getDoc(doc(db, "round32Results", "official"));
   const bonusResultsSnap = await getDoc(doc(db, "bonusResults", "official"));
 
   const groupResults = groupResultsSnap.exists() ? groupResultsSnap.data().results || {} : {};
+  const round32Results = round32ResultsSnap.exists() ? round32ResultsSnap.data().results || {} : {};
   const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
 
   const users = {};
@@ -977,6 +1337,14 @@ async function renderLeaderboardFromFirestore() {
         }
       });
     });
+  });
+
+  round32PicksSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
+
+    player.match_points += scoreRound32Picks(data.picks, round32Results);
   });
 
   bonusAnswersSnap.forEach(docSnap => {

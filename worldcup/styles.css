@@ -167,7 +167,9 @@ footer {
 }
 
 #groupPicksForm,
+#round32PicksForm,
 #adminGroupResultsForm,
+#adminRound32ResultsForm,
 #matchPicksForm,
 #adminMatchResultsForm {
   display: grid;
@@ -211,15 +213,52 @@ footer {
   font-size: 15px;
 }
 
+.pick-card input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  font-size: 15px;
+}
+
 .checkbox-row {
   display: flex !important;
   align-items: center;
   gap: 8px;
 }
 
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.secondary-btn {
+  background: transparent;
+  color: #e5e7eb;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 #saveGroupPicksBtn,
+#saveRound32PicksBtn,
 #saveMatchPicksBtn,
 #saveGroupResultsBtn,
+#saveRound32ResultsBtn,
 #saveMatchResultsBtn,
 #resetGroupResultsBtn,
 #resetMatchResultsBtn,
