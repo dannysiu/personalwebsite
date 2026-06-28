@@ -97,11 +97,11 @@ const round32Flags = {
   "Canada": "🇨🇦",
   "Cape Verde": "🇨🇻",
   "Colombia": "🇨🇴",
-  "Congo DR": "🇨🇩",
+  "DR Congo": "🇨🇩",
   "Croatia": "🇭🇷",
   "Ecuador": "🇪🇨",
   "Egypt": "🇪🇬",
-  "England": "🏴",
+  "England": "🇬🇧",
   "France": "🇫🇷",
   "Germany": "🇩🇪",
   "Ghana": "🇬🇭",
@@ -118,140 +118,26 @@ const round32Flags = {
   "Spain": "🇪🇸",
   "Sweden": "🇸🇪",
   "Switzerland": "🇨🇭",
-  "United States": "🇺🇸",
-  "Austria or Algeria": "🇦🇹/🇩🇿",
-  "Iran or Algeria": "🇮🇷/🇩🇿"
+  "United States": "🇺🇸"
 };
 
 const round32Matches = [
-  {
-    id: "73",
-    label: "Match 73",
-    home: "South Africa",
-    away: "Canada",
-    startTime: "2026-06-28T12:00:00-07:00",
-    venue: "Los Angeles"
-  },
-  {
-    id: "76",
-    label: "Match 76",
-    home: "Brazil",
-    away: "Japan",
-    startTime: "2026-06-29T12:00:00-05:00",
-    venue: "Houston"
-  },
-  {
-    id: "74",
-    label: "Match 74",
-    home: "Germany",
-    away: "Paraguay",
-    startTime: "2026-06-29T16:30:00-04:00",
-    venue: "Boston"
-  },
-  {
-    id: "75",
-    label: "Match 75",
-    home: "Netherlands",
-    away: "Morocco",
-    startTime: "2026-06-29T19:00:00-06:00",
-    venue: "Monterrey"
-  },
-  {
-    id: "78",
-    label: "Match 78",
-    home: "Ivory Coast",
-    away: "Norway",
-    startTime: "2026-06-30T12:00:00-05:00",
-    venue: "Dallas"
-  },
-  {
-    id: "77",
-    label: "Match 77",
-    home: "France",
-    away: "Sweden",
-    startTime: "2026-06-30T17:00:00-04:00",
-    venue: "New York / New Jersey"
-  },
-  {
-    id: "79",
-    label: "Match 79",
-    home: "Mexico",
-    away: "Ecuador",
-    startTime: "2026-06-30T19:00:00-06:00",
-    venue: "Mexico City"
-  },
-  {
-    id: "80",
-    label: "Match 80",
-    home: "England",
-    away: "Congo DR",
-    startTime: "2026-07-01T12:00:00-04:00",
-    venue: "Atlanta"
-  },
-  {
-    id: "82",
-    label: "Match 82",
-    home: "Belgium",
-    away: "Senegal",
-    startTime: "2026-07-01T13:00:00-07:00",
-    venue: "Seattle"
-  },
-  {
-    id: "81",
-    label: "Match 81",
-    home: "United States",
-    away: "Bosnia and Herzegovina",
-    startTime: "2026-07-01T17:00:00-07:00",
-    venue: "Santa Clara"
-  },
-  {
-    id: "84",
-    label: "Match 84",
-    home: "Spain",
-    away: "Austria or Algeria",
-    startTime: "2026-07-02T12:00:00-07:00",
-    venue: "Los Angeles"
-  },
-  {
-    id: "83",
-    label: "Match 83",
-    home: "Portugal",
-    away: "Croatia",
-    startTime: "2026-07-02T19:00:00-04:00",
-    venue: "Toronto"
-  },
-  {
-    id: "85",
-    label: "Match 85",
-    home: "Switzerland",
-    away: "Iran or Algeria",
-    startTime: "2026-07-02T20:00:00-07:00",
-    venue: "Vancouver"
-  },
-  {
-    id: "88",
-    label: "Match 88",
-    home: "Australia",
-    away: "Egypt",
-    startTime: "2026-07-03T13:00:00-05:00",
-    venue: "Dallas"
-  },
-  {
-    id: "86",
-    label: "Match 86",
-    home: "Argentina",
-    away: "Cape Verde",
-    startTime: "2026-07-03T18:00:00-04:00",
-    venue: "Miami"
-  },
-  {
-    id: "87",
-    label: "Match 87",
-    home: "Colombia",
-    away: "Ghana",
-    startTime: "2026-07-03T20:30:00-05:00",
-    venue: "Kansas City"
-  }
+  { id: "73", label: "Match 73", home: "South Africa", away: "Canada", startTime: "2026-06-28T14:00:00-05:00", venue: "Los Angeles" },
+  { id: "76", label: "Match 76", home: "Brazil", away: "Japan", startTime: "2026-06-29T12:00:00-05:00", venue: "Houston" },
+  { id: "74", label: "Match 74", home: "Germany", away: "Paraguay", startTime: "2026-06-29T15:30:00-05:00", venue: "Boston" },
+  { id: "75", label: "Match 75", home: "Netherlands", away: "Morocco", startTime: "2026-06-29T20:00:00-05:00", venue: "Monterrey" },
+  { id: "78", label: "Match 78", home: "Ivory Coast", away: "Norway", startTime: "2026-06-30T12:00:00-05:00", venue: "Dallas" },
+  { id: "77", label: "Match 77", home: "France", away: "Sweden", startTime: "2026-06-30T16:00:00-05:00", venue: "New York / New Jersey" },
+  { id: "79", label: "Match 79", home: "Mexico", away: "Ecuador", startTime: "2026-06-30T20:00:00-05:00", venue: "Mexico City" },
+  { id: "80", label: "Match 80", home: "England", away: "DR Congo", startTime: "2026-07-01T11:00:00-05:00", venue: "Atlanta" },
+  { id: "82", label: "Match 82", home: "Belgium", away: "Senegal", startTime: "2026-07-01T15:00:00-05:00", venue: "Seattle" },
+  { id: "81", label: "Match 81", home: "United States", away: "Bosnia and Herzegovina", startTime: "2026-07-01T19:00:00-05:00", venue: "Santa Clara" },
+  { id: "84", label: "Match 84", home: "Spain", away: "Austria", startTime: "2026-07-02T14:00:00-05:00", venue: "Los Angeles" },
+  { id: "83", label: "Match 83", home: "Portugal", away: "Croatia", startTime: "2026-07-02T18:00:00-05:00", venue: "Toronto" },
+  { id: "85", label: "Match 85", home: "Switzerland", away: "Algeria", startTime: "2026-07-02T22:00:00-05:00", venue: "Vancouver" },
+  { id: "88", label: "Match 88", home: "Australia", away: "Egypt", startTime: "2026-07-03T13:00:00-05:00", venue: "Dallas" },
+  { id: "86", label: "Match 86", home: "Argentina", away: "Cape Verde", startTime: "2026-07-03T17:00:00-05:00", venue: "Miami" },
+  { id: "87", label: "Match 87", home: "Colombia", away: "Ghana", startTime: "2026-07-03T20:30:00-05:00", venue: "Kansas City" }
 ];
 
 const round32TeamOptions = sortTeamsAlphabetically([
