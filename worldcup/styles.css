@@ -703,6 +703,21 @@ footer {
   margin-top: 0;
 }
 
+.public-pick-hidden {
+  border-style: dashed;
+  background: rgba(15, 23, 42, 0.76);
+}
+
+.hidden-pick-marker {
+  display: inline-block;
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+
 #closePlayerPicksBtn {
   background: white;
   color: #111827;

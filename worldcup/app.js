@@ -1901,7 +1901,7 @@ function renderLeaderboard(rows) {
 
   tbody.querySelectorAll(".player-pick-link").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await showPlayerGroupPicks(btn.dataset.uid, btn.dataset.name);
+      await showPlayerRound32Picks(btn.dataset.uid, btn.dataset.name);
     });
   });
 
@@ -1929,57 +1929,65 @@ function renderRootingForFlags(rootingForCountries = []) {
     : `<span class="rooting-flags-empty">—</span>`;
 }
 
-async function showPlayerGroupPicks(uid, displayName) {
+async function showPlayerRound32Picks(uid, displayName) {
   if (!currentUser) {
-    alert("Please sign in to view player picks.");
+    alert("Please sign in to view player Round of 32 picks.");
     return;
   }
 
-  await loadGroupLockTimes();
+  const [picksSnap, resultsSnap] = await Promise.all([
+    getDoc(doc(db, "round32Picks", uid)),
+    getDoc(doc(db, "round32Results", "official"))
+  ]);
 
-  const snap = await getDoc(doc(db, "groupPicks", uid));
-
-  if (!snap.exists()) {
-    playerPicksTitle.textContent = `${displayName}'s Group Picks`;
-    playerPicksContent.innerHTML = `<p class="mini-note">No group picks found for this player.</p>`;
+  if (!picksSnap.exists()) {
+    playerPicksTitle.textContent = `${displayName}'s Round of 32 Picks`;
+    playerPicksContent.innerHTML = `<p class="mini-note">No Round of 32 picks found for this player.</p>`;
     playerPicksViewer.style.display = "block";
     playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
 
-  const picks = snap.data().picks || {};
-  const lockedGroups = Object.keys(groups).filter(groupName => groupIsLocked(groupName));
+  const picks = picksSnap.data().picks || {};
+  const results = resultsSnap.exists() ? resultsSnap.data().results || {} : {};
 
-  playerPicksTitle.textContent = `${displayName}'s Group Picks`;
+  playerPicksTitle.textContent = `${displayName}'s Round of 32 Picks`;
+  playerPicksContent.innerHTML = `
+    <div class="public-picks-grid">
+      ${round32Matches.map(match => renderPublicRound32PickCard(match, picks[match.id], results[match.id])).join("")}
+    </div>
+  `;
 
-  if (!lockedGroups.length) {
-    playerPicksContent.innerHTML = `<p class="mini-note">No groups are locked yet, so picks are hidden for now.</p>`;
-  } else {
-    playerPicksContent.innerHTML = `
-      <div class="public-picks-grid">
-        ${lockedGroups.map(groupName => {
-          const pick = picks[groupName];
+  playerPicksViewer.style.display = "block";
+  playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
-          return `
-            <div class="public-pick-card">
-              <h3>Group ${groupName}</h3>
-              ${
-                pick?.first && pick?.second
-                  ? `
-                    <p><strong>Pick #1:</strong> ${escapeHTML(pick.first)}</p>
-                    <p><strong>Pick #2:</strong> ${escapeHTML(pick.second)}</p>
-                  `
-                  : `<p class="mini-note">No saved pick for this group.</p>`
-              }
-            </div>
-          `;
-        }).join("")}
+function renderPublicRound32PickCard(match, pick, result) {
+  const matchupLabel = round32MatchupLabel(match);
+  const resultIsEntered = !!result?.winner;
+
+  if (!resultIsEntered) {
+    return `
+      <div class="public-pick-card public-pick-hidden">
+        <h3>${escapeHTML(matchupLabel)}</h3>
+        <p class="hidden-pick-marker">Hidden until match is finished</p>
       </div>
     `;
   }
 
-  playerPicksViewer.style.display = "block";
-  playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
+  return `
+    <div class="public-pick-card">
+      <h3>${escapeHTML(matchupLabel)}</h3>
+      ${
+        pick?.winner
+          ? `
+            <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
+            <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
+          `
+          : `<p class="mini-note">No saved pick for this match.</p>`
+      }
+    </div>
+  `;
 }
 
 closePlayerPicksBtn?.addEventListener("click", () => {
