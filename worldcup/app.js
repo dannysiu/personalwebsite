@@ -118,7 +118,9 @@ const round32Flags = {
   "Spain": "🇪🇸",
   "Sweden": "🇸🇪",
   "Switzerland": "🇨🇭",
-  "United States": "🇺🇸"
+  "United States": "🇺🇸",
+  "Austria or Algeria": "🇦🇹/🇩🇿",
+  "Iran or Algeria": "🇮🇷/🇩🇿"
 };
 
 const round32Matches = [
@@ -190,9 +192,9 @@ const round32Matches = [
     id: "82",
     label: "Match 82",
     home: "Belgium",
-    away: "Austria",
+    away: "Senegal",
     startTime: "2026-07-01T13:00:00-07:00",
-    venue: "Santa Clara"
+    venue: "Seattle"
   },
   {
     id: "81",
@@ -200,13 +202,13 @@ const round32Matches = [
     home: "United States",
     away: "Bosnia and Herzegovina",
     startTime: "2026-07-01T17:00:00-07:00",
-    venue: "Seattle"
+    venue: "Santa Clara"
   },
   {
     id: "84",
     label: "Match 84",
     home: "Spain",
-    away: "Argentina",
+    away: "Austria or Algeria",
     startTime: "2026-07-02T12:00:00-07:00",
     venue: "Los Angeles"
   },
@@ -222,7 +224,7 @@ const round32Matches = [
     id: "85",
     label: "Match 85",
     home: "Switzerland",
-    away: "Senegal",
+    away: "Iran or Algeria",
     startTime: "2026-07-02T20:00:00-07:00",
     venue: "Vancouver"
   },
@@ -237,7 +239,7 @@ const round32Matches = [
   {
     id: "86",
     label: "Match 86",
-    home: "Algeria",
+    home: "Argentina",
     away: "Cape Verde",
     startTime: "2026-07-03T18:00:00-04:00",
     venue: "Miami"
@@ -845,11 +847,11 @@ function renderRound32BonusQuestions() {
       <p class="mini-note">Each correct team = 2 points.</p>
       <select id="round32-bonus-threeGoalWinner1">
         <option value="">Select team #1</option>
-        ${round32TeamOptions.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(round32TeamLabel(team))}</option>`).join("")}
+        ${countryOptions.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(team)}</option>`).join("")}
       </select>
       <select id="round32-bonus-threeGoalWinner2">
         <option value="">Select team #2</option>
-        ${round32TeamOptions.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(round32TeamLabel(team))}</option>`).join("")}
+        ${countryOptions.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(team)}</option>`).join("")}
       </select>
     </div>
   `;
