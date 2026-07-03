@@ -298,6 +298,7 @@ const adminRound16ResultsForm = document.getElementById("adminRound16ResultsForm
 const saveRound16ResultsBtn = document.getElementById("saveRound16ResultsBtn");
 const round16ResultsStatus = document.getElementById("round16ResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
+const refreshLeaderboardStatus = document.getElementById("refreshLeaderboardStatus");
 
 const playerPicksViewer = document.getElementById("playerPicksViewer");
 const playerPicksTitle = document.getElementById("playerPicksTitle");
@@ -317,12 +318,10 @@ let adminRound16PlayerList;
 let adminBonusResultsForm;
 let saveBonusResultsBtn;
 let bonusResultsStatus;
-let resetGroupResultsBtn;
 
 injectBonusSection();
 injectAdminPlayerManagement();
 injectAdminBonusResults();
-injectAdminResetButtons();
 moveRefreshLeaderboardButton();
 showUsaCelebrationWhenActive();
 
@@ -352,6 +351,19 @@ function setupCollapsibleSection(button, content, startsExpanded) {
     const isHidden = content.style.display === "none";
     content.style.display = isHidden ? "block" : "none";
     button.textContent = isHidden ? "Minimize" : "Expand";
+  });
+}
+
+function setupAdminPanelToggles(root = adminSection) {
+  if (!root) return;
+
+  root.querySelectorAll(".admin-panel").forEach(panel => {
+    const button = panel.querySelector(".admin-toggle-btn");
+    const content = panel.querySelector(".admin-panel-content");
+    if (!button || !content || button.dataset.toggleReady) return;
+
+    button.dataset.toggleReady = "true";
+    setupCollapsibleSection(button, content, true);
   });
 }
 
@@ -424,6 +436,7 @@ onAuthStateChanged(auth, async (user) => {
     round16BonusSection.style.display = "none";
     bonusSection.style.display = "none";
     if (adminSection) adminSection.style.display = "none";
+    if (refreshLeaderboardBtn) refreshLeaderboardBtn.style.display = "none";
 
     await renderPublicLeaderboard();
     return;
@@ -491,6 +504,8 @@ onAuthStateChanged(auth, async (user) => {
   if (ADMIN_EMAILS.includes(user.email)) {
     round16PicksSection?.insertAdjacentElement("beforebegin", adminSection);
     adminSection.style.display = "block";
+    if (refreshLeaderboardBtn) refreshLeaderboardBtn.style.display = "inline-block";
+    setupAdminPanelToggles(adminSection);
     renderAdminGroupResults();
     renderAdminRound32Results();
     renderAdminRound32BonusResults();
@@ -504,6 +519,7 @@ onAuthStateChanged(auth, async (user) => {
     await renderAdminPlayerList();
     await renderLeaderboardFromFirestore();
   } else {
+    if (refreshLeaderboardBtn) refreshLeaderboardBtn.style.display = "none";
     await renderPublicLeaderboard();
   }
 });
@@ -551,24 +567,45 @@ function injectAdminPlayerManagement() {
   const box = document.createElement("div");
   box.innerHTML = `
     <div class="admin-panel">
-      <span class="admin-panel-label">Players</span>
-      <h3>Player Payment / Ban Controls</h3>
-      <p class="mini-note">All signed-in players appear on the leaderboard unless banned.</p>
-      <div id="adminPlayerList"></div>
+      <div class="section-header admin-panel-header">
+        <div>
+          <span class="admin-panel-label">Players</span>
+          <h3>Player Payment / Ban Controls</h3>
+        </div>
+        <button class="secondary-btn admin-toggle-btn">Minimize</button>
+      </div>
+      <div class="admin-panel-content">
+        <p class="mini-note">All signed-in players appear on the leaderboard unless banned.</p>
+        <div id="adminPlayerList"></div>
+      </div>
     </div>
 
     <div class="admin-panel">
-      <span class="admin-panel-label">Round of 32 tracking</span>
-      <h3>Round of 32 Pick Status</h3>
-      <p class="mini-note">Quick check for who has saved every Round of 32 winner pick and completed the Round of 32 bonus questions.</p>
-      <div id="adminRound32PlayerList"></div>
+      <div class="section-header admin-panel-header">
+        <div>
+          <span class="admin-panel-label">Round of 32 tracking</span>
+          <h3>Round of 32 Pick Status</h3>
+        </div>
+        <button class="secondary-btn admin-toggle-btn">Minimize</button>
+      </div>
+      <div class="admin-panel-content">
+        <p class="mini-note">Quick check for who has saved every Round of 32 winner pick and completed the Round of 32 bonus questions.</p>
+        <div id="adminRound32PlayerList"></div>
+      </div>
     </div>
 
     <div class="admin-panel">
-      <span class="admin-panel-label">Round of 16 tracking</span>
-      <h3>Round of 16 Pick Status</h3>
-      <p class="mini-note">Quick check for who has saved every Round of 16 match pick and completed the Round of 16 bonus questions.</p>
-      <div id="adminRound16PlayerList"></div>
+      <div class="section-header admin-panel-header">
+        <div>
+          <span class="admin-panel-label">Round of 16 tracking</span>
+          <h3>Round of 16 Pick Status</h3>
+        </div>
+        <button class="secondary-btn admin-toggle-btn">Minimize</button>
+      </div>
+      <div class="admin-panel-content">
+        <p class="mini-note">Quick check for who has saved every Round of 16 match pick and completed the Round of 16 bonus questions.</p>
+        <div id="adminRound16PlayerList"></div>
+      </div>
     </div>
   `;
 
@@ -581,6 +618,7 @@ function injectAdminPlayerManagement() {
   adminPlayerList = document.getElementById("adminPlayerList");
   adminRound32PlayerList = document.getElementById("adminRound32PlayerList");
   adminRound16PlayerList = document.getElementById("adminRound16PlayerList");
+  setupAdminPanelToggles(box);
 }
 
 function injectAdminBonusResults() {
@@ -589,12 +627,19 @@ function injectAdminBonusResults() {
   const box = document.createElement("div");
   box.className = "admin-panel";
   box.innerHTML = `
-    <span class="admin-panel-label">Opening bonus</span>
-    <h3>Bonus Answer Key</h3>
-    <p class="mini-note">Set the correct bonus answers here. Each correct answer is worth 1 point.</p>
-    <div id="adminBonusResultsForm"></div>
-    <button id="saveBonusResultsBtn">Save Bonus Answer Key</button>
-    <p id="bonusResultsStatus"></p>
+    <div class="section-header admin-panel-header">
+      <div>
+        <span class="admin-panel-label">Opening bonus</span>
+        <h3>Bonus Answer Key</h3>
+      </div>
+      <button class="secondary-btn admin-toggle-btn">Minimize</button>
+    </div>
+    <div class="admin-panel-content">
+      <p class="mini-note">Set the correct bonus answers here. Each correct answer is worth 1 point.</p>
+      <div id="adminBonusResultsForm"></div>
+      <button id="saveBonusResultsBtn">Save Bonus Answer Key</button>
+      <p id="bonusResultsStatus"></p>
+    </div>
   `;
 
   adminSection.appendChild(box);
@@ -604,22 +649,12 @@ function injectAdminBonusResults() {
   bonusResultsStatus = document.getElementById("bonusResultsStatus");
 
   saveBonusResultsBtn.addEventListener("click", saveBonusResults);
-}
-
-function injectAdminResetButtons() {
-  if (!adminSection) return;
-
-  resetGroupResultsBtn = document.createElement("button");
-  resetGroupResultsBtn.textContent = "Reset Group Results";
-
-  saveGroupResultsBtn.insertAdjacentElement("afterend", resetGroupResultsBtn);
-  resetGroupResultsBtn.addEventListener("click", resetGroupResults);
+  setupAdminPanelToggles(box);
 }
 
 function moveRefreshLeaderboardButton() {
-  if (!refreshLeaderboardBtn || !adminSection) return;
-
-  adminSection.appendChild(refreshLeaderboardBtn);
+  if (!refreshLeaderboardBtn) return;
+  refreshLeaderboardBtn.style.display = "none";
 }
 
 async function loadGroupLockTimes() {
@@ -2946,26 +2981,31 @@ async function renderAdminPlayerList() {
 }
 
 refreshLeaderboardBtn?.addEventListener("click", async () => {
-  await renderAdminPlayerList();
-  await renderLeaderboardFromFirestore();
+  if (refreshLeaderboardStatus) {
+    refreshLeaderboardStatus.className = "refresh-leaderboard-status status-message status-info";
+    refreshLeaderboardStatus.textContent = "Refreshing leaderboard...";
+  }
+
+  refreshLeaderboardBtn.disabled = true;
+
+  try {
+    await renderAdminPlayerList();
+    await renderLeaderboardFromFirestore();
+
+    if (refreshLeaderboardStatus) {
+      refreshLeaderboardStatus.className = "refresh-leaderboard-status status-message status-success";
+      refreshLeaderboardStatus.textContent = "✅ Leaderboard refreshed!";
+    }
+  } catch (error) {
+    console.error("Failed to refresh leaderboard:", error);
+    if (refreshLeaderboardStatus) {
+      refreshLeaderboardStatus.className = "refresh-leaderboard-status status-message status-error";
+      refreshLeaderboardStatus.textContent = "Leaderboard refresh failed.";
+    }
+  } finally {
+    refreshLeaderboardBtn.disabled = false;
+  }
 });
-
-async function resetGroupResults() {
-  if (!confirm("Reset all group results?")) return;
-
-  await setDoc(doc(db, "groupResults", "official"), {
-    results: {},
-    updatedAt: new Date().toISOString(),
-    updatedBy: currentUser.email
-  });
-
-  renderAdminGroupResults();
-
-  groupResultsStatus.textContent =
-    "✅ Group results reset.";
-
-  await renderLeaderboardFromFirestore();
-}
 
 async function renderPublicLeaderboard() {
   const snap = await getDoc(doc(db, "publicLeaderboard", "current"));
@@ -3304,7 +3344,7 @@ function renderLeaderboard(rows) {
       <td>${matchPoints}${showPointDeltas ? renderPointDelta(r.match_points_delta) : ""}</td>
       <td>${r.bonus_points}${showPointDeltas ? renderPointDelta(r.bonus_points_delta) : ""}</td>
       <td><strong>${r.total_points}</strong></td>
-      <td>${renderDailyChange(r)}</td>
+      <td class="daily-change-table-cell">${renderDailyChange(r)}</td>
     `;
     tbody.appendChild(tr);
   });

@@ -185,43 +185,71 @@
       <h2>🛠️ Admin Results</h2>
 
       <div class="admin-panel admin-primary-panel">
-        <span class="admin-panel-label">Round of 16</span>
-        <h3>Round of 16 Match + Bonus Answer Key</h3>
-        <p class="mini-note">Enter each official winner and full-time score once. Match scoring and the three Round of 16 bonus answers are calculated from these results.</p>
-        <div id="adminRound16ResultsForm"></div>
-        <button id="saveRound16ResultsBtn">Save Round of 16 Results</button>
-        <p id="round16ResultsStatus"></p>
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Round of 16</span>
+            <h3>Round of 16 Match + Bonus Answer Key</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Enter each official winner and full-time score once. Match scoring and the three Round of 16 bonus answers are calculated from these results.</p>
+          <div id="adminRound16ResultsForm"></div>
+          <button id="saveRound16ResultsBtn">Save Round of 16 Results</button>
+          <p id="round16ResultsStatus"></p>
+        </div>
       </div>
 
       <div class="admin-panel">
-        <span class="admin-panel-label">Group stage</span>
-        <h3>Group Results</h3>
-        <div id="adminGroupResultsForm"></div>
-        <button id="saveGroupResultsBtn">Save Group Results</button>
-        <p id="groupResultsStatus"></p>
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Group stage</span>
+            <h3>Group Results</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <div id="adminGroupResultsForm"></div>
+          <button id="saveGroupResultsBtn">Save Group Results</button>
+          <p id="groupResultsStatus"></p>
+        </div>
       </div>
 
       <div class="admin-panel">
-        <span class="admin-panel-label">Round of 32</span>
-        <h3>Round of 32 Results</h3>
-        <div id="adminRound32ResultsForm"></div>
-        <button id="saveRound32ResultsBtn">Save Round of 32 Results</button>
-        <p id="round32ResultsStatus"></p>
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Round of 32</span>
+            <h3>Round of 32 Results</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <div id="adminRound32ResultsForm"></div>
+          <button id="saveRound32ResultsBtn">Save Round of 32 Results</button>
+          <p id="round32ResultsStatus"></p>
+        </div>
       </div>
 
       <div class="admin-panel">
-        <span class="admin-panel-label">Round of 32 bonus</span>
-        <h3>Round of 32 Bonus Results</h3>
-        <p class="mini-note">Set official counts and choose every team that won a Round of 32 match by 3+ goals.</p>
-        <div id="adminRound32BonusResultsForm"></div>
-        <button id="saveRound32BonusResultsBtn">Save Round of 32 Bonus Results</button>
-        <p id="round32BonusResultsStatus"></p>
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Round of 32 bonus</span>
+            <h3>Round of 32 Bonus Results</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Set official counts and choose every team that won a Round of 32 match by 3+ goals.</p>
+          <div id="adminRound32BonusResultsForm"></div>
+          <button id="saveRound32BonusResultsBtn">Save Round of 32 Bonus Results</button>
+          <p id="round32BonusResultsStatus"></p>
+        </div>
       </div>
-
-      <button id="refreshLeaderboardBtn">Refresh Leaderboard</button>
     </section>
 
     <section id="leaderboardSection">
+      <button id="refreshLeaderboardBtn" style="display:none;">Refresh Leaderboard</button>
+      <span id="refreshLeaderboardStatus" class="refresh-leaderboard-status" role="status" aria-live="polite"></span>
       <h2>🏆 Leaderboard</h2>
       <p class="leaderboard-note">
         🤖 <strong>FIFATom</strong> is our FIFA-rankings baseline bot: a fun benchmark to see how human picks stack up against the numbers.
@@ -235,7 +263,7 @@
             <th>Match Points</th>
             <th>Bonus Points</th>
             <th>Total Points</th>
-            <th>Daily Change</th>
+            <th class="daily-change-heading">Daily Change</th>
           </tr>
         </thead>
         <tbody></tbody>
