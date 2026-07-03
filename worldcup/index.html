@@ -18,6 +18,16 @@
     </a>
   </div>
 
+  <section class="usa-celebration" id="usaCelebrationBanner" style="display:none;">
+    <div class="usa-firework usa-firework-left"></div>
+    <div class="usa-firework usa-firework-right"></div>
+    <div class="usa-stars" aria-hidden="true">★ ★ ★ ★ ★</div>
+    <h2>Happy July 4th Weekend!</h2>
+    <p>
+      Celebrating 250 years of the USA and Team USA reaching the Round of 16.
+    </p>
+  </section>
+
   <header class="hero">
     <div class="hero-badge">🌍 FIFA World Cup 2026 Pick’em</div>
     <h1>Danz World Cup League 2026</h1>
@@ -29,10 +39,10 @@
 
   <main class="container">
     <section class="card announcement-card">
-      <h2>🚨 Round of 32 Picks are open!</h2>
+      <h2>🚨 Round of 16 Picks are open!</h2>
       <p>
-        ✅ Pick the winner of every Round of 32 match.<br>
-        ⭐ Answer the 3 bonus questions for a chance to earn extra points.<br>
+        ✅ Pick the winner and full-time score for every Round of 16 match.<br>
+        ⭐ Round of 16 bonus questions are live.<br>
         Good luck! ⚽
       </p>
     </section>
@@ -83,35 +93,78 @@
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
-    <section class="card" id="round32PicksSection" style="display:none;">
-      <h2>🏟️ Round of 32 Pick’em</h2>
-      <p>
-        Pick the winner of each Round of 32 match. Correct winner = <strong>3 points</strong>.<br>
-        Think the match goes to Extra Time or Penalties? Check the box.<br>
-        Correct prediction = <strong>+1</strong> • Incorrect prediction = <strong>-1</strong>.
-      </p>
-      <p class="lock-note">Each match locks at its official kickoff time.</p>
+    <section class="card" id="round16PicksSection" style="display:none;">
+      <div class="section-header">
+        <h2>🏟️ Round of 16 Pick’em</h2>
+        <button id="toggleRound16PicksBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="round16PicksContent">
+        <p>
+          Pick the winner of each Round of 16 match and enter the full-time score.<br>
+          Correct winner = <strong>3 points</strong>. Exact full-time score = <strong>2 points</strong>.<br>
+          Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
+        </p>
+        <p class="lock-note">Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
 
-      <div id="round32PicksForm"></div>
-      <button id="saveRound32PicksBtn">Save Round of 32 Picks</button>
-      <p id="round32PicksStatus"></p>
+        <div id="round16PicksForm"></div>
+        <button id="saveRound16PicksBtn">Save Round of 16 Picks</button>
+        <p id="round16PicksStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card" id="round16BonusSection" style="display:none;">
+      <div class="section-header">
+        <h2>🎯 Round of 16 Bonus Questions</h2>
+        <button id="toggleRound16BonusBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="round16BonusContent">
+        <p class="lock-note">Round of 16 bonus answers lock when the first Round of 16 match begins.</p>
+
+        <div id="round16BonusForm"></div>
+        <button id="saveRound16BonusBtn">Save Round of 16 Bonus Answers</button>
+        <p id="round16BonusStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card" id="round32PicksSection" style="display:none;">
+      <div class="section-header">
+        <h2>🏟️ Round of 32 Pick’em</h2>
+        <button id="toggleRound32PicksBtn" class="secondary-btn">Expand</button>
+      </div>
+      <div id="round32PicksContent" style="display:none;">
+        <p>
+          Pick the winner of each Round of 32 match. Correct winner = <strong>3 points</strong>.<br>
+          Think the match goes to Extra Time or Penalties? Check the box.<br>
+          Correct prediction = <strong>+1</strong> • Incorrect prediction = <strong>-1</strong>.
+        </p>
+        <p class="lock-note">Each match locks at its official kickoff time.</p>
+
+        <div id="round32PicksForm"></div>
+        <button id="saveRound32PicksBtn">Save Round of 32 Picks</button>
+        <p id="round32PicksStatus"></p>
+      </div>
     </section>
 
     <section class="card" id="round32BonusSection" style="display:none;">
-      <h2>🎯 Round of 32 Bonus Questions</h2>
-      <p class="lock-note">Round of 32 bonus answers lock when the first Round of 32 match begins.</p>
+      <div class="section-header">
+        <h2>🎯 Round of 32 Bonus Questions</h2>
+        <button id="toggleRound32BonusBtn" class="secondary-btn">Expand</button>
+      </div>
+      <div id="round32BonusContent" style="display:none;">
+        <p class="lock-note">Round of 32 bonus answers lock when the first Round of 32 match begins.</p>
 
-      <div id="round32BonusForm"></div>
-      <button id="saveRound32BonusBtn">Save Round of 32 Bonus Answers</button>
-      <p id="round32BonusStatus" role="status" aria-live="polite"></p>
+        <div id="round32BonusForm"></div>
+        <button id="saveRound32BonusBtn">Save Round of 32 Bonus Answers</button>
+        <p id="round32BonusStatus" role="status" aria-live="polite"></p>
+      </div>
     </section>
 
     <section class="card" id="groupPicksSection" style="display:none;">
       <div class="section-header">
         <h2>🌍 Group Stage Pick’em</h2>
-        <button id="toggleGroupPicksBtn" class="secondary-btn">Minimize</button>
+        <button id="toggleGroupPicksBtn" class="secondary-btn">Expand</button>
       </div>
-      <div id="groupPicksContent">
+      <div id="groupPicksContent" style="display:none;">
         <p>
           Pick <strong>2 teams from each group</strong>.
           Each pick that finishes <strong>top 2 = 2 points</strong>.
@@ -130,6 +183,15 @@
 
     <section class="card" id="adminSection" style="display:none;">
       <h2>🛠️ Admin Results</h2>
+
+      <div class="admin-panel admin-primary-panel">
+        <span class="admin-panel-label">Round of 16</span>
+        <h3>Round of 16 Match + Bonus Answer Key</h3>
+        <p class="mini-note">Enter each official winner and full-time score once. Match scoring and the three Round of 16 bonus answers are calculated from these results.</p>
+        <div id="adminRound16ResultsForm"></div>
+        <button id="saveRound16ResultsBtn">Save Round of 16 Results</button>
+        <p id="round16ResultsStatus"></p>
+      </div>
 
       <div class="admin-panel">
         <span class="admin-panel-label">Group stage</span>
@@ -159,8 +221,11 @@
       <button id="refreshLeaderboardBtn">Refresh Leaderboard</button>
     </section>
 
-    <section>
+    <section id="leaderboardSection">
       <h2>🏆 Leaderboard</h2>
+      <p class="leaderboard-note">
+        🤖 <strong>FIFATom</strong> is our FIFA-rankings baseline bot: a fun benchmark to see how human picks stack up against the numbers.
+      </p>
       <table id="leaderboard">
         <thead>
           <tr>
@@ -170,6 +235,7 @@
             <th>Match Points</th>
             <th>Bonus Points</th>
             <th>Total Points</th>
+            <th>Daily Change</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -177,13 +243,15 @@
     </section>
 
     <section class="card" id="playerPicksViewer" style="display:none;">
-      <h2 id="playerPicksTitle">Player Round of 32 Picks</h2>
-      <p class="mini-note">Round of 32 picks stay hidden until the official result is entered.</p>
+      <h2 id="playerPicksTitle">Player Knockout Picks</h2>
+      <p class="mini-note">Knockout picks stay hidden until the official result is entered or the match starts.</p>
       <div id="playerPicksContent"></div>
       <button id="closePlayerPicksBtn">Close</button>
     </section>
 
   </main>
+
+  <button id="viewLeaderboardBtn" class="floating-leaderboard-btn">View Leaderboard</button>
 
   <footer class="site-footer">
     Built by
@@ -196,6 +264,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=public-started-round32-picks"></script>
+  <script type="module" src="app.js?v=round16-picks"></script>
 </body>
 </html>
