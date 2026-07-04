@@ -119,6 +119,10 @@ function countryFlagFromOption(country) {
   return country.replace(cleanCountryName(country), "").trim();
 }
 
+function currentUserIsAdmin() {
+  return !!currentUser && ADMIN_EMAILS.includes(currentUser.email);
+}
+
 const round32Flags = {
   "Algeria": "🇩🇿",
   "Argentina": "🇦🇷",
@@ -310,6 +314,8 @@ const adminRound32BonusResultsForm = document.getElementById("adminRound32BonusR
 const saveRound32BonusResultsBtn = document.getElementById("saveRound32BonusResultsBtn");
 const round32BonusResultsStatus = document.getElementById("round32BonusResultsStatus");
 const adminRound16ResultsForm = document.getElementById("adminRound16ResultsForm");
+const adminRound16BonusQuestions = document.getElementById("adminRound16BonusQuestions");
+const adminRound16BonusKey = document.getElementById("adminRound16BonusKey");
 const saveRound16ResultsBtn = document.getElementById("saveRound16ResultsBtn");
 const round16ResultsStatus = document.getElementById("round16ResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
@@ -359,17 +365,22 @@ toggleProfileSettingsBtn?.addEventListener("click", () => {
 function setupCollapsibleSection(button, content, startsExpanded) {
   if (!button || !content) return;
 
-  content.style.display = startsExpanded ? "block" : "none";
-  button.textContent = startsExpanded ? "Minimize" : "Expand";
+  setCollapsibleSectionState(button, content, startsExpanded);
 
   button.addEventListener("click", () => {
     const isHidden = content.style.display === "none";
-    content.style.display = isHidden ? "block" : "none";
-    button.textContent = isHidden ? "Minimize" : "Expand";
+    setCollapsibleSectionState(button, content, isHidden);
   });
 }
 
-function setupAdminPanelToggles(root = adminSection) {
+function setCollapsibleSectionState(button, content, expanded) {
+  if (!button || !content) return;
+
+  content.style.display = expanded ? "block" : "none";
+  button.textContent = expanded ? "Minimize" : "Expand";
+}
+
+function setupAdminPanelToggles(root = adminSection, startsExpanded = false) {
   if (!root) return;
 
   const panels = [
@@ -383,7 +394,26 @@ function setupAdminPanelToggles(root = adminSection) {
     if (!button || !content || button.dataset.toggleReady) return;
 
     button.dataset.toggleReady = "true";
-    setupCollapsibleSection(button, content, true);
+    setupCollapsibleSection(button, content, startsExpanded);
+  });
+}
+
+function minimizeAdminDefaultSections() {
+  setCollapsibleSectionState(toggleProfileSettingsBtn, profileSettingsContent, false);
+  setCollapsibleSectionState(toggleRound16PicksBtn, round16PicksContent, false);
+  setCollapsibleSectionState(toggleRound16BonusBtn, round16BonusContent, false);
+  setCollapsibleSectionState(toggleRound32PicksBtn, round32PicksContent, false);
+  setCollapsibleSectionState(toggleRound32BonusBtn, round32BonusContent, false);
+  setCollapsibleSectionState(toggleGroupPicksBtn, groupPicksContent, false);
+  setCollapsibleSectionState(document.getElementById("toggleBonusBtn"), bonusContent, false);
+  setupAdminPanelToggles(adminSection, false);
+
+  adminSection?.querySelectorAll(".admin-panel").forEach(panel => {
+    setCollapsibleSectionState(
+      panel.querySelector(".admin-toggle-btn"),
+      panel.querySelector(".admin-panel-content"),
+      false
+    );
   });
 }
 
@@ -525,11 +555,13 @@ onAuthStateChanged(auth, async (user) => {
     round16PicksSection?.insertAdjacentElement("beforebegin", adminSection);
     adminSection.style.display = "block";
     if (refreshLeaderboardBtn) refreshLeaderboardBtn.style.display = "inline-block";
-    setupAdminPanelToggles(adminSection);
+    setupAdminPanelToggles(adminSection, false);
+    minimizeAdminDefaultSections();
     renderAdminGroupResults();
     renderAdminRound32Results();
     renderAdminRound32BonusResults();
     await renderAdminRound16Results();
+    await renderAdminRound16BonusQuestions();
     renderAdminBonusResults();
     await loadExistingGroupResults();
     await loadExistingRound32Results();
@@ -1694,6 +1726,38 @@ async function renderRound16BonusQuestions() {
   }
 }
 
+async function renderAdminRound16BonusQuestions() {
+  if (!adminRound16BonusQuestions) return;
+
+  const round32Results = await getRound32OfficialResults();
+
+  adminRound16BonusQuestions.innerHTML = `
+    <div class="pick-card">
+      <label>1. Which Round of 16 match will have the most total goals?</label>
+      <p class="mini-note">Correct match = 2 points.</p>
+      <select disabled>
+        ${renderRound16MatchOptions(round32Results)}
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>2. How many clean sheets will there be in the Round of 16?</label>
+      <p class="mini-note">Exact = 3 points. Within 1 = 2 points.</p>
+      <input type="number" min="0" max="16" disabled />
+    </div>
+
+    <div class="pick-card">
+      <label>3. Order the regions by most goals scored during the Round of 16.</label>
+      <p class="mini-note">Each correct spot = 1 point.</p>
+      ${renderRound16RegionCountryGuide(round32Results)}
+      <select disabled>${renderRound16RegionOptions("1st most goals")}</select>
+      <select disabled>${renderRound16RegionOptions("2nd most goals")}</select>
+      <select disabled>${renderRound16RegionOptions("3rd most goals")}</select>
+      <select disabled>${renderRound16RegionOptions("4th most goals")}</select>
+    </div>
+  `;
+}
+
 async function loadExistingRound16BonusAnswers() {
   let snap;
 
@@ -1745,6 +1809,10 @@ async function applyRound16BonusIndicators() {
 
   const round16Results = round16Snap.data().results || {};
   const round32Results = round32Snap.exists() ? round32Snap.data().results || {} : {};
+
+  if (!round16BonusResultsAreComplete(round16Results)) {
+    return;
+  }
 
   const mostGoalsAnswer = getValue("round16-bonus-mostGoalsMatch");
   if (mostGoalsAnswer) {
@@ -2491,7 +2559,10 @@ async function renderAdminRound16Results() {
 
 async function loadExistingRound16Results() {
   const snap = await getDoc(doc(db, "round16Results", "official"));
-  if (!snap.exists()) return;
+  if (!snap.exists()) {
+    await renderAdminRound16BonusKey();
+    return;
+  }
 
   const results = snap.data().results || {};
 
@@ -2504,6 +2575,63 @@ async function loadExistingRound16Results() {
       extraTimeOrPenalties.checked = !!result.extraTimeOrPenalties;
     }
   });
+
+  await renderAdminRound16BonusKey(results);
+}
+
+async function renderAdminRound16BonusKey(existingResults = null) {
+  if (!adminRound16BonusKey) return;
+
+  const [round16Snap, round32Snap] = await Promise.all([
+    existingResults ? Promise.resolve(null) : getDoc(doc(db, "round16Results", "official")),
+    getDoc(doc(db, "round32Results", "official"))
+  ]);
+  const round16Results = existingResults || (round16Snap?.exists() ? round16Snap.data().results || {} : {});
+  const round32Results = round32Snap.exists() ? round32Snap.data().results || {} : {};
+  const completedCount = getRound16OfficialScores(round16Results).length;
+  const key = getRound16BonusAnswerKey(round16Results, round32Results);
+
+  if (!key) {
+    adminRound16BonusKey.innerHTML = `
+      <div class="admin-bonus-key-card">
+        <span class="admin-panel-label">Round of 16 bonus key</span>
+        <h3>Bonus Answer Key</h3>
+        <p class="mini-note">
+          Pending: ${completedCount}/${round16Matches.length} Round of 16 official results have winners and valid full-time scores.
+          Bonus points will stay at 0 until all Round of 16 matches are complete.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const mostGoalsMatches = key.mostGoalsMatchIds
+    .map(matchId => round16Matches.find(match => match.id === matchId))
+    .filter(Boolean);
+
+  adminRound16BonusKey.innerHTML = `
+    <div class="admin-bonus-key-card">
+      <span class="admin-panel-label">Round of 16 bonus key</span>
+      <h3>Bonus Answer Key</h3>
+      <p class="mini-note">These answers are calculated from the official Round of 16 results above. RO16 bonus points are awarded only after all eight matches are complete.</p>
+      <table class="admin-player-table admin-bonus-key-table">
+        <tbody>
+          <tr>
+            <th>Most total goals match</th>
+            <td>${mostGoalsMatches.map(match => escapeHTML(round16MatchupLabel(match, round32Results))).join("<br>")}</td>
+          </tr>
+          <tr>
+            <th>Clean sheets</th>
+            <td>${escapeHTML(String(key.cleanSheets))}</td>
+          </tr>
+          <tr>
+            <th>Region goal order</th>
+            <td>${key.regionOrder.map((region, index) => `${index + 1}. ${escapeHTML(region)}`).join("<br>")}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 saveRound16ResultsBtn?.addEventListener("click", async () => {
@@ -2553,6 +2681,7 @@ saveRound16ResultsBtn?.addEventListener("click", async () => {
   }, { merge: true });
 
   round16ResultsStatus.textContent = "✅ Round of 16 results saved!";
+  await renderAdminRound16BonusKey(results);
   await renderRound16Picks();
   await renderRound16BonusQuestions();
   await loadExistingRound16Picks();
@@ -2715,6 +2844,27 @@ function calculateRound16MostGoalsMatchIds(results = {}) {
     .map(({ match }) => match.id);
 }
 
+function round16BonusResultsAreComplete(results = {}) {
+  return round16Matches.every(match => {
+    const result = results[match.id];
+    return !!result?.winner && !!parseWinnerFirstScore(result.score);
+  });
+}
+
+function getRound16BonusAnswerKey(results = {}, round32Results = {}) {
+  if (!round16BonusResultsAreComplete(results)) return null;
+
+  const mostGoalsMatchIds = calculateRound16MostGoalsMatchIds(results);
+  const cleanSheets = calculateRound16CleanSheets(results);
+  const regionOrder = calculateRound16RegionOrder(results, round32Results);
+
+  return {
+    mostGoalsMatchIds,
+    cleanSheets,
+    regionOrder
+  };
+}
+
 function getRound16ResultParticipants(match, result, round32Results = {}) {
   if (Array.isArray(result?.participants) && result.participants.length === 2) {
     return result.participants;
@@ -2772,6 +2922,7 @@ function scoreExactOrWithinOne(answer, result) {
 
 function scoreRound16BonusAnswers(answers, round16Results, round32Results) {
   if (!answers || !round16Results) return 0;
+  if (!round16BonusResultsAreComplete(round16Results)) return 0;
 
   let points = 0;
 
@@ -3198,6 +3349,58 @@ function leaderboardDateKey(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+function dateKeyFromValue(value) {
+  if (!value) return "";
+
+  const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return leaderboardDateKey(date);
+}
+
+function matchDateKey(match) {
+  return dateKeyFromValue(match?.startTime);
+}
+
+function roundLastMatchDateKey(matches) {
+  const timestamps = matches
+    .map(match => new Date(match.startTime).getTime())
+    .filter(timestamp => !Number.isNaN(timestamp));
+
+  if (!timestamps.length) return "";
+  return leaderboardDateKey(new Date(Math.max(...timestamps)));
+}
+
+function signedPointLabel(points) {
+  const amount = Number(points || 0);
+  return `${amount > 0 ? "+" : ""}${amount}`;
+}
+
+function exactWithinTwoLabel(points) {
+  if (points === 4) return "Exact";
+  if (points === 2) return "Within 2";
+  return "";
+}
+
+function exactWithinOneLabel(points) {
+  if (points === 3) return "Exact";
+  if (points === 2) return "Within 1";
+  return "";
+}
+
+function addScoringEntry(entries, dateKey, category, item, detail, points) {
+  const numericPoints = Number(points || 0);
+  if (!numericPoints) return;
+
+  entries.push({
+    dateKey,
+    category,
+    item,
+    detail,
+    points: numericPoints
+  });
+}
+
 function compareLeaderboardRows(a, b) {
   const pointDiff = (b.total_points || 0) - (a.total_points || 0);
   if (pointDiff !== 0) return pointDiff;
@@ -3543,6 +3746,397 @@ function renderPointDelta(delta = 0) {
   return `<span class="point-delta point-delta-flat">+0 today</span>`;
 }
 
+async function loadPlayerScoringBreakdownData(uid) {
+  const [
+    groupPicksSnap,
+    round32PicksSnap,
+    round16PicksSnap,
+    round32BonusAnswersSnap,
+    round16BonusAnswersSnap,
+    bonusAnswersSnap,
+    groupResultsSnap,
+    round32ResultsSnap,
+    round32BonusResultsSnap,
+    round16ResultsSnap,
+    bonusResultsSnap
+  ] = await Promise.all([
+    getDoc(doc(db, "groupPicks", uid)),
+    getDoc(doc(db, "round32Picks", uid)),
+    getDoc(doc(db, "round16Picks", uid)),
+    getDoc(doc(db, "round32BonusAnswers", uid)),
+    getDoc(doc(db, "round16BonusAnswers", uid)),
+    getDoc(doc(db, "bonusAnswers", uid)),
+    getDoc(doc(db, "groupResults", "official")),
+    getDoc(doc(db, "round32Results", "official")),
+    getDoc(doc(db, "round32BonusResults", "official")),
+    getDoc(doc(db, "round16Results", "official")),
+    getDoc(doc(db, "bonusResults", "official"))
+  ]);
+
+  const groupResultsDoc = groupResultsSnap.exists() ? groupResultsSnap.data() : {};
+  const round32BonusResultsDoc = round32BonusResultsSnap.exists() ? round32BonusResultsSnap.data() : {};
+  const round16ResultsDoc = round16ResultsSnap.exists() ? round16ResultsSnap.data() : {};
+  const bonusResultsDoc = bonusResultsSnap.exists() ? bonusResultsSnap.data() : {};
+
+  return {
+    groupPicks: groupPicksSnap.exists() ? groupPicksSnap.data().picks || {} : {},
+    round32Picks: round32PicksSnap.exists() ? round32PicksSnap.data().picks || {} : {},
+    round16Picks: round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {},
+    round32BonusAnswers: round32BonusAnswersSnap.exists() ? round32BonusAnswersSnap.data().answers || {} : {},
+    round16BonusAnswers: round16BonusAnswersSnap.exists() ? round16BonusAnswersSnap.data().answers || {} : {},
+    bonusAnswers: bonusAnswersSnap.exists() ? bonusAnswersSnap.data().answers || {} : {},
+    groupResults: groupResultsDoc.results || {},
+    groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
+    round32Results: round32ResultsSnap.exists() ? round32ResultsSnap.data().results || {} : {},
+    round32BonusResults: round32BonusResultsDoc.results || {},
+    round32BonusResultsDateKey:
+      dateKeyFromValue(round32BonusResultsDoc.updatedAt) || roundLastMatchDateKey(round32Matches),
+    round16Results: round16ResultsDoc.results || {},
+    round16ResultsDateKey:
+      dateKeyFromValue(round16ResultsDoc.updatedAt) || roundLastMatchDateKey(round16Matches),
+    bonusResults: bonusResultsDoc.results || {},
+    bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
+  };
+}
+
+function buildGroupScoringEntries(data) {
+  const entries = [];
+
+  Object.entries(data.groupPicks || {}).forEach(([groupName, pick]) => {
+    const result = data.groupResults[groupName];
+    if (!result) return;
+
+    [
+      ["Pick #1", pick.first],
+      ["Pick #2", pick.second]
+    ].forEach(([slotLabel, team]) => {
+      if (!team) return;
+
+      if (sameCountryOption(team, result.first) || sameCountryOption(team, result.second)) {
+        addScoringEntry(
+          entries,
+          data.groupResultsDateKey,
+          "Match",
+          `Group ${groupName}: ${countryOptionLabel(team)}`,
+          `${slotLabel} finished top 2`,
+          2
+        );
+      } else if (sameCountryOption(team, result.third) && result.thirdQualified) {
+        addScoringEntry(
+          entries,
+          data.groupResultsDateKey,
+          "Match",
+          `Group ${groupName}: ${countryOptionLabel(team)}`,
+          `${slotLabel} finished 3rd and qualified`,
+          1
+        );
+      }
+    });
+  });
+
+  return entries;
+}
+
+function buildRound32ScoringEntries(data) {
+  const entries = [];
+
+  Object.entries(data.round32Picks || {}).forEach(([matchId, pick]) => {
+    const match = round32Matches.find(item => item.id === matchId);
+    const result = data.round32Results[matchId];
+    if (!match || !pick || !result?.winner) return;
+
+    const item = round32MatchupLabel(match);
+    if (sameCountryOption(pick.winner, result.winner)) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Winner pick", 3);
+    }
+
+    if (pick.extraTimeOrPenalties) {
+      addScoringEntry(
+        entries,
+        matchDateKey(match),
+        "Match",
+        item,
+        "Extra time / penalties pick",
+        result.extraTimeOrPenalties ? 1 : -1
+      );
+    }
+  });
+
+  return entries;
+}
+
+function buildRound16ScoringEntries(data) {
+  const entries = [];
+
+  Object.entries(data.round16Picks || {}).forEach(([matchId, pick]) => {
+    const match = round16Matches.find(item => item.id === matchId);
+    const result = data.round16Results[matchId];
+    if (!match || !pick || !result?.winner) return;
+
+    const item = round16MatchupLabel(match, data.round32Results);
+    if (sameCountryOption(pick.winner, result.winner)) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Winner pick", 3);
+    }
+
+    const pickScore = normalizeWinnerFirstScore(pick.score);
+    const resultScore = normalizeWinnerFirstScore(result.score);
+    if (
+      parseWinnerFirstScore(pickScore) &&
+      parseWinnerFirstScore(resultScore) &&
+      pickScore === resultScore
+    ) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Exact full-time score", 2);
+    }
+
+    if (pick.extraTimeOrPenalties) {
+      addScoringEntry(
+        entries,
+        matchDateKey(match),
+        "Match",
+        item,
+        "Extra time / penalties pick",
+        result.extraTimeOrPenalties ? 1 : -1
+      );
+    }
+  });
+
+  return entries;
+}
+
+function buildRound32BonusScoringEntries(data) {
+  const entries = [];
+  const answers = data.round32BonusAnswers || {};
+  const results = data.round32BonusResults || {};
+  const dateKey = data.round32BonusResultsDateKey;
+
+  const extraTimePoints = scoreExactOrWithinTwo(
+    answers.extraTimeOrPenaltiesCount,
+    results.extraTimeOrPenaltiesCount
+  );
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Round of 32 bonus: extra time / penalties count",
+    exactWithinTwoLabel(extraTimePoints),
+    extraTimePoints
+  );
+
+  const redCardsPoints = scoreExactOrWithinTwo(answers.redCards, results.redCards);
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Round of 32 bonus: red cards",
+    exactWithinTwoLabel(redCardsPoints),
+    redCardsPoints
+  );
+
+  const officialThreeGoalWinners = Array.isArray(results.threeGoalWinners)
+    ? results.threeGoalWinners
+    : [];
+  const userThreeGoalWinners = Array.isArray(answers.threeGoalWinners)
+    ? answers.threeGoalWinners
+    : [answers.threeGoalWinner].filter(Boolean);
+
+  [...new Set(userThreeGoalWinners.filter(Boolean))].forEach(team => {
+    if (officialThreeGoalWinners.some(resultTeam => sameCountryOption(team, resultTeam))) {
+      addScoringEntry(
+        entries,
+        dateKey,
+        "Bonus",
+        `Round of 32 bonus: ${countryOptionLabel(team)} won by 3+ goals`,
+        "Correct team",
+        2
+      );
+    }
+  });
+
+  return entries;
+}
+
+function buildRound16BonusScoringEntries(data) {
+  const entries = [];
+  const answers = data.round16BonusAnswers || {};
+  const results = data.round16Results || {};
+  const dateKey = data.round16ResultsDateKey;
+  if (!round16BonusResultsAreComplete(results)) return entries;
+
+  const mostGoalsMatchIds = calculateRound16MostGoalsMatchIds(results);
+  if (answers.mostGoalsMatch && mostGoalsMatchIds.includes(answers.mostGoalsMatch)) {
+    const match = round16Matches.find(item => item.id === answers.mostGoalsMatch);
+    addScoringEntry(
+      entries,
+      dateKey,
+      "Bonus",
+      "Round of 16 bonus: most total goals match",
+      match ? round16MatchupLabel(match, data.round32Results) : `Match ${answers.mostGoalsMatch}`,
+      2
+    );
+  }
+
+  const cleanSheetsPoints = scoreExactOrWithinOne(
+    answers.cleanSheets,
+    calculateRound16CleanSheets(results)
+  );
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Round of 16 bonus: clean sheets",
+    exactWithinOneLabel(cleanSheetsPoints),
+    cleanSheetsPoints
+  );
+
+  const actualRegionOrder = calculateRound16RegionOrder(results, data.round32Results);
+  const answerRegionOrder = Array.isArray(answers.regionOrder) ? answers.regionOrder : [];
+  answerRegionOrder.forEach((region, index) => {
+    if (region && region === actualRegionOrder[index]) {
+      addScoringEntry(
+        entries,
+        dateKey,
+        "Bonus",
+        `Round of 16 bonus: region rank #${index + 1}`,
+        region,
+        1
+      );
+    }
+  });
+
+  return entries;
+}
+
+function buildOpeningBonusScoringEntries(data) {
+  const entries = [];
+  const answers = data.bonusAnswers || {};
+  const results = data.bonusResults || {};
+  const dateKey = data.bonusResultsDateKey;
+
+  if (sameCountryOption(answers.mostGoalsCountry, results.mostGoalsCountry)) {
+    addScoringEntry(entries, dateKey, "Bonus", "Opening bonus: most goals country", countryOptionLabel(answers.mostGoalsCountry), 1);
+  }
+
+  const guessYellow = Number(answers.yellowCards);
+  const actualYellow = Number(results.yellowCards);
+  if (!Number.isNaN(guessYellow) && !Number.isNaN(actualYellow) && Math.abs(guessYellow - actualYellow) <= 10) {
+    addScoringEntry(entries, dateKey, "Bonus", "Opening bonus: yellow cards", "Within 10", 1);
+  }
+
+  if (answers.usaOut && answers.usaOut === results.usaOut) {
+    addScoringEntry(entries, dateKey, "Bonus", "Opening bonus: USA elimination round", answers.usaOut, 1);
+  }
+
+  if (
+    answers.semifinalist &&
+    Array.isArray(results.semifinalists) &&
+    results.semifinalists.some(team => sameCountryOption(answers.semifinalist, team))
+  ) {
+    addScoringEntry(entries, dateKey, "Bonus", "Opening bonus: semifinalist", countryOptionLabel(answers.semifinalist), 1);
+  }
+
+  if (sameCountryOption(answers.winner, results.winner)) {
+    addScoringEntry(entries, dateKey, "Bonus", "Opening bonus: champion", countryOptionLabel(answers.winner), 1);
+  }
+
+  return entries;
+}
+
+function buildScoringBreakdownEntries(data) {
+  return [
+    ...buildGroupScoringEntries(data),
+    ...buildRound32ScoringEntries(data),
+    ...buildRound16ScoringEntries(data),
+    ...buildRound32BonusScoringEntries(data),
+    ...buildRound16BonusScoringEntries(data),
+    ...buildOpeningBonusScoringEntries(data)
+  ].sort((a, b) => {
+    if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
+    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    return a.item.localeCompare(b.item);
+  });
+}
+
+function renderAdminDailyPointsBreakdown(data, selectedDateKey) {
+  const entries = buildScoringBreakdownEntries(data)
+    .filter(entry => entry.dateKey === selectedDateKey);
+  const matchPoints = entries
+    .filter(entry => entry.category === "Match")
+    .reduce((total, entry) => total + entry.points, 0);
+  const bonusPoints = entries
+    .filter(entry => entry.category === "Bonus")
+    .reduce((total, entry) => total + entry.points, 0);
+  const totalPoints = matchPoints + bonusPoints;
+
+  if (!entries.length) {
+    return `
+      <div class="admin-daily-points-summary">
+        <span>Match ${signedPointLabel(0)}</span>
+        <span>Bonus ${signedPointLabel(0)}</span>
+        <strong>Total ${signedPointLabel(0)}</strong>
+      </div>
+      <p class="mini-note">No scored items for this day.</p>
+    `;
+  }
+
+  return `
+    <div class="admin-daily-points-summary">
+      <span>Match ${signedPointLabel(matchPoints)}</span>
+      <span>Bonus ${signedPointLabel(bonusPoints)}</span>
+      <strong>Total ${signedPointLabel(totalPoints)}</strong>
+    </div>
+    <table class="admin-player-table admin-daily-points-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Item</th>
+          <th>Detail</th>
+          <th>Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${entries.map(entry => `
+          <tr>
+            <td>${escapeHTML(entry.category)}</td>
+            <td>${escapeHTML(entry.item)}</td>
+            <td>${escapeHTML(entry.detail)}</td>
+            <td class="${entry.points >= 0 ? "daily-points-positive" : "daily-points-negative"}">${signedPointLabel(entry.points)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderAdminDailyPointsPanel(data, selectedDateKey = leaderboardDateKey()) {
+  return `
+    <div class="admin-daily-points-panel">
+      <div class="admin-daily-points-header">
+        <div>
+          <span class="admin-panel-label">Admin</span>
+          <h3>Daily Points Breakdown</h3>
+        </div>
+        <label class="admin-date-control">
+          Day
+          <input id="adminDailyPointsDate" type="date" value="${escapeHTML(selectedDateKey)}" />
+        </label>
+      </div>
+      <div id="adminDailyPointsBreakdown">
+        ${renderAdminDailyPointsBreakdown(data, selectedDateKey)}
+      </div>
+    </div>
+  `;
+}
+
+function bindAdminDailyPointsPanel(data) {
+  const input = document.getElementById("adminDailyPointsDate");
+  const output = document.getElementById("adminDailyPointsBreakdown");
+  if (!input || !output) return;
+
+  input.addEventListener("change", () => {
+    output.innerHTML = renderAdminDailyPointsBreakdown(data, input.value);
+  });
+}
+
 function renderRootingForFlags(rootingForCountries = []) {
   if (!Array.isArray(rootingForCountries) || !rootingForCountries.length) {
     return `<span class="rooting-flags-empty">—</span>`;
@@ -3573,9 +4167,20 @@ async function showPlayerRound32Picks(uid, displayName) {
     getDoc(doc(db, "round16Results", "official"))
   ]);
 
+  const adminBreakdownData = currentUserIsAdmin()
+    ? await loadPlayerScoringBreakdownData(uid)
+    : null;
+  const adminBreakdownPanel = adminBreakdownData
+    ? renderAdminDailyPointsPanel(adminBreakdownData)
+    : "";
+
   if (!picksSnap.exists() && !round16PicksSnap.exists()) {
     playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
-    playerPicksContent.innerHTML = `<p class="mini-note">No knockout picks found for this player.</p>`;
+    playerPicksContent.innerHTML = `
+      ${adminBreakdownPanel}
+      <p class="mini-note">No knockout picks found for this player.</p>
+    `;
+    if (adminBreakdownData) bindAdminDailyPointsPanel(adminBreakdownData);
     playerPicksViewer.style.display = "block";
     playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
@@ -3588,6 +4193,8 @@ async function showPlayerRound32Picks(uid, displayName) {
 
   playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
   playerPicksContent.innerHTML = `
+    ${adminBreakdownPanel}
+
     <h3>Round of 32</h3>
     <div class="public-picks-grid">
       ${round32Matches.map(match =>
@@ -3603,6 +4210,7 @@ async function showPlayerRound32Picks(uid, displayName) {
     </div>
   `;
 
+  if (adminBreakdownData) bindAdminDailyPointsPanel(adminBreakdownData);
   playerPicksViewer.style.display = "block";
   playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
 }

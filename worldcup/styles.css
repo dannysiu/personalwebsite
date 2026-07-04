@@ -966,6 +966,29 @@ footer {
   color: #94a3b8;
 }
 
+.admin-bonus-key-card {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(253, 230, 138, 0.34);
+  border-radius: 12px;
+  margin: 18px 0;
+  padding: 16px;
+}
+
+.admin-bonus-key-card h3 {
+  margin: 4px 0 8px;
+}
+
+.admin-bonus-key-table th,
+.admin-bonus-key-table td {
+  vertical-align: top;
+}
+
+.admin-bonus-key-table th:first-child,
+.admin-bonus-key-table td:first-child {
+  text-align: left;
+  width: 240px;
+}
+
 .admin-ban-cell {
   display: inline-flex;
   align-items: center;
@@ -1036,6 +1059,80 @@ footer {
   font-size: 13px;
   font-weight: 800;
   padding: 6px 10px;
+}
+
+.admin-daily-points-panel {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(253, 230, 138, 0.36);
+  border-radius: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  text-align: left;
+}
+
+.admin-daily-points-header {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-daily-points-header h3 {
+  margin: 4px 0 0;
+}
+
+.admin-date-control {
+  align-items: center;
+  color: #f8fafc;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+}
+
+.admin-date-control input {
+  margin: 0;
+  max-width: 160px;
+}
+
+.admin-daily-points-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-daily-points-summary span,
+.admin-daily-points-summary strong {
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid #334155;
+  border-radius: 999px;
+  color: #e5e7eb;
+  font-size: 1em;
+  line-height: inherit;
+  padding: 7px 10px;
+}
+
+.admin-daily-points-table th:first-child,
+.admin-daily-points-table td:first-child {
+  text-align: left;
+  width: auto;
+}
+
+.admin-daily-points-table th:last-child,
+.admin-daily-points-table td:last-child {
+  text-align: right;
+  width: 64px;
+}
+
+.daily-points-positive {
+  color: #bbf7d0;
+  font-weight: 900;
+}
+
+.daily-points-negative {
+  color: #fecaca;
+  font-weight: 900;
 }
 
 #closePlayerPicksBtn {

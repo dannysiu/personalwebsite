@@ -188,15 +188,30 @@
         <div class="section-header admin-panel-header">
           <div>
             <span class="admin-panel-label">Round of 16</span>
-            <h3>Round of 16 Match + Bonus Answer Key</h3>
+            <h3>Round of 16 Match Results</h3>
           </div>
           <button class="secondary-btn admin-toggle-btn">Minimize</button>
         </div>
         <div class="admin-panel-content">
-          <p class="mini-note">Enter each official winner and full-time score once. Match scoring and the three Round of 16 bonus answers are calculated from these results.</p>
+          <p class="mini-note">Enter each official winner and full-time score once. Match scoring is calculated from these results.</p>
           <div id="adminRound16ResultsForm"></div>
           <button id="saveRound16ResultsBtn">Save Round of 16 Results</button>
           <p id="round16ResultsStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Round of 16 bonus</span>
+            <h3>Round of 16 Bonus Questions + Answer Key</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Admins can review the exact bonus questions and point values here. The answer key is calculated from official Round of 16 results and awards points only after all eight matches are complete.</p>
+          <div id="adminRound16BonusQuestions"></div>
+          <div id="adminRound16BonusKey"></div>
         </div>
       </div>
 
@@ -292,6 +307,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=round16-qualified-teams"></script>
+  <script type="module" src="app.js?v=admin-minimized-ro16-bonus"></script>
 </body>
 </html>
