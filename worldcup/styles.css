@@ -383,6 +383,27 @@ footer {
   font-size: 15px;
 }
 
+.score-entry-row {
+  display: grid;
+  grid-template-columns: minmax(54px, 88px) 18px minmax(54px, 88px);
+  align-items: center;
+  gap: 8px;
+  max-width: 210px;
+}
+
+.pick-card .score-entry-row .score-number-input {
+  width: 100%;
+  text-align: center;
+  font-weight: 800;
+}
+
+.score-entry-dash {
+  color: #e5e7eb;
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+}
+
 .rooting-for-box {
   border-top: 1px solid rgba(148, 163, 184, 0.24);
   margin-top: 20px;

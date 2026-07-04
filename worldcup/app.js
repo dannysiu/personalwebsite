@@ -1303,13 +1303,67 @@ function renderRound16WinnerOptions(match, round32Results, placeholder = "Select
 }
 
 function parseWinnerFirstScore(score) {
-  if (!/^\d+-\d+$/.test(score)) return null;
+  const normalizedScore = normalizeWinnerFirstScore(score);
+  if (!normalizedScore) return null;
 
-  const [winnerGoals, otherGoals] = score.split("-").map(Number);
+  const [winnerGoals, otherGoals] = normalizedScore.split("-").map(Number);
   if (Number.isNaN(winnerGoals) || Number.isNaN(otherGoals)) return null;
   if (otherGoals > winnerGoals) return null;
 
   return { winnerGoals, otherGoals, totalGoals: winnerGoals + otherGoals };
+}
+
+function cleanScoreNumber(value) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function scorePartsFromValue(score) {
+  const numbers = String(score ?? "").match(/\d+/g) || [];
+  return {
+    winnerGoals: numbers[0] ?? "",
+    otherGoals: numbers[1] ?? ""
+  };
+}
+
+function normalizeWinnerFirstScore(score) {
+  const { winnerGoals, otherGoals } = scorePartsFromValue(score);
+  if (winnerGoals === "" || otherGoals === "") return "";
+
+  return `${Number(winnerGoals)}-${Number(otherGoals)}`;
+}
+
+function setRound16ScoreInputs(prefix, matchId, score) {
+  const { winnerGoals, otherGoals } = scorePartsFromValue(score);
+  setValue(`${prefix}-${matchId}-winnerGoals`, cleanScoreNumber(winnerGoals));
+  setValue(`${prefix}-${matchId}-otherGoals`, cleanScoreNumber(otherGoals));
+}
+
+function getRound16ScoreFromInputs(prefix, matchId) {
+  const winnerGoalsId = `${prefix}-${matchId}-winnerGoals`;
+  const otherGoalsId = `${prefix}-${matchId}-otherGoals`;
+  const winnerGoals = cleanScoreNumber(getValue(winnerGoalsId));
+  const otherGoals = cleanScoreNumber(getValue(otherGoalsId));
+
+  setValue(winnerGoalsId, winnerGoals);
+  setValue(otherGoalsId, otherGoals);
+
+  if (winnerGoals === "" && otherGoals === "") return "";
+  if (winnerGoals === "" || otherGoals === "") return null;
+
+  return `${Number(winnerGoals)}-${Number(otherGoals)}`;
+}
+
+function setupNumericScoreInputs(root) {
+  if (!root) return;
+
+  root.querySelectorAll("[data-score-number]").forEach(input => {
+    const cleanInput = () => {
+      input.value = cleanScoreNumber(input.value);
+    };
+
+    input.addEventListener("input", cleanInput);
+    input.addEventListener("blur", cleanInput);
+  });
 }
 
 function validateRound16Score(score, label) {
@@ -1343,13 +1397,33 @@ async function renderRound16Picks() {
       </select>
 
       <label>Full-time score</label>
-      <input
-        id="round16-${match.id}-score"
-        type="text"
-        inputmode="numeric"
-        pattern="\\d+-\\d+"
-        ${locked ? "disabled" : ""}
-      />
+      <div class="score-entry-row" aria-label="Full-time score">
+        <input
+          id="round16-${match.id}-winnerGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="next"
+          data-score-number
+          aria-label="Selected winner full-time goals"
+          ${locked ? "disabled" : ""}
+        />
+        <span class="score-entry-dash">-</span>
+        <input
+          id="round16-${match.id}-otherGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="done"
+          data-score-number
+          aria-label="Opponent full-time goals"
+          ${locked ? "disabled" : ""}
+        />
+      </div>
       <p class="mini-note">Put your winner first. Examples: 2-1, 3-0, 1-1.</p>
 
       <label class="checkbox-row">
@@ -1361,6 +1435,8 @@ async function renderRound16Picks() {
 
     round16PicksForm.appendChild(wrapper);
   });
+
+  setupNumericScoreInputs(round16PicksForm);
 
   if (allRound16MatchesAreLocked()) {
     round16PicksStatus.textContent = "🔒 All Round of 16 picks are locked.";
@@ -1380,7 +1456,7 @@ async function loadExistingRound16Picks() {
 
   Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
     setValue(`round16-${matchId}-winner`, pick.winner);
-    setValue(`round16-${matchId}-score`, pick.score);
+    setRound16ScoreInputs("round16", matchId, pick.score);
 
     const extraTimeOrPenalties = document.getElementById(`round16-${matchId}-extraTimeOrPenalties`);
     if (extraTimeOrPenalties) {
@@ -1411,11 +1487,15 @@ async function applyRound16PickIndicators() {
 
     const result = results[match.id];
     const winner = getValue(`round16-${match.id}-winner`);
-    const score = getValue(`round16-${match.id}-score`);
+    const score = getRound16ScoreFromInputs("round16", match.id);
+    const resultScore = normalizeWinnerFirstScore(result?.score);
     if (!winner || !result?.winner) return;
 
     const winnerCorrect = sameCountryOption(winner, result.winner);
-    const scoreCorrect = !!score && !!result.score && score === result.score;
+    const scoreCorrect =
+      !!parseWinnerFirstScore(score) &&
+      !!parseWinnerFirstScore(resultScore) &&
+      score === resultScore;
     const pickedExtraTime = document.getElementById(`round16-${match.id}-extraTimeOrPenalties`)?.checked || false;
 
     let points = 0;
@@ -1451,7 +1531,7 @@ saveRound16PicksBtn?.addEventListener("click", async () => {
     if (round16MatchIsLocked(match)) continue;
 
     const winner = getValue(`round16-${match.id}-winner`);
-    const score = getValue(`round16-${match.id}-score`);
+    const score = getRound16ScoreFromInputs("round16", match.id);
     const extraTimeOrPenalties =
       document.getElementById(`round16-${match.id}-extraTimeOrPenalties`)?.checked || false;
 
@@ -1460,7 +1540,9 @@ saveRound16PicksBtn?.addEventListener("click", async () => {
     const validTeams = round16PossibleTeams(match, round32Results);
     if (!validTeams.includes(winner)) return alert(`${match.label}: selected winner is not valid for this matchup.`);
 
-    const scoreError = validateRound16Score(score, match.label);
+    const scoreError = score === null
+      ? `${match.label}: enter both score numbers.`
+      : validateRound16Score(score, match.label);
     if (scoreError) return alert(scoreError);
 
     picks[match.id] = { winner, score, extraTimeOrPenalties };
@@ -2353,12 +2435,31 @@ async function renderAdminRound16Results() {
       </select>
 
       <label>Full-time score</label>
-      <input
-        id="result-round16-${match.id}-score"
-        type="text"
-        inputmode="numeric"
-        pattern="\\d+-\\d+"
-      />
+      <div class="score-entry-row" aria-label="Official full-time score">
+        <input
+          id="result-round16-${match.id}-winnerGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="next"
+          data-score-number
+          aria-label="Official winner full-time goals"
+        />
+        <span class="score-entry-dash">-</span>
+        <input
+          id="result-round16-${match.id}-otherGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="done"
+          data-score-number
+          aria-label="Official opponent full-time goals"
+        />
+      </div>
       <p class="mini-note">Put the winner's full-time score first. Use 1-1 for matches tied after full time.</p>
 
       <label class="checkbox-row">
@@ -2369,6 +2470,8 @@ async function renderAdminRound16Results() {
 
     adminRound16ResultsForm.appendChild(wrapper);
   });
+
+  setupNumericScoreInputs(adminRound16ResultsForm);
 }
 
 async function loadExistingRound16Results() {
@@ -2379,7 +2482,7 @@ async function loadExistingRound16Results() {
 
   Object.entries(results).forEach(([matchId, result]) => {
     setValue(`result-round16-${matchId}-winner`, result.winner);
-    setValue(`result-round16-${matchId}-score`, result.score);
+    setRound16ScoreInputs("result-round16", matchId, result.score);
 
     const extraTimeOrPenalties = document.getElementById(`result-round16-${matchId}-extraTimeOrPenalties`);
     if (extraTimeOrPenalties) {
@@ -2394,7 +2497,7 @@ saveRound16ResultsBtn?.addEventListener("click", async () => {
 
   for (const match of round16Matches) {
     const winner = getValue(`result-round16-${match.id}-winner`);
-    const score = getValue(`result-round16-${match.id}-score`);
+    const score = getRound16ScoreFromInputs("result-round16", match.id);
     const extraTimeOrPenalties =
       document.getElementById(`result-round16-${match.id}-extraTimeOrPenalties`)?.checked || false;
 
@@ -2404,9 +2507,11 @@ saveRound16ResultsBtn?.addEventListener("click", async () => {
         return alert(`${match.label}: selected winner is not valid for this matchup.`);
       }
 
-      const scoreError = validateRound16Score(score, match.label);
+      const scoreError = score === null
+        ? `${match.label}: enter both score numbers.`
+        : validateRound16Score(score, match.label);
       if (scoreError) return alert(scoreError);
-    } else if (score) {
+    } else if (score !== "") {
       return alert(`${match.label}: select a winner before entering a score.`);
     }
 
@@ -2453,7 +2558,13 @@ function scoreRound16Picks(picks, results) {
       points += 3;
     }
 
-    if (pick.score && result.score && pick.score === result.score) {
+    const pickScore = normalizeWinnerFirstScore(pick.score);
+    const resultScore = normalizeWinnerFirstScore(result.score);
+    if (
+      parseWinnerFirstScore(pickScore) &&
+      parseWinnerFirstScore(resultScore) &&
+      pickScore === resultScore
+    ) {
       points += 2;
     }
 
@@ -3271,7 +3382,7 @@ async function renderLeaderboardFromFirestore() {
 
       player.publicRound16Picks[matchId] = {
         winner: pick.winner,
-        score: pick.score || "",
+        score: normalizeWinnerFirstScore(pick.score),
         extraTimeOrPenalties: !!pick.extraTimeOrPenalties
       };
     });
@@ -3565,7 +3676,7 @@ function renderPublicRound16PickCard(match, pick, isRevealable, round32Results =
         pick?.winner
           ? `
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
-            <p><strong>Full-time score:</strong> ${escapeHTML(pick.score || "")}</p>
+            <p><strong>Full-time score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
             <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
           `
           : `<p class="mini-note">No saved pick for this match.</p>`
