@@ -174,7 +174,22 @@ const round32Matches = [
 ];
 
 const knownRound32Winners = {
-  "88": "Egypt"
+  "73": "Canada",
+  "76": "Brazil",
+  "74": "Paraguay",
+  "75": "Morocco",
+  "78": "Norway",
+  "77": "France",
+  "79": "Mexico",
+  "80": "England",
+  "82": "Belgium",
+  "81": "United States",
+  "84": "Spain",
+  "83": "Portugal",
+  "85": "Switzerland",
+  "88": "Egypt",
+  "86": "Argentina",
+  "87": "Colombia"
 };
 
 const round32TeamOptions = sortTeamsAlphabetically([
@@ -1227,11 +1242,11 @@ function findRound32Match(matchId) {
 }
 
 function round16SlotTeams(matchId, round32Results = {}) {
-  const resultWinner = round32Results[matchId]?.winner;
-  if (resultWinner) return [resultWinner];
-
   const knownWinner = knownRound32Winners[matchId];
   if (knownWinner) return [knownWinner];
+
+  const resultWinner = round32Results[matchId]?.winner;
+  if (resultWinner) return [resultWinner];
 
   const sourceMatch = findRound32Match(matchId);
   return sourceMatch ? [sourceMatch.home, sourceMatch.away] : [];
@@ -1260,8 +1275,8 @@ function round16PossibleTeams(match, round32Results = {}) {
 
 function round16ResolvedParticipants(match, round32Results = {}) {
   const participants = match.sourceMatchIds.flatMap(matchId => {
-    const winner = round32Results[matchId]?.winner;
-    return winner ? [winner] : [];
+    const teams = round16SlotTeams(matchId, round32Results);
+    return teams.length === 1 ? teams : [];
   });
 
   return participants.length === 2 ? participants : [];
