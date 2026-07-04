@@ -357,7 +357,12 @@ function setupCollapsibleSection(button, content, startsExpanded) {
 function setupAdminPanelToggles(root = adminSection) {
   if (!root) return;
 
-  root.querySelectorAll(".admin-panel").forEach(panel => {
+  const panels = [
+    ...(root.matches?.(".admin-panel") ? [root] : []),
+    ...root.querySelectorAll(".admin-panel")
+  ];
+
+  panels.forEach(panel => {
     const button = panel.querySelector(".admin-toggle-btn");
     const content = panel.querySelector(".admin-panel-content");
     if (!button || !content || button.dataset.toggleReady) return;
