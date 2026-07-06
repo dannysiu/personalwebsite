@@ -62,6 +62,7 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 let latestLeaderboardRows = [];
+let latestTickerMatches = [];
 
 const usaCelebrationBanner = document.getElementById("usaCelebrationBanner");
 
@@ -214,10 +215,10 @@ const round16Matches = [
   { id: "90", label: "Match 90", sourceMatchIds: ["74", "77"], startTime: "2026-07-04T16:00:00-05:00", venue: "Houston" },
   { id: "91", label: "Match 91", sourceMatchIds: ["76", "78"], startTime: "2026-07-05T12:00:00-05:00", venue: "New York / New Jersey" },
   { id: "92", label: "Match 92", sourceMatchIds: ["79", "80"], startTime: "2026-07-05T15:00:00-05:00", venue: "Mexico City" },
-  { id: "93", label: "Match 93", sourceMatchIds: ["83", "84"], startTime: "2026-07-06T17:00:00-05:00", venue: "Dallas" },
-  { id: "94", label: "Match 94", sourceMatchIds: ["81", "82"], startTime: "2026-07-06T20:00:00-05:00", venue: "Seattle" },
-  { id: "95", label: "Match 95", sourceMatchIds: ["86", "88"], startTime: "2026-07-07T15:00:00-05:00", venue: "Atlanta" },
-  { id: "96", label: "Match 96", sourceMatchIds: ["85", "87"], startTime: "2026-07-07T20:00:00-05:00", venue: "Vancouver" }
+  { id: "93", label: "Match 93", sourceMatchIds: ["83", "84"], startTime: "2026-07-06T19:00:00.000Z", venue: "Dallas" },
+  { id: "94", label: "Match 94", sourceMatchIds: ["81", "82"], startTime: "2026-07-07T00:00:00.000Z", venue: "Seattle" },
+  { id: "95", label: "Match 95", sourceMatchIds: ["86", "88"], startTime: "2026-07-07T16:00:00.000Z", venue: "Atlanta" },
+  { id: "96", label: "Match 96", sourceMatchIds: ["85", "87"], startTime: "2026-07-07T20:00:00.000Z", venue: "Vancouver" }
 ];
 
 const round16RegionOptions = ["Africa", "Europe", "North America", "South America"];
@@ -1318,12 +1319,41 @@ function round16MatchupLabel(match, round32Results = {}) {
   return match.sourceMatchIds.map(matchId => round16SlotLabel(matchId, round32Results)).join(" vs ");
 }
 
+function getTickerMatchForRound16Match(match) {
+  const participants = round16ResolvedParticipants(match);
+  if (participants.length !== 2 || !latestTickerMatches.length) return null;
+
+  return latestTickerMatches.find(tickerMatch => {
+    if (String(tickerMatch.round || "").toLowerCase() !== "r16") return false;
+
+    const home = tickerMatch.home?.name || "";
+    const away = tickerMatch.away?.name || "";
+
+    return (
+      sameTickerTeam(home, participants[0]) && sameTickerTeam(away, participants[1])
+    ) || (
+      sameTickerTeam(home, participants[1]) && sameTickerTeam(away, participants[0])
+    );
+  }) || null;
+}
+
+function tickerMatchHasStarted(match) {
+  const statusType = String(match?.status?.type || "").toLowerCase();
+  if (statusType === "live" || statusType === "final") return true;
+
+  const kickoffTime = new Date(match?.date).getTime();
+  return !Number.isNaN(kickoffTime) && Date.now() >= kickoffTime;
+}
+
 function round16MatchIsLocked(match) {
+  const tickerMatch = getTickerMatchForRound16Match(match);
+  if (tickerMatch) return tickerMatchHasStarted(tickerMatch);
+
   return new Date() >= new Date(match.startTime);
 }
 
-function round16PickIsRevealable(match, results = {}) {
-  return round16MatchIsLocked(match) || !!results[match.id]?.winner;
+function round16PickIsRevealable(match) {
+  return round16MatchIsLocked(match);
 }
 
 function allRound16MatchesAreLocked() {
@@ -3508,7 +3538,7 @@ async function renderLeaderboardFromFirestore() {
     round32BonusResultsSnap.exists() ? round32BonusResultsSnap.data().results || {} : {};
   const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
   const publicRound16RevealableMatchIds = round16Matches
-    .filter(match => round16PickIsRevealable(match, round16Results))
+    .filter(match => round16PickIsRevealable(match))
     .map(match => match.id);
   const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
 
@@ -4160,11 +4190,10 @@ async function showPlayerRound32Picks(uid, displayName) {
     return;
   }
 
-  const [picksSnap, resultsSnap, round16PicksSnap, round16ResultsSnap] = await Promise.all([
+  const [picksSnap, resultsSnap, round16PicksSnap] = await Promise.all([
     getDoc(doc(db, "round32Picks", uid)),
     getDoc(doc(db, "round32Results", "official")),
-    getDoc(doc(db, "round16Picks", uid)),
-    getDoc(doc(db, "round16Results", "official"))
+    getDoc(doc(db, "round16Picks", uid))
   ]);
 
   const adminBreakdownData = currentUserIsAdmin()
@@ -4189,7 +4218,6 @@ async function showPlayerRound32Picks(uid, displayName) {
   const picks = picksSnap.exists() ? picksSnap.data().picks || {} : {};
   const results = resultsSnap.exists() ? resultsSnap.data().results || {} : {};
   const round16Picks = round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {};
-  const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
 
   playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
   playerPicksContent.innerHTML = `
@@ -4205,7 +4233,7 @@ async function showPlayerRound32Picks(uid, displayName) {
     <h3>Round of 16</h3>
     <div class="public-picks-grid">
       ${round16Matches.map(match =>
-        renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match, round16Results), results)
+        renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match), results)
       ).join("")}
     </div>
   `;
@@ -4228,9 +4256,6 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
         ? row.publicRound32FinishedMatchIds
       : [];
     const round16Picks = row.publicRound16Picks || {};
-    const round16RevealableMatchIds = Array.isArray(row.publicRound16RevealableMatchIds)
-      ? row.publicRound16RevealableMatchIds
-      : [];
 
     playerPicksContent.innerHTML = `
       <h3>Round of 32</h3>
@@ -4243,7 +4268,7 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
       <h3>Round of 16</h3>
       <div class="public-picks-grid">
         ${round16Matches.map(match =>
-          renderPublicRound16PickCard(match, round16Picks[match.id], round16RevealableMatchIds.includes(match.id))
+          renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match))
         ).join("")}
       </div>
     `;
@@ -4362,6 +4387,7 @@ async function loadWorldCupTicker() {
     const res = await fetch(MATCH_TICKER_URL);
     const data = await res.json();
     const matches = data.matches || [];
+    latestTickerMatches = matches;
 
     if (!matches.length) {
       ticker.textContent = "No World Cup matches found right now.";
