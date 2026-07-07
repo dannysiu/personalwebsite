@@ -14,8 +14,11 @@ Scoring notes:
 - Round of 32 bonus counts = 4 exact or 2 within 2
 - Round of 32 bonus 3+ goal winners = 2 points each
 - Round of 16 correct winner = 3 points
-- Round of 16 correct full-time score = 2 points
+- Round of 16 correct full-time score = 2 points only when winner is correct
 - Round of 16 bonus questions are scored from official Round of 16 results
+- Quarterfinals correct winner = 3 points
+- Quarterfinals correct full-time score = 2 points only when winner is correct
+- Quarterfinals bonus questions are scored from official Quarterfinals results
 - Opening bonus quiz = 1 point per correct answer
 - Yellow card bonus question is correct if within 10 of the official total
 */
@@ -256,6 +259,15 @@ const round16TeamRegions = {
   "United States": "North America"
 };
 
+const quarterfinalMatches = [
+  { id: "97", label: "Match 97", sourceMatchIds: ["89", "90"], startTime: "2026-07-09T19:00:00.000Z", venue: "Boston" },
+  { id: "98", label: "Match 98", sourceMatchIds: ["93", "94"], startTime: "2026-07-10T19:00:00.000Z", venue: "Los Angeles" },
+  { id: "99", label: "Match 99", sourceMatchIds: ["91", "92"], startTime: "2026-07-11T19:00:00.000Z", venue: "Miami" },
+  { id: "100", label: "Match 100", sourceMatchIds: ["95", "96"], startTime: "2026-07-11T23:00:00.000Z", venue: "Kansas City" }
+];
+
+const QUARTERFINAL_BONUS_POINTS = 2;
+
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userInfo = document.getElementById("userInfo");
@@ -301,6 +313,18 @@ const toggleRound16BonusBtn = document.getElementById("toggleRound16BonusBtn");
 const round16BonusForm = document.getElementById("round16BonusForm");
 const saveRound16BonusBtn = document.getElementById("saveRound16BonusBtn");
 const round16BonusStatus = document.getElementById("round16BonusStatus");
+const quarterfinalPicksSection = document.getElementById("quarterfinalPicksSection");
+const quarterfinalPicksContent = document.getElementById("quarterfinalPicksContent");
+const toggleQuarterfinalPicksBtn = document.getElementById("toggleQuarterfinalPicksBtn");
+const quarterfinalPicksForm = document.getElementById("quarterfinalPicksForm");
+const saveQuarterfinalPicksBtn = document.getElementById("saveQuarterfinalPicksBtn");
+const quarterfinalPicksStatus = document.getElementById("quarterfinalPicksStatus");
+const quarterfinalBonusSection = document.getElementById("quarterfinalBonusSection");
+const quarterfinalBonusContent = document.getElementById("quarterfinalBonusContent");
+const toggleQuarterfinalBonusBtn = document.getElementById("toggleQuarterfinalBonusBtn");
+const quarterfinalBonusForm = document.getElementById("quarterfinalBonusForm");
+const saveQuarterfinalBonusBtn = document.getElementById("saveQuarterfinalBonusBtn");
+const quarterfinalBonusStatus = document.getElementById("quarterfinalBonusStatus");
 const viewLeaderboardBtn = document.getElementById("viewLeaderboardBtn");
 const leaderboardSection = document.getElementById("leaderboardSection");
 
@@ -319,6 +343,11 @@ const adminRound16BonusQuestions = document.getElementById("adminRound16BonusQue
 const adminRound16BonusKey = document.getElementById("adminRound16BonusKey");
 const saveRound16ResultsBtn = document.getElementById("saveRound16ResultsBtn");
 const round16ResultsStatus = document.getElementById("round16ResultsStatus");
+const adminQuarterfinalResultsForm = document.getElementById("adminQuarterfinalResultsForm");
+const adminQuarterfinalBonusQuestions = document.getElementById("adminQuarterfinalBonusQuestions");
+const adminQuarterfinalBonusKey = document.getElementById("adminQuarterfinalBonusKey");
+const saveQuarterfinalResultsBtn = document.getElementById("saveQuarterfinalResultsBtn");
+const quarterfinalResultsStatus = document.getElementById("quarterfinalResultsStatus");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
 const refreshLeaderboardStatus = document.getElementById("refreshLeaderboardStatus");
 
@@ -337,6 +366,7 @@ let rootingCountry2;
 let adminPlayerList;
 let adminRound32PlayerList;
 let adminRound16PlayerList;
+let adminQuarterfinalPlayerList;
 let adminBonusResultsForm;
 let saveBonusResultsBtn;
 let bonusResultsStatus;
@@ -349,6 +379,8 @@ showUsaCelebrationWhenActive();
 
 setupCollapsibleSection(toggleRound16PicksBtn, round16PicksContent, true);
 setupCollapsibleSection(toggleRound16BonusBtn, round16BonusContent, true);
+setupCollapsibleSection(toggleQuarterfinalPicksBtn, quarterfinalPicksContent, true);
+setupCollapsibleSection(toggleQuarterfinalBonusBtn, quarterfinalBonusContent, true);
 setupCollapsibleSection(toggleRound32PicksBtn, round32PicksContent, false);
 setupCollapsibleSection(toggleRound32BonusBtn, round32BonusContent, false);
 setupCollapsibleSection(toggleGroupPicksBtn, groupPicksContent, false);
@@ -401,6 +433,8 @@ function setupAdminPanelToggles(root = adminSection, startsExpanded = false) {
 
 function minimizeAdminDefaultSections() {
   setCollapsibleSectionState(toggleProfileSettingsBtn, profileSettingsContent, false);
+  setCollapsibleSectionState(toggleQuarterfinalPicksBtn, quarterfinalPicksContent, false);
+  setCollapsibleSectionState(toggleQuarterfinalBonusBtn, quarterfinalBonusContent, false);
   setCollapsibleSectionState(toggleRound16PicksBtn, round16PicksContent, false);
   setCollapsibleSectionState(toggleRound16BonusBtn, round16BonusContent, false);
   setCollapsibleSectionState(toggleRound32PicksBtn, round32PicksContent, false);
@@ -483,6 +517,8 @@ onAuthStateChanged(auth, async (user) => {
     groupPicksSection.style.display = "none";
     round32PicksSection.style.display = "none";
     round32BonusSection.style.display = "none";
+    quarterfinalPicksSection.style.display = "none";
+    quarterfinalBonusSection.style.display = "none";
     round16PicksSection.style.display = "none";
     round16BonusSection.style.display = "none";
     bonusSection.style.display = "none";
@@ -529,6 +565,8 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   groupPicksSection.style.display = "block";
+  quarterfinalPicksSection.style.display = "block";
+  quarterfinalBonusSection.style.display = "block";
   round32PicksSection.style.display = "block";
   round32BonusSection.style.display = "block";
   round16PicksSection.style.display = "block";
@@ -539,6 +577,8 @@ onAuthStateChanged(auth, async (user) => {
   renderGroupPicks();
   renderRound32Picks();
   renderRound32BonusQuestions();
+  await renderQuarterfinalPicks();
+  await renderQuarterfinalBonusQuestions();
   await renderRound16Picks();
   await renderRound16BonusQuestions();
   renderBonusQuiz();
@@ -551,6 +591,8 @@ onAuthStateChanged(auth, async (user) => {
   await loadExistingRound16BonusAnswers();
   await loadExistingBonusAnswers();
   await loadExistingRootingForCountries(userSnap.data());
+  await loadExistingQuarterfinalPicks();
+  await loadExistingQuarterfinalBonusAnswers();
 
   if (ADMIN_EMAILS.includes(user.email)) {
     round16PicksSection?.insertAdjacentElement("beforebegin", adminSection);
@@ -561,12 +603,15 @@ onAuthStateChanged(auth, async (user) => {
     renderAdminGroupResults();
     renderAdminRound32Results();
     renderAdminRound32BonusResults();
+    await renderAdminQuarterfinalResults();
+    await renderAdminQuarterfinalBonusQuestions();
     await renderAdminRound16Results();
     await renderAdminRound16BonusQuestions();
     renderAdminBonusResults();
     await loadExistingGroupResults();
     await loadExistingRound32Results();
     await loadExistingRound32BonusResults();
+    await loadExistingQuarterfinalResults();
     await loadExistingRound16Results();
     await loadExistingBonusResults();
     await renderAdminPlayerList();
@@ -660,6 +705,20 @@ function injectAdminPlayerManagement() {
         <div id="adminRound16PlayerList"></div>
       </div>
     </div>
+
+    <div class="admin-panel">
+      <div class="section-header admin-panel-header">
+        <div>
+          <span class="admin-panel-label">Quarterfinals tracking</span>
+          <h3>Quarterfinals Pick Status</h3>
+        </div>
+        <button class="secondary-btn admin-toggle-btn">Minimize</button>
+      </div>
+      <div class="admin-panel-content">
+        <p class="mini-note">Quick check for who has saved every Quarterfinals match pick and completed the Quarterfinals bonus questions.</p>
+        <div id="adminQuarterfinalPlayerList"></div>
+      </div>
+    </div>
   `;
 
   const adminTitle = adminSection.querySelector("h2");
@@ -671,6 +730,7 @@ function injectAdminPlayerManagement() {
   adminPlayerList = document.getElementById("adminPlayerList");
   adminRound32PlayerList = document.getElementById("adminRound32PlayerList");
   adminRound16PlayerList = document.getElementById("adminRound16PlayerList");
+  adminQuarterfinalPlayerList = document.getElementById("adminQuarterfinalPlayerList");
   setupAdminPanelToggles(box);
 }
 
@@ -718,6 +778,28 @@ async function loadGroupLockTimes() {
   } catch (err) {
     console.error("Failed to load group lock times:", err);
     groupLockTimes = {};
+  }
+}
+
+function emptyDocsSnapshot() {
+  return { forEach() {} };
+}
+
+async function getOptionalCollectionDocs(collectionName) {
+  try {
+    return await getDocs(collection(db, collectionName));
+  } catch (error) {
+    console.warn(`Could not load optional collection ${collectionName}:`, error);
+    return emptyDocsSnapshot();
+  }
+}
+
+async function getOptionalDoc(collectionName, docId) {
+  try {
+    return await getDoc(doc(db, collectionName, docId));
+  } catch (error) {
+    console.warn(`Could not load optional document ${collectionName}/${docId}:`, error);
+    return null;
   }
 }
 
@@ -1319,6 +1401,69 @@ function round16MatchupLabel(match, round32Results = {}) {
   return match.sourceMatchIds.map(matchId => round16SlotLabel(matchId, round32Results)).join(" vs ");
 }
 
+async function getRound16OfficialResults() {
+  const snap = await getDoc(doc(db, "round16Results", "official"));
+  return snap.exists() ? snap.data().results || {} : {};
+}
+
+function findRound16Match(matchId) {
+  return round16Matches.find(match => match.id === matchId);
+}
+
+function quarterfinalSlotTeams(matchId, round16Results = {}, round32Results = {}) {
+  const resultWinner = round16Results[matchId]?.winner;
+  if (resultWinner) return [resultWinner];
+
+  const sourceMatch = findRound16Match(matchId);
+  return sourceMatch ? round16PossibleTeams(sourceMatch, round32Results) : [];
+}
+
+function quarterfinalSlotLabel(matchId, round16Results = {}, round32Results = {}) {
+  const teams = quarterfinalSlotTeams(matchId, round16Results, round32Results);
+
+  if (teams.length === 1) {
+    return round32TeamLabel(teams[0]);
+  }
+
+  const sourceMatch = findRound16Match(matchId);
+  const fallback = sourceMatch
+    ? round16MatchupLabel(sourceMatch, round32Results)
+    : `Match ${matchId}`;
+
+  return `Winner Match ${matchId} (${fallback})`;
+}
+
+function quarterfinalPossibleTeams(match, round16Results = {}, round32Results = {}) {
+  return sortTeamsAlphabetically([
+    ...new Set(match.sourceMatchIds.flatMap(matchId =>
+      quarterfinalSlotTeams(matchId, round16Results, round32Results)
+    ))
+  ]);
+}
+
+function quarterfinalResolvedParticipants(match, round16Results = {}, round32Results = {}) {
+  const participants = match.sourceMatchIds.flatMap(matchId => {
+    const teams = quarterfinalSlotTeams(matchId, round16Results, round32Results);
+    return teams.length === 1 ? teams : [];
+  });
+
+  return participants.length === 2 ? participants : [];
+}
+
+function quarterfinalMatchupLabel(match, round16Results = {}, round32Results = {}) {
+  return match.sourceMatchIds
+    .map(matchId => quarterfinalSlotLabel(matchId, round16Results, round32Results))
+    .join(" vs ");
+}
+
+function quarterfinalTeamOptions(round16Results = {}, round32Results = {}) {
+  return sortTeamsAlphabetically([
+    ...new Set(quarterfinalMatches.flatMap(match =>
+      quarterfinalPossibleTeams(match, round16Results, round32Results)
+    ))
+  ]);
+}
+
 function getTickerMatchForRound16Match(match) {
   const participants = round16ResolvedParticipants(match);
   if (participants.length !== 2 || !latestTickerMatches.length) return null;
@@ -1570,6 +1715,7 @@ async function applyRound16PickIndicators() {
 
     const winnerCorrect = sameCountryOption(winner, result.winner);
     const scoreCorrect =
+      winnerCorrect &&
       !!parseWinnerFirstScore(score) &&
       !!parseWinnerFirstScore(resultScore) &&
       score === resultScore;
@@ -1582,7 +1728,7 @@ async function applyRound16PickIndicators() {
 
     const labelParts = [];
     labelParts.push(winnerCorrect ? "Winner ✓" : "Winner X");
-    if (score) labelParts.push(scoreCorrect ? "score ✓" : "score X");
+    if (score) labelParts.push(scoreCorrect ? "score ✓" : winnerCorrect ? "score X" : "score needs winner");
     if (pickedExtraTime) labelParts.push(result.extraTimeOrPenalties ? "ET/Pens ✓" : "ET/Pens X");
 
     setScoringIndicator(
@@ -1634,7 +1780,7 @@ saveRound16PicksBtn?.addEventListener("click", async () => {
     uid: currentUser.uid,
     email: currentUser.email,
     picks,
-    scoring: { winner: 3, score: 2, extraTimeOrPenaltiesCorrect: 1, extraTimeOrPenaltiesWrong: -1 },
+    scoring: { winner: 3, score: 2, scoreRequiresCorrectWinner: true, extraTimeOrPenaltiesCorrect: 1, extraTimeOrPenaltiesWrong: -1 },
     updatedAt: new Date().toISOString()
   }, { merge: true });
 
@@ -1936,6 +2082,514 @@ saveRound16BonusBtn?.addEventListener("click", async () => {
   } finally {
     if (!round16BonusAnswersAreLocked()) {
       saveRound16BonusBtn.disabled = false;
+    }
+  }
+});
+
+function quarterfinalMatchIsLocked(match) {
+  return new Date() >= new Date(match.startTime);
+}
+
+function quarterfinalPickIsRevealable(match) {
+  return quarterfinalMatchIsLocked(match);
+}
+
+function allQuarterfinalMatchesAreLocked() {
+  return quarterfinalMatches.every(match => quarterfinalMatchIsLocked(match));
+}
+
+function quarterfinalMatchTimeLabel(match) {
+  return new Date(match.startTime).toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function renderQuarterfinalWinnerOptions(match, round16Results, round32Results, placeholder = "Select winner") {
+  return `
+    <option value="">${escapeHTML(placeholder)}</option>
+    ${quarterfinalPossibleTeams(match, round16Results, round32Results)
+      .map(team => `<option value="${escapeHTML(team)}">${escapeHTML(round32TeamLabel(team))}</option>`)
+      .join("")}
+  `;
+}
+
+function renderQuarterfinalMatchOptions(round16Results, round32Results, placeholder = "Select match") {
+  return `
+    <option value="">${escapeHTML(placeholder)}</option>
+    ${quarterfinalMatches
+      .map(match => `<option value="${escapeHTML(match.id)}">${escapeHTML(`${match.label}: ${quarterfinalMatchupLabel(match, round16Results, round32Results)}`)}</option>`)
+      .join("")}
+  `;
+}
+
+function renderQuarterfinalTeamSelectOptions(round16Results, round32Results, placeholder = "Select team") {
+  return `
+    <option value="">${escapeHTML(placeholder)}</option>
+    ${quarterfinalTeamOptions(round16Results, round32Results)
+      .map(team => `<option value="${escapeHTML(team)}">${escapeHTML(round32TeamLabel(team))}</option>`)
+      .join("")}
+  `;
+}
+
+async function getQuarterfinalSourceResults() {
+  const [round16Results, round32Results] = await Promise.all([
+    getRound16OfficialResults(),
+    getRound32OfficialResults()
+  ]);
+
+  return { round16Results, round32Results };
+}
+
+async function renderQuarterfinalPicks() {
+  if (!quarterfinalPicksForm) return;
+
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+  quarterfinalPicksForm.innerHTML = "";
+
+  quarterfinalMatches.forEach(match => {
+    const locked = quarterfinalMatchIsLocked(match);
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+    const matchupLabel = quarterfinalMatchupLabel(match, round16Results, round32Results);
+
+    wrapper.innerHTML = `
+      <h3>${escapeHTML(matchupLabel)} ${locked ? "🔒" : ""}</h3>
+      <p class="lock-note">Kickoff: <strong>${quarterfinalMatchTimeLabel(match)}</strong> · ${escapeHTML(match.venue)}</p>
+
+      <label>Winner</label>
+      <select id="quarterfinal-${match.id}-winner" ${locked ? "disabled" : ""}>
+        ${renderQuarterfinalWinnerOptions(match, round16Results, round32Results)}
+      </select>
+
+      <label class="quarterfinal-score-label">Full-time score</label>
+      <div class="score-entry-row" aria-label="Full-time score">
+        <input
+          id="quarterfinal-${match.id}-winnerGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="next"
+          data-score-number
+          aria-label="Selected winner full-time goals"
+          ${locked ? "disabled" : ""}
+        />
+        <span class="score-entry-dash">-</span>
+        <input
+          id="quarterfinal-${match.id}-otherGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="done"
+          data-score-number
+          aria-label="Opponent full-time goals"
+          ${locked ? "disabled" : ""}
+        />
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="quarterfinal-${match.id}-extraTimeOrPenalties" ${locked ? "disabled" : ""} />
+        Goes to extra time or penalties
+      </label>
+      <p id="quarterfinal-${match.id}-result" class="answer-result"></p>
+    `;
+
+    quarterfinalPicksForm.appendChild(wrapper);
+  });
+
+  setupNumericScoreInputs(quarterfinalPicksForm);
+
+  if (allQuarterfinalMatchesAreLocked()) {
+    quarterfinalPicksStatus.textContent = "🔒 All Quarterfinals picks are locked.";
+    saveQuarterfinalPicksBtn.disabled = true;
+    saveQuarterfinalPicksBtn.textContent = "Quarterfinals Picks Locked";
+  } else {
+    saveQuarterfinalPicksBtn.disabled = false;
+    saveQuarterfinalPicksBtn.textContent = "Save Quarterfinals Picks";
+  }
+}
+
+async function loadExistingQuarterfinalPicks() {
+  let snap;
+
+  try {
+    snap = await getDoc(doc(db, "quarterfinalPicks", currentUser.uid));
+  } catch (error) {
+    console.error("Failed to load Quarterfinals picks:", error);
+    quarterfinalPicksStatus.className = "status-message status-error";
+    quarterfinalPicksStatus.textContent =
+      "Could not load saved Quarterfinals picks. Check Firestore rules for quarterfinalPicks.";
+    return;
+  }
+
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+
+  Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
+    setValue(`quarterfinal-${matchId}-winner`, pick.winner);
+    setRound16ScoreInputs("quarterfinal", matchId, pick.score);
+
+    const extraTimeOrPenalties = document.getElementById(`quarterfinal-${matchId}-extraTimeOrPenalties`);
+    if (extraTimeOrPenalties) {
+      extraTimeOrPenalties.checked = !!pick.extraTimeOrPenalties;
+    }
+  });
+
+  if (allQuarterfinalMatchesAreLocked()) {
+    quarterfinalPicksStatus.className = "status-message status-locked";
+    quarterfinalPicksStatus.textContent = "🔒 All Quarterfinals picks are locked.";
+  } else {
+    quarterfinalPicksStatus.className = "status-message status-info";
+    quarterfinalPicksStatus.textContent = "Loaded saved Quarterfinals picks.";
+  }
+
+  await applyQuarterfinalPickIndicators();
+}
+
+async function applyQuarterfinalPickIndicators() {
+  let snap;
+
+  try {
+    snap = await getDoc(doc(db, "quarterfinalResults", "official"));
+  } catch (error) {
+    console.warn("Could not load Quarterfinals official results for indicators:", error);
+    return;
+  }
+
+  if (!snap.exists()) return;
+
+  const results = snap.data().results || {};
+
+  quarterfinalMatches.forEach(match => {
+    const indicatorId = `quarterfinal-${match.id}-result`;
+    clearScoringIndicator(indicatorId);
+
+    const result = results[match.id];
+    const winner = getValue(`quarterfinal-${match.id}-winner`);
+    const score = getRound16ScoreFromInputs("quarterfinal", match.id);
+    const resultScore = normalizeWinnerFirstScore(result?.score);
+    if (!winner || !result?.winner) return;
+
+    const winnerCorrect = sameCountryOption(winner, result.winner);
+    const scoreCorrect =
+      winnerCorrect &&
+      !!parseWinnerFirstScore(score) &&
+      !!parseWinnerFirstScore(resultScore) &&
+      score === resultScore;
+    const pickedExtraTime = document.getElementById(`quarterfinal-${match.id}-extraTimeOrPenalties`)?.checked || false;
+
+    let points = 0;
+    if (winnerCorrect) points += 3;
+    if (scoreCorrect) points += 2;
+    if (pickedExtraTime) points += result.extraTimeOrPenalties ? 1 : -1;
+
+    const labelParts = [];
+    labelParts.push(winnerCorrect ? "Winner ✓" : "Winner X");
+    if (score) labelParts.push(scoreCorrect ? "score ✓" : winnerCorrect ? "score X" : "score needs winner");
+    if (pickedExtraTime) labelParts.push(result.extraTimeOrPenalties ? "ET/Pens ✓" : "ET/Pens X");
+
+    setScoringIndicator(
+      indicatorId,
+      pointsState(points),
+      labelParts.join(", "),
+      points
+    );
+  });
+}
+
+saveQuarterfinalPicksBtn?.addEventListener("click", async () => {
+  if (!currentUser) return alert("Please sign in first.");
+  if (allQuarterfinalMatchesAreLocked()) return alert("All Quarterfinals picks are locked.");
+
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+  const existingSnap = await getOptionalDoc("quarterfinalPicks", currentUser.uid);
+  const picks = existingSnap?.exists() ? existingSnap.data().picks || {} : {};
+
+  let savedAnyUnlockedMatch = false;
+
+  for (const match of quarterfinalMatches) {
+    if (quarterfinalMatchIsLocked(match)) continue;
+
+    const winner = getValue(`quarterfinal-${match.id}-winner`);
+    const score = getRound16ScoreFromInputs("quarterfinal", match.id);
+    const extraTimeOrPenalties =
+      document.getElementById(`quarterfinal-${match.id}-extraTimeOrPenalties`)?.checked || false;
+
+    if (!winner) return alert(`Pick a winner for ${match.label}.`);
+
+    const validTeams = quarterfinalPossibleTeams(match, round16Results, round32Results);
+    if (!validTeams.includes(winner)) return alert(`${match.label}: selected winner is not valid for this matchup.`);
+
+    const scoreError = score === null
+      ? `${match.label}: enter both score numbers.`
+      : validateRound16Score(score, match.label);
+    if (scoreError) return alert(scoreError);
+
+    picks[match.id] = { winner, score, extraTimeOrPenalties };
+    savedAnyUnlockedMatch = true;
+  }
+
+  if (!savedAnyUnlockedMatch) {
+    return alert("No unlocked Quarterfinals matches are available to save.");
+  }
+
+  quarterfinalPicksStatus.className = "status-message status-info";
+  quarterfinalPicksStatus.textContent = "Saving Quarterfinals picks...";
+  saveQuarterfinalPicksBtn.disabled = true;
+
+  try {
+    await setDoc(doc(db, "quarterfinalPicks", currentUser.uid), {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      picks,
+      scoring: { winner: 3, score: 2, scoreRequiresCorrectWinner: true, extraTimeOrPenaltiesCorrect: 1, extraTimeOrPenaltiesWrong: -1 },
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    quarterfinalPicksStatus.className = "status-message status-success";
+    quarterfinalPicksStatus.textContent =
+      "✅ Quarterfinals picks saved! Your answers are saved.";
+    await applyQuarterfinalPickIndicators();
+    quarterfinalBonusSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    console.error("Failed to save Quarterfinals picks:", error);
+    quarterfinalPicksStatus.className = "status-message status-error";
+    quarterfinalPicksStatus.textContent =
+      "Quarterfinals picks were not saved. Check Firestore rules for quarterfinalPicks.";
+  } finally {
+    if (!allQuarterfinalMatchesAreLocked()) {
+      saveQuarterfinalPicksBtn.disabled = false;
+    }
+  }
+});
+
+function quarterfinalBonusAnswersAreLocked() {
+  return quarterfinalMatchIsLocked(quarterfinalMatches[0]);
+}
+
+async function renderQuarterfinalBonusQuestions() {
+  if (!quarterfinalBonusForm) return;
+
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+
+  quarterfinalBonusForm.innerHTML = `
+    <div class="pick-card">
+      <label>1. Will any team keep a clean sheet in the quarterfinals?</label>
+      <select id="quarterfinal-bonus-anyCleanSheet">
+        <option value="">Select answer</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+      <p id="quarterfinal-bonus-anyCleanSheet-result" class="answer-result"></p>
+    </div>
+
+    <div class="pick-card">
+      <label>2. Which quarterfinal team will score the most goals?</label>
+      <p class="mini-note">Tied top scorer counts.</p>
+      <select id="quarterfinal-bonus-mostGoalsTeam">
+        ${renderQuarterfinalTeamSelectOptions(round16Results, round32Results)}
+      </select>
+      <p id="quarterfinal-bonus-mostGoalsTeam-result" class="answer-result"></p>
+    </div>
+
+    <div class="pick-card">
+      <label>3. Which quarterfinal match will have the most free kicks?</label>
+      <p class="mini-note">Combined total for both teams.</p>
+      <select id="quarterfinal-bonus-mostFreeKicksMatch">
+        ${renderQuarterfinalMatchOptions(round16Results, round32Results)}
+      </select>
+      <p id="quarterfinal-bonus-mostFreeKicksMatch-result" class="answer-result"></p>
+    </div>
+  `;
+
+  if (quarterfinalBonusAnswersAreLocked()) {
+    quarterfinalBonusStatus.className = "status-message status-locked";
+    quarterfinalBonusStatus.textContent = "🔒 Quarterfinals bonus answers are locked.";
+    saveQuarterfinalBonusBtn.disabled = true;
+    saveQuarterfinalBonusBtn.textContent = "Quarterfinals Bonus Locked";
+    [
+      "quarterfinal-bonus-anyCleanSheet",
+      "quarterfinal-bonus-mostGoalsTeam",
+      "quarterfinal-bonus-mostFreeKicksMatch"
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+  } else {
+    quarterfinalBonusStatus.className = "";
+    saveQuarterfinalBonusBtn.disabled = false;
+    saveQuarterfinalBonusBtn.textContent = "Save Quarterfinals Bonus Answers";
+  }
+}
+
+async function renderAdminQuarterfinalBonusQuestions() {
+  if (!adminQuarterfinalBonusQuestions) return;
+
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+
+  adminQuarterfinalBonusQuestions.innerHTML = `
+    <div class="quarterfinal-bonus-instructions">
+      Each bonus question is worth <strong>${QUARTERFINAL_BONUS_POINTS} points</strong>.
+    </div>
+
+    <div class="pick-card">
+      <label>1. Will any team keep a clean sheet in the quarterfinals?</label>
+      <select disabled>
+        <option value="">Select answer</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+    </div>
+
+    <div class="pick-card">
+      <label>2. Which quarterfinal team will score the most goals?</label>
+      <p class="mini-note">Tied top scorer counts.</p>
+      <select disabled>${renderQuarterfinalTeamSelectOptions(round16Results, round32Results)}</select>
+    </div>
+
+    <div class="pick-card">
+      <label>3. Which quarterfinal match will have the most free kicks?</label>
+      <p class="mini-note">Combined total for both teams.</p>
+      <select disabled>${renderQuarterfinalMatchOptions(round16Results, round32Results)}</select>
+    </div>
+  `;
+}
+
+async function loadExistingQuarterfinalBonusAnswers() {
+  let snap;
+
+  try {
+    snap = await getDoc(doc(db, "quarterfinalBonusAnswers", currentUser.uid));
+  } catch (error) {
+    console.error("Failed to load Quarterfinals bonus answers:", error);
+    quarterfinalBonusStatus.className = "status-message status-error";
+    quarterfinalBonusStatus.textContent =
+      "Could not load saved Quarterfinals bonus answers. Check Firestore rules for quarterfinalBonusAnswers.";
+    return;
+  }
+
+  if (!snap.exists()) return;
+
+  const answers = snap.data().answers || {};
+
+  setValue("quarterfinal-bonus-anyCleanSheet", answers.anyCleanSheet);
+  setValue("quarterfinal-bonus-mostGoalsTeam", answers.mostGoalsTeam);
+  setValue("quarterfinal-bonus-mostFreeKicksMatch", answers.mostFreeKicksMatch);
+
+  if (!quarterfinalBonusAnswersAreLocked()) {
+    quarterfinalBonusStatus.className = "status-message status-info";
+    quarterfinalBonusStatus.textContent = "Loaded saved Quarterfinals bonus answers.";
+  }
+
+  await applyQuarterfinalBonusIndicators();
+}
+
+async function applyQuarterfinalBonusIndicators() {
+  [
+    "quarterfinal-bonus-anyCleanSheet-result",
+    "quarterfinal-bonus-mostGoalsTeam-result",
+    "quarterfinal-bonus-mostFreeKicksMatch-result"
+  ].forEach(clearScoringIndicator);
+
+  const [snap, sourceResults] = await Promise.all([
+    getOptionalDoc("quarterfinalResults", "official"),
+    getQuarterfinalSourceResults()
+  ]);
+  if (!snap?.exists()) return;
+
+  const results = snap.data().results || {};
+  if (!quarterfinalBonusResultsAreComplete(results)) return;
+
+  const key = getQuarterfinalBonusAnswerKey(
+    results,
+    sourceResults.round16Results,
+    sourceResults.round32Results
+  );
+  if (!key) return;
+
+  const anyCleanSheetAnswer = getValue("quarterfinal-bonus-anyCleanSheet");
+  if (anyCleanSheetAnswer) {
+    const correct = anyCleanSheetAnswer === (key.anyCleanSheet ? "yes" : "no");
+    setScoringIndicator(
+      "quarterfinal-bonus-anyCleanSheet-result",
+      correct ? "correct" : "wrong",
+      correct ? "Correct" : "Wrong",
+      correct ? QUARTERFINAL_BONUS_POINTS : 0
+    );
+  }
+
+  const mostGoalsTeamAnswer = getValue("quarterfinal-bonus-mostGoalsTeam");
+  if (mostGoalsTeamAnswer) {
+    const correct = key.mostGoalsTeams.some(team => sameCountryOption(mostGoalsTeamAnswer, team));
+    setScoringIndicator(
+      "quarterfinal-bonus-mostGoalsTeam-result",
+      correct ? "correct" : "wrong",
+      correct ? "Correct team" : "Wrong team",
+      correct ? QUARTERFINAL_BONUS_POINTS : 0
+    );
+  }
+
+  const mostFreeKicksAnswer = getValue("quarterfinal-bonus-mostFreeKicksMatch");
+  if (mostFreeKicksAnswer) {
+    const correct = key.mostFreeKicksMatchIds.includes(mostFreeKicksAnswer);
+    setScoringIndicator(
+      "quarterfinal-bonus-mostFreeKicksMatch-result",
+      correct ? "correct" : "wrong",
+      correct ? "Correct match" : "Wrong match",
+      correct ? QUARTERFINAL_BONUS_POINTS : 0
+    );
+  }
+}
+
+saveQuarterfinalBonusBtn?.addEventListener("click", async () => {
+  if (!currentUser) return alert("Please sign in first.");
+  if (quarterfinalBonusAnswersAreLocked()) return alert("Quarterfinals bonus answers are locked.");
+
+  const answers = {
+    anyCleanSheet: getValue("quarterfinal-bonus-anyCleanSheet"),
+    mostGoalsTeam: getValue("quarterfinal-bonus-mostGoalsTeam"),
+    mostFreeKicksMatch: getValue("quarterfinal-bonus-mostFreeKicksMatch")
+  };
+
+  if (!answers.anyCleanSheet) return alert("Answer whether any Quarterfinals team will keep a clean sheet.");
+  if (!answers.mostGoalsTeam) return alert("Select the Quarterfinals team that will score the most goals.");
+  if (!answers.mostFreeKicksMatch) return alert("Select the Quarterfinals match with the most free kicks.");
+
+  quarterfinalBonusStatus.className = "status-message status-info";
+  quarterfinalBonusStatus.textContent = "Saving Quarterfinals bonus answers...";
+  saveQuarterfinalBonusBtn.disabled = true;
+
+  try {
+    await setDoc(doc(db, "quarterfinalBonusAnswers", currentUser.uid), {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      answers,
+      scoring: {
+        anyCleanSheet: QUARTERFINAL_BONUS_POINTS,
+        mostGoalsTeam: QUARTERFINAL_BONUS_POINTS,
+        mostFreeKicksMatch: QUARTERFINAL_BONUS_POINTS
+      },
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    quarterfinalBonusStatus.className = "status-message status-success";
+    quarterfinalBonusStatus.textContent = "✅ Quarterfinals bonus answers saved!";
+    await applyQuarterfinalBonusIndicators();
+  } catch (error) {
+    console.error("Failed to save Quarterfinals bonus answers:", error);
+    quarterfinalBonusStatus.className = "status-message status-error";
+    quarterfinalBonusStatus.textContent =
+      "Quarterfinals bonus answers were not saved. Check Firestore rules for quarterfinalBonusAnswers.";
+  } finally {
+    if (!quarterfinalBonusAnswersAreLocked()) {
+      saveQuarterfinalBonusBtn.disabled = false;
     }
   }
 });
@@ -2494,7 +3148,11 @@ saveRound32ResultsBtn?.addEventListener("click", async () => {
   round32ResultsStatus.textContent = "✅ Round of 32 results saved!";
   await applyRound32PickIndicators();
   await renderRound16Picks();
+  await renderQuarterfinalPicks();
+  await renderQuarterfinalBonusQuestions();
   await loadExistingRound16Picks();
+  await loadExistingQuarterfinalPicks();
+  await loadExistingQuarterfinalBonusAnswers();
   await renderLeaderboardFromFirestore();
 });
 
@@ -2522,6 +3180,231 @@ function scoreRound32Picks(picks, results) {
       } else {
         points -= 1;
       }
+    }
+  });
+
+  return points;
+}
+
+async function renderAdminQuarterfinalResults() {
+  if (!adminQuarterfinalResultsForm) return;
+
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+  adminQuarterfinalResultsForm.innerHTML = "";
+
+  quarterfinalMatches.forEach(match => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+    const matchupLabel = quarterfinalMatchupLabel(match, round16Results, round32Results);
+
+    wrapper.innerHTML = `
+      <h3>${escapeHTML(matchupLabel)} Official Result</h3>
+
+      <label>Winner</label>
+      <select id="result-quarterfinal-${match.id}-winner">
+        ${renderQuarterfinalWinnerOptions(match, round16Results, round32Results)}
+      </select>
+
+      <label>Full-time score</label>
+      <div class="score-entry-row" aria-label="Official full-time score">
+        <input
+          id="result-quarterfinal-${match.id}-winnerGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="next"
+          data-score-number
+          aria-label="Official winner full-time goals"
+        />
+        <span class="score-entry-dash">-</span>
+        <input
+          id="result-quarterfinal-${match.id}-otherGoals"
+          class="score-number-input"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          enterkeyhint="done"
+          data-score-number
+          aria-label="Official opponent full-time goals"
+        />
+      </div>
+      <p class="mini-note">Put the winner's full-time score first. Use 1-1 for matches tied after full time.</p>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="result-quarterfinal-${match.id}-extraTimeOrPenalties" />
+        Went to extra time or penalties
+      </label>
+
+      <label>Combined free kicks</label>
+      <input id="result-quarterfinal-${match.id}-freeKicks" type="number" min="0" />
+    `;
+
+    adminQuarterfinalResultsForm.appendChild(wrapper);
+  });
+
+  setupNumericScoreInputs(adminQuarterfinalResultsForm);
+}
+
+async function loadExistingQuarterfinalResults() {
+  const snap = await getOptionalDoc("quarterfinalResults", "official");
+  if (!snap?.exists()) {
+    await renderAdminQuarterfinalBonusKey();
+    return;
+  }
+
+  const results = snap.data().results || {};
+
+  Object.entries(results).forEach(([matchId, result]) => {
+    setValue(`result-quarterfinal-${matchId}-winner`, result.winner);
+    setRound16ScoreInputs("result-quarterfinal", matchId, result.score);
+    setValue(`result-quarterfinal-${matchId}-freeKicks`, result.freeKicks);
+
+    const extraTimeOrPenalties = document.getElementById(`result-quarterfinal-${matchId}-extraTimeOrPenalties`);
+    if (extraTimeOrPenalties) {
+      extraTimeOrPenalties.checked = !!result.extraTimeOrPenalties;
+    }
+  });
+
+  await renderAdminQuarterfinalBonusKey(results);
+}
+
+async function renderAdminQuarterfinalBonusKey(existingResults = null) {
+  if (!adminQuarterfinalBonusKey) return;
+
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+  const quarterfinalSnap = existingResults ? null : await getOptionalDoc("quarterfinalResults", "official");
+  const results = existingResults || (quarterfinalSnap?.exists() ? quarterfinalSnap.data().results || {} : {});
+  const completedCount = getQuarterfinalOfficialScores(results).length;
+  const key = getQuarterfinalBonusAnswerKey(results, round16Results, round32Results);
+
+  if (!key) {
+    adminQuarterfinalBonusKey.innerHTML = `
+      <div class="admin-bonus-key-card">
+        <span class="admin-panel-label">Quarterfinals bonus key</span>
+        <h3>Bonus Answer Key</h3>
+        <p class="mini-note">
+          Pending: ${completedCount}/${quarterfinalMatches.length} Quarterfinals official results have winners, valid full-time scores, and free-kick totals.
+          Bonus points will stay at 0 until all four matches are complete.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const mostFreeKicksMatches = key.mostFreeKicksMatchIds
+    .map(matchId => quarterfinalMatches.find(match => match.id === matchId))
+    .filter(Boolean);
+
+  adminQuarterfinalBonusKey.innerHTML = `
+    <div class="admin-bonus-key-card">
+      <span class="admin-panel-label">Quarterfinals bonus key</span>
+      <h3>Bonus Answer Key</h3>
+      <p class="mini-note">These answers are calculated from the official Quarterfinals results above. Bonus points are awarded only after all four matches are complete.</p>
+      <table class="admin-player-table admin-bonus-key-table">
+        <tbody>
+          <tr>
+            <th>Any clean sheet?</th>
+            <td>${key.anyCleanSheet ? "Yes" : "No"}</td>
+          </tr>
+          <tr>
+            <th>Most goals team</th>
+            <td>${key.mostGoalsTeams.map(team => escapeHTML(round32TeamLabel(team))).join("<br>")}</td>
+          </tr>
+          <tr>
+            <th>Most free kicks match</th>
+            <td>${mostFreeKicksMatches.map(match => escapeHTML(quarterfinalMatchupLabel(match, round16Results, round32Results))).join("<br>")}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+saveQuarterfinalResultsBtn?.addEventListener("click", async () => {
+  const { round16Results, round32Results } = await getQuarterfinalSourceResults();
+  const results = {};
+
+  for (const match of quarterfinalMatches) {
+    const winner = getValue(`result-quarterfinal-${match.id}-winner`);
+    const score = getRound16ScoreFromInputs("result-quarterfinal", match.id);
+    const extraTimeOrPenalties =
+      document.getElementById(`result-quarterfinal-${match.id}-extraTimeOrPenalties`)?.checked || false;
+    const freeKicks = getValue(`result-quarterfinal-${match.id}-freeKicks`);
+
+    if (winner) {
+      const validTeams = quarterfinalPossibleTeams(match, round16Results, round32Results);
+      if (!validTeams.includes(winner)) {
+        return alert(`${match.label}: selected winner is not valid for this matchup.`);
+      }
+
+      const scoreError = score === null
+        ? `${match.label}: enter both score numbers.`
+        : validateRound16Score(score, match.label);
+      if (scoreError) return alert(scoreError);
+    } else if (score !== "" || freeKicks !== "") {
+      return alert(`${match.label}: select a winner before entering a score or free-kick total.`);
+    }
+
+    if (freeKicks !== "" && Number(freeKicks) < 0) {
+      return alert(`${match.label}: free-kick total cannot be negative.`);
+    }
+
+    const participants = quarterfinalResolvedParticipants(match, round16Results, round32Results);
+
+    results[match.id] = {
+      winner,
+      score,
+      extraTimeOrPenalties,
+      freeKicks,
+      participants
+    };
+  }
+
+  await setDoc(doc(db, "quarterfinalResults", "official"), {
+    results,
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser.email
+  }, { merge: true });
+
+  quarterfinalResultsStatus.textContent = "✅ Quarterfinals results saved!";
+  await renderAdminQuarterfinalBonusKey(results);
+  await renderQuarterfinalPicks();
+  await renderQuarterfinalBonusQuestions();
+  await loadExistingQuarterfinalPicks();
+  await loadExistingQuarterfinalBonusAnswers();
+  await renderLeaderboardFromFirestore();
+});
+
+function scoreQuarterfinalPicks(picks, results) {
+  if (!picks || !results) return 0;
+
+  let points = 0;
+
+  Object.entries(picks).forEach(([matchId, pick]) => {
+    const result = results[matchId];
+    if (!pick || !result?.winner) return;
+
+    const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+    if (winnerCorrect) {
+      points += 3;
+    }
+
+    const pickScore = normalizeWinnerFirstScore(pick.score);
+    const resultScore = normalizeWinnerFirstScore(result.score);
+    if (
+      winnerCorrect &&
+      parseWinnerFirstScore(pickScore) &&
+      parseWinnerFirstScore(resultScore) &&
+      pickScore === resultScore
+    ) {
+      points += 2;
+    }
+
+    if (pick.extraTimeOrPenalties) {
+      points += result.extraTimeOrPenalties ? 1 : -1;
     }
   });
 
@@ -2712,10 +3595,17 @@ saveRound16ResultsBtn?.addEventListener("click", async () => {
 
   round16ResultsStatus.textContent = "✅ Round of 16 results saved!";
   await renderAdminRound16BonusKey(results);
+  await renderAdminQuarterfinalResults();
+  await renderAdminQuarterfinalBonusQuestions();
+  await loadExistingQuarterfinalResults();
   await renderRound16Picks();
   await renderRound16BonusQuestions();
+  await renderQuarterfinalPicks();
+  await renderQuarterfinalBonusQuestions();
   await loadExistingRound16Picks();
   await loadExistingRound16BonusAnswers();
+  await loadExistingQuarterfinalPicks();
+  await loadExistingQuarterfinalBonusAnswers();
   await renderLeaderboardFromFirestore();
 });
 
@@ -2728,13 +3618,15 @@ function scoreRound16Picks(picks, results) {
     const result = results[matchId];
     if (!pick || !result?.winner) return;
 
-    if (sameCountryOption(pick.winner, result.winner)) {
+    const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+    if (winnerCorrect) {
       points += 3;
     }
 
     const pickScore = normalizeWinnerFirstScore(pick.score);
     const resultScore = normalizeWinnerFirstScore(result.score);
     if (
+      winnerCorrect &&
       parseWinnerFirstScore(pickScore) &&
       parseWinnerFirstScore(resultScore) &&
       pickScore === resultScore
@@ -2854,6 +3746,110 @@ function getRound16OfficialScores(results = {}) {
       return { match, result, parsed };
     })
     .filter(Boolean);
+}
+
+function getQuarterfinalOfficialScores(results = {}) {
+  return quarterfinalMatches
+    .map(match => {
+      const result = results[match.id];
+      const parsed = result?.score ? parseWinnerFirstScore(result.score) : null;
+      const hasFreeKicks = result?.freeKicks !== "" && result?.freeKicks != null;
+      const freeKicks = Number(result?.freeKicks);
+      if (!result?.winner || !parsed || !hasFreeKicks || Number.isNaN(freeKicks)) return null;
+      return { match, result, parsed, freeKicks };
+    })
+    .filter(Boolean);
+}
+
+function quarterfinalBonusResultsAreComplete(results = {}) {
+  return quarterfinalMatches.every(match => {
+    const result = results[match.id];
+    const hasFreeKicks = result?.freeKicks !== "" && result?.freeKicks != null;
+    const freeKicks = Number(result?.freeKicks);
+    return !!result?.winner && !!parseWinnerFirstScore(result.score) && hasFreeKicks && !Number.isNaN(freeKicks);
+  });
+}
+
+function getQuarterfinalResultParticipants(match, result, round16Results = {}, round32Results = {}) {
+  if (Array.isArray(result?.participants) && result.participants.length === 2) {
+    return result.participants;
+  }
+
+  return quarterfinalResolvedParticipants(match, round16Results, round32Results);
+}
+
+function calculateQuarterfinalAnyCleanSheet(results = {}) {
+  return getQuarterfinalOfficialScores(results).some(({ parsed }) =>
+    parsed.winnerGoals === 0 || parsed.otherGoals === 0
+  );
+}
+
+function calculateQuarterfinalMostGoalsTeams(results = {}, round16Results = {}, round32Results = {}) {
+  const goalsByTeam = {};
+
+  getQuarterfinalOfficialScores(results).forEach(({ match, result, parsed }) => {
+    const participants = getQuarterfinalResultParticipants(match, result, round16Results, round32Results);
+    if (participants.length !== 2) return;
+
+    const winner = participants.find(team => sameCountryOption(team, result.winner));
+    const other = participants.find(team => !sameCountryOption(team, result.winner));
+
+    if (winner) goalsByTeam[winner] = (goalsByTeam[winner] || 0) + parsed.winnerGoals;
+    if (other) goalsByTeam[other] = (goalsByTeam[other] || 0) + parsed.otherGoals;
+  });
+
+  const teams = Object.keys(goalsByTeam);
+  if (!teams.length) return [];
+
+  const maxGoals = Math.max(...teams.map(team => goalsByTeam[team]));
+  return teams.filter(team => goalsByTeam[team] === maxGoals);
+}
+
+function calculateQuarterfinalMostFreeKicksMatchIds(results = {}) {
+  const scoredMatches = getQuarterfinalOfficialScores(results);
+  if (!scoredMatches.length) return [];
+
+  const maxFreeKicks = Math.max(...scoredMatches.map(({ freeKicks }) => freeKicks));
+  return scoredMatches
+    .filter(({ freeKicks }) => freeKicks === maxFreeKicks)
+    .map(({ match }) => match.id);
+}
+
+function getQuarterfinalBonusAnswerKey(results = {}, round16Results = {}, round32Results = {}) {
+  if (!quarterfinalBonusResultsAreComplete(results)) return null;
+
+  return {
+    anyCleanSheet: calculateQuarterfinalAnyCleanSheet(results),
+    mostGoalsTeams: calculateQuarterfinalMostGoalsTeams(results, round16Results, round32Results),
+    mostFreeKicksMatchIds: calculateQuarterfinalMostFreeKicksMatchIds(results)
+  };
+}
+
+function scoreQuarterfinalBonusAnswers(answers, quarterfinalResults, round16Results, round32Results) {
+  if (!answers || !quarterfinalResults) return 0;
+  if (!quarterfinalBonusResultsAreComplete(quarterfinalResults)) return 0;
+
+  const key = getQuarterfinalBonusAnswerKey(quarterfinalResults, round16Results, round32Results);
+  if (!key) return 0;
+
+  let points = 0;
+
+  if (answers.anyCleanSheet && answers.anyCleanSheet === (key.anyCleanSheet ? "yes" : "no")) {
+    points += QUARTERFINAL_BONUS_POINTS;
+  }
+
+  if (
+    answers.mostGoalsTeam &&
+    key.mostGoalsTeams.some(team => sameCountryOption(answers.mostGoalsTeam, team))
+  ) {
+    points += QUARTERFINAL_BONUS_POINTS;
+  }
+
+  if (answers.mostFreeKicksMatch && key.mostFreeKicksMatchIds.includes(answers.mostFreeKicksMatch)) {
+    points += QUARTERFINAL_BONUS_POINTS;
+  }
+
+  return points;
 }
 
 function calculateRound16CleanSheets(results = {}) {
@@ -3030,6 +4026,8 @@ async function renderAdminPlayerList() {
   const round32BonusAnswersSnap = await getDocs(collection(db, "round32BonusAnswers"));
   const round16PicksSnap = await getDocs(collection(db, "round16Picks"));
   const round16BonusAnswersSnap = await getDocs(collection(db, "round16BonusAnswers"));
+  const quarterfinalPicksSnap = await getOptionalCollectionDocs("quarterfinalPicks");
+  const quarterfinalBonusAnswersSnap = await getOptionalCollectionDocs("quarterfinalBonusAnswers");
 
   const unlockedGroups = Object.keys(groups).filter(groupName => !groupIsLocked(groupName));
 
@@ -3137,6 +4135,39 @@ async function renderAdminPlayerList() {
         Number(!!answers.mostGoalsMatch) +
         Number(answers.cleanSheets !== "" && answers.cleanSheets != null) +
         Math.min(uniqueRegionOrder.length, round16RegionOptions.length),
+      complete
+    };
+  });
+
+  const quarterfinalPickStatusByUserId = {};
+  quarterfinalPicksSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const picks = data.picks || {};
+    const savedCount = quarterfinalMatches.filter(match =>
+      picks[match.id]?.winner && picks[match.id]?.score
+    ).length;
+    const uid = data.uid || docSnap.id;
+
+    quarterfinalPickStatusByUserId[uid] = {
+      savedCount,
+      complete: savedCount === quarterfinalMatches.length
+    };
+  });
+
+  const quarterfinalBonusStatusByUserId = {};
+  quarterfinalBonusAnswersSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const answers = data.answers || {};
+    const complete =
+      !!answers.anyCleanSheet &&
+      !!answers.mostGoalsTeam &&
+      !!answers.mostFreeKicksMatch;
+
+    quarterfinalBonusStatusByUserId[data.uid || docSnap.id] = {
+      answerCount:
+        Number(!!answers.anyCleanSheet) +
+        Number(!!answers.mostGoalsTeam) +
+        Number(!!answers.mostFreeKicksMatch),
       complete
     };
   });
@@ -3266,6 +4297,45 @@ async function renderAdminPlayerList() {
                 <td>
                   <span class="${bonus.complete ? "status-good" : "status-bad"}">
                     ${bonus.complete ? "✅ Complete" : `❌ ${bonus.answerCount}/6`}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  if (adminQuarterfinalPlayerList) {
+    adminQuarterfinalPlayerList.innerHTML = `
+      <table class="admin-player-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Quarterfinals Picks</th>
+            <th>Quarterfinals Bonus</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map((u, index) => {
+            const uid = u.uid;
+            const picks = quarterfinalPickStatusByUserId[uid] || { savedCount: 0, complete: false };
+            const bonus = quarterfinalBonusStatusByUserId[uid] || { answerCount: 0, complete: false };
+
+            return `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${escapeHTML(u.username || u.googleDisplayName || "Player")}</td>
+                <td>
+                  <span class="${picks.complete ? "status-good" : "status-bad"}">
+                    ${picks.complete ? "✅ Complete" : `❌ ${picks.savedCount}/${quarterfinalMatches.length}`}
+                  </span>
+                </td>
+                <td>
+                  <span class="${bonus.complete ? "status-good" : "status-bad"}">
+                    ${bonus.complete ? "✅ Complete" : `❌ ${bonus.answerCount}/3`}
                   </span>
                 </td>
               </tr>
@@ -3521,12 +4591,15 @@ async function renderLeaderboardFromFirestore() {
   const round32BonusAnswersSnap = await getDocs(collection(db, "round32BonusAnswers"));
   const round16PicksSnap = await getDocs(collection(db, "round16Picks"));
   const round16BonusAnswersSnap = await getDocs(collection(db, "round16BonusAnswers"));
+  const quarterfinalPicksSnap = await getOptionalCollectionDocs("quarterfinalPicks");
+  const quarterfinalBonusAnswersSnap = await getOptionalCollectionDocs("quarterfinalBonusAnswers");
   const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
 
   const groupResultsSnap = await getDoc(doc(db, "groupResults", "official"));
   const round32ResultsSnap = await getDoc(doc(db, "round32Results", "official"));
   const round32BonusResultsSnap = await getDoc(doc(db, "round32BonusResults", "official"));
   const round16ResultsSnap = await getDoc(doc(db, "round16Results", "official"));
+  const quarterfinalResultsSnap = await getOptionalDoc("quarterfinalResults", "official");
   const bonusResultsSnap = await getDoc(doc(db, "bonusResults", "official"));
 
   const groupResults = groupResultsSnap.exists() ? groupResultsSnap.data().results || {} : {};
@@ -3539,6 +4612,10 @@ async function renderLeaderboardFromFirestore() {
   const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
   const publicRound16RevealableMatchIds = round16Matches
     .filter(match => round16PickIsRevealable(match))
+    .map(match => match.id);
+  const quarterfinalResults = quarterfinalResultsSnap?.exists() ? quarterfinalResultsSnap.data().results || {} : {};
+  const publicQuarterfinalRevealableMatchIds = quarterfinalMatches
+    .filter(match => quarterfinalPickIsRevealable(match))
     .map(match => match.id);
   const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
 
@@ -3569,6 +4646,8 @@ async function renderLeaderboardFromFirestore() {
         publicRound32RevealableMatchIds,
         publicRound16Picks: {},
         publicRound16RevealableMatchIds,
+        publicQuarterfinalPicks: {},
+        publicQuarterfinalRevealableMatchIds,
         match_points: 0,
         group_points: 0,
         bonus_points: 0,
@@ -3638,6 +4717,24 @@ async function renderLeaderboardFromFirestore() {
     player.match_points += scoreRound16Picks(data.picks, round16Results);
   });
 
+  quarterfinalPicksSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
+
+    Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
+      if (!pick?.winner) return;
+
+      player.publicQuarterfinalPicks[matchId] = {
+        winner: pick.winner,
+        score: normalizeWinnerFirstScore(pick.score),
+        extraTimeOrPenalties: !!pick.extraTimeOrPenalties
+      };
+    });
+
+    player.match_points += scoreQuarterfinalPicks(data.picks, quarterfinalResults);
+  });
+
   round32BonusAnswersSnap.forEach(docSnap => {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
@@ -3652,6 +4749,19 @@ async function renderLeaderboardFromFirestore() {
     if (!player) return;
 
     player.bonus_points += scoreRound16BonusAnswers(data.answers, round16Results, round32Results);
+  });
+
+  quarterfinalBonusAnswersSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
+
+    player.bonus_points += scoreQuarterfinalBonusAnswers(
+      data.answers,
+      quarterfinalResults,
+      round16Results,
+      round32Results
+    );
   });
 
   bonusAnswersSnap.forEach(docSnap => {
@@ -3781,39 +4891,48 @@ async function loadPlayerScoringBreakdownData(uid) {
     groupPicksSnap,
     round32PicksSnap,
     round16PicksSnap,
+    quarterfinalPicksSnap,
     round32BonusAnswersSnap,
     round16BonusAnswersSnap,
+    quarterfinalBonusAnswersSnap,
     bonusAnswersSnap,
     groupResultsSnap,
     round32ResultsSnap,
     round32BonusResultsSnap,
     round16ResultsSnap,
+    quarterfinalResultsSnap,
     bonusResultsSnap
   ] = await Promise.all([
     getDoc(doc(db, "groupPicks", uid)),
     getDoc(doc(db, "round32Picks", uid)),
     getDoc(doc(db, "round16Picks", uid)),
+    getOptionalDoc("quarterfinalPicks", uid),
     getDoc(doc(db, "round32BonusAnswers", uid)),
     getDoc(doc(db, "round16BonusAnswers", uid)),
+    getOptionalDoc("quarterfinalBonusAnswers", uid),
     getDoc(doc(db, "bonusAnswers", uid)),
     getDoc(doc(db, "groupResults", "official")),
     getDoc(doc(db, "round32Results", "official")),
     getDoc(doc(db, "round32BonusResults", "official")),
     getDoc(doc(db, "round16Results", "official")),
+    getOptionalDoc("quarterfinalResults", "official"),
     getDoc(doc(db, "bonusResults", "official"))
   ]);
 
   const groupResultsDoc = groupResultsSnap.exists() ? groupResultsSnap.data() : {};
   const round32BonusResultsDoc = round32BonusResultsSnap.exists() ? round32BonusResultsSnap.data() : {};
   const round16ResultsDoc = round16ResultsSnap.exists() ? round16ResultsSnap.data() : {};
+  const quarterfinalResultsDoc = quarterfinalResultsSnap?.exists() ? quarterfinalResultsSnap.data() : {};
   const bonusResultsDoc = bonusResultsSnap.exists() ? bonusResultsSnap.data() : {};
 
   return {
     groupPicks: groupPicksSnap.exists() ? groupPicksSnap.data().picks || {} : {},
     round32Picks: round32PicksSnap.exists() ? round32PicksSnap.data().picks || {} : {},
     round16Picks: round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {},
+    quarterfinalPicks: quarterfinalPicksSnap?.exists() ? quarterfinalPicksSnap.data().picks || {} : {},
     round32BonusAnswers: round32BonusAnswersSnap.exists() ? round32BonusAnswersSnap.data().answers || {} : {},
     round16BonusAnswers: round16BonusAnswersSnap.exists() ? round16BonusAnswersSnap.data().answers || {} : {},
+    quarterfinalBonusAnswers: quarterfinalBonusAnswersSnap?.exists() ? quarterfinalBonusAnswersSnap.data().answers || {} : {},
     bonusAnswers: bonusAnswersSnap.exists() ? bonusAnswersSnap.data().answers || {} : {},
     groupResults: groupResultsDoc.results || {},
     groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
@@ -3824,6 +4943,9 @@ async function loadPlayerScoringBreakdownData(uid) {
     round16Results: round16ResultsDoc.results || {},
     round16ResultsDateKey:
       dateKeyFromValue(round16ResultsDoc.updatedAt) || roundLastMatchDateKey(round16Matches),
+    quarterfinalResults: quarterfinalResultsDoc.results || {},
+    quarterfinalResultsDateKey:
+      dateKeyFromValue(quarterfinalResultsDoc.updatedAt) || roundLastMatchDateKey(quarterfinalMatches),
     bonusResults: bonusResultsDoc.results || {},
     bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
   };
@@ -3876,7 +4998,8 @@ function buildRound32ScoringEntries(data) {
     if (!match || !pick || !result?.winner) return;
 
     const item = round32MatchupLabel(match);
-    if (sameCountryOption(pick.winner, result.winner)) {
+    const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+    if (winnerCorrect) {
       addScoringEntry(entries, matchDateKey(match), "Match", item, "Winner pick", 3);
     }
 
@@ -3904,13 +5027,55 @@ function buildRound16ScoringEntries(data) {
     if (!match || !pick || !result?.winner) return;
 
     const item = round16MatchupLabel(match, data.round32Results);
-    if (sameCountryOption(pick.winner, result.winner)) {
+    const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+    if (winnerCorrect) {
       addScoringEntry(entries, matchDateKey(match), "Match", item, "Winner pick", 3);
     }
 
     const pickScore = normalizeWinnerFirstScore(pick.score);
     const resultScore = normalizeWinnerFirstScore(result.score);
     if (
+      winnerCorrect &&
+      parseWinnerFirstScore(pickScore) &&
+      parseWinnerFirstScore(resultScore) &&
+      pickScore === resultScore
+    ) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Exact full-time score", 2);
+    }
+
+    if (pick.extraTimeOrPenalties) {
+      addScoringEntry(
+        entries,
+        matchDateKey(match),
+        "Match",
+        item,
+        "Extra time / penalties pick",
+        result.extraTimeOrPenalties ? 1 : -1
+      );
+    }
+  });
+
+  return entries;
+}
+
+function buildQuarterfinalScoringEntries(data) {
+  const entries = [];
+
+  Object.entries(data.quarterfinalPicks || {}).forEach(([matchId, pick]) => {
+    const match = quarterfinalMatches.find(item => item.id === matchId);
+    const result = data.quarterfinalResults[matchId];
+    if (!match || !pick || !result?.winner) return;
+
+    const item = quarterfinalMatchupLabel(match, data.round16Results, data.round32Results);
+    const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+    if (winnerCorrect) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Winner pick", 3);
+    }
+
+    const pickScore = normalizeWinnerFirstScore(pick.score);
+    const resultScore = normalizeWinnerFirstScore(result.score);
+    if (
+      winnerCorrect &&
       parseWinnerFirstScore(pickScore) &&
       parseWinnerFirstScore(resultScore) &&
       pickScore === resultScore
@@ -4036,6 +5201,56 @@ function buildRound16BonusScoringEntries(data) {
   return entries;
 }
 
+function buildQuarterfinalBonusScoringEntries(data) {
+  const entries = [];
+  const answers = data.quarterfinalBonusAnswers || {};
+  const results = data.quarterfinalResults || {};
+  const dateKey = data.quarterfinalResultsDateKey;
+  if (!quarterfinalBonusResultsAreComplete(results)) return entries;
+
+  const key = getQuarterfinalBonusAnswerKey(results, data.round16Results, data.round32Results);
+  if (!key) return entries;
+
+  if (answers.anyCleanSheet && answers.anyCleanSheet === (key.anyCleanSheet ? "yes" : "no")) {
+    addScoringEntry(
+      entries,
+      dateKey,
+      "Bonus",
+      "Quarterfinals bonus: any clean sheet",
+      key.anyCleanSheet ? "Yes" : "No",
+      QUARTERFINAL_BONUS_POINTS
+    );
+  }
+
+  if (
+    answers.mostGoalsTeam &&
+    key.mostGoalsTeams.some(team => sameCountryOption(answers.mostGoalsTeam, team))
+  ) {
+    addScoringEntry(
+      entries,
+      dateKey,
+      "Bonus",
+      "Quarterfinals bonus: most goals team",
+      countryOptionLabel(answers.mostGoalsTeam),
+      QUARTERFINAL_BONUS_POINTS
+    );
+  }
+
+  if (answers.mostFreeKicksMatch && key.mostFreeKicksMatchIds.includes(answers.mostFreeKicksMatch)) {
+    const match = quarterfinalMatches.find(item => item.id === answers.mostFreeKicksMatch);
+    addScoringEntry(
+      entries,
+      dateKey,
+      "Bonus",
+      "Quarterfinals bonus: most free kicks match",
+      match ? quarterfinalMatchupLabel(match, data.round16Results, data.round32Results) : `Match ${answers.mostFreeKicksMatch}`,
+      QUARTERFINAL_BONUS_POINTS
+    );
+  }
+
+  return entries;
+}
+
 function buildOpeningBonusScoringEntries(data) {
   const entries = [];
   const answers = data.bonusAnswers || {};
@@ -4076,8 +5291,10 @@ function buildScoringBreakdownEntries(data) {
     ...buildGroupScoringEntries(data),
     ...buildRound32ScoringEntries(data),
     ...buildRound16ScoringEntries(data),
+    ...buildQuarterfinalScoringEntries(data),
     ...buildRound32BonusScoringEntries(data),
     ...buildRound16BonusScoringEntries(data),
+    ...buildQuarterfinalBonusScoringEntries(data),
     ...buildOpeningBonusScoringEntries(data)
   ].sort((a, b) => {
     if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
@@ -4190,10 +5407,12 @@ async function showPlayerRound32Picks(uid, displayName) {
     return;
   }
 
-  const [picksSnap, resultsSnap, round16PicksSnap] = await Promise.all([
+  const [picksSnap, resultsSnap, round16PicksSnap, quarterfinalPicksSnap, round16ResultsSnap] = await Promise.all([
     getDoc(doc(db, "round32Picks", uid)),
     getDoc(doc(db, "round32Results", "official")),
-    getDoc(doc(db, "round16Picks", uid))
+    getDoc(doc(db, "round16Picks", uid)),
+    getOptionalDoc("quarterfinalPicks", uid),
+    getDoc(doc(db, "round16Results", "official"))
   ]);
 
   const adminBreakdownData = currentUserIsAdmin()
@@ -4203,7 +5422,7 @@ async function showPlayerRound32Picks(uid, displayName) {
     ? renderAdminDailyPointsPanel(adminBreakdownData)
     : "";
 
-  if (!picksSnap.exists() && !round16PicksSnap.exists()) {
+  if (!picksSnap.exists() && !round16PicksSnap.exists() && !quarterfinalPicksSnap?.exists()) {
     playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
     playerPicksContent.innerHTML = `
       ${adminBreakdownPanel}
@@ -4218,6 +5437,8 @@ async function showPlayerRound32Picks(uid, displayName) {
   const picks = picksSnap.exists() ? picksSnap.data().picks || {} : {};
   const results = resultsSnap.exists() ? resultsSnap.data().results || {} : {};
   const round16Picks = round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {};
+  const quarterfinalPicks = quarterfinalPicksSnap?.exists() ? quarterfinalPicksSnap.data().picks || {} : {};
+  const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
 
   playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
   playerPicksContent.innerHTML = `
@@ -4234,6 +5455,13 @@ async function showPlayerRound32Picks(uid, displayName) {
     <div class="public-picks-grid">
       ${round16Matches.map(match =>
         renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match), results)
+      ).join("")}
+    </div>
+
+    <h3>Quarterfinals</h3>
+    <div class="public-picks-grid">
+      ${quarterfinalMatches.map(match =>
+        renderPublicQuarterfinalPickCard(match, quarterfinalPicks[match.id], quarterfinalPickIsRevealable(match), round16Results, results)
       ).join("")}
     </div>
   `;
@@ -4256,6 +5484,10 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
         ? row.publicRound32FinishedMatchIds
       : [];
     const round16Picks = row.publicRound16Picks || {};
+    const quarterfinalPicks = row.publicQuarterfinalPicks || {};
+    const quarterfinalRevealableMatchIds = Array.isArray(row.publicQuarterfinalRevealableMatchIds)
+      ? row.publicQuarterfinalRevealableMatchIds
+      : [];
 
     playerPicksContent.innerHTML = `
       <h3>Round of 32</h3>
@@ -4269,6 +5501,13 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
       <div class="public-picks-grid">
         ${round16Matches.map(match =>
           renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match))
+        ).join("")}
+      </div>
+
+      <h3>Quarterfinals</h3>
+      <div class="public-picks-grid">
+        ${quarterfinalMatches.map(match =>
+          renderPublicQuarterfinalPickCard(match, quarterfinalPicks[match.id], quarterfinalRevealableMatchIds.includes(match.id))
         ).join("")}
       </div>
     `;
@@ -4307,6 +5546,34 @@ function renderPublicRound32PickCard(match, pick, isRevealable) {
 
 function renderPublicRound16PickCard(match, pick, isRevealable, round32Results = {}) {
   const matchupLabel = round16MatchupLabel(match, round32Results);
+
+  if (!isRevealable) {
+    return `
+      <div class="public-pick-card public-pick-hidden">
+        <h3>${escapeHTML(matchupLabel)}</h3>
+        <p class="hidden-pick-marker">Hidden until match has started</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="public-pick-card">
+      <h3>${escapeHTML(matchupLabel)}</h3>
+      ${
+        pick?.winner
+          ? `
+            <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
+            <p><strong>Full-time score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
+            <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
+          `
+          : `<p class="mini-note">No saved pick for this match.</p>`
+      }
+    </div>
+  `;
+}
+
+function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Results = {}, round32Results = {}) {
+  const matchupLabel = quarterfinalMatchupLabel(match, round16Results, round32Results);
 
   if (!isRevealable) {
     return `

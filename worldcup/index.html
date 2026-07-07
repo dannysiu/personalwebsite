@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=quarterfinal-save-buttons-20260707" />
 </head>
 <body>
   <div class="home-link">
@@ -39,10 +39,10 @@
 
   <main class="container">
     <section class="card announcement-card">
-      <h2>🚨 Round of 16 Picks are open!</h2>
+      <h2>🚨 Quarterfinals Picks are open!</h2>
       <p>
-        ✅ Pick the winner and full-time score for every Round of 16 match.<br>
-        ⭐ Round of 16 bonus questions are live.<br>
+        ✅ Make your Quarterfinals picks and predict every full-time score.<br>
+        ⭐ Quarterfinals bonus questions are live too.<br>
         Good luck! ⚽
       </p>
     </section>
@@ -93,6 +93,45 @@
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
+    <section class="card" id="quarterfinalPicksSection" style="display:none;">
+      <div class="section-header">
+        <h2>🏟️ Quarterfinals Pick’em</h2>
+        <button id="toggleQuarterfinalPicksBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="quarterfinalPicksContent">
+        <p>
+          Pick the winner of each Quarterfinal and enter the full-time score.<br>
+          Correct winner = <strong>3 points</strong>. Exact full-time score = <strong>2 points</strong>.<br>
+          Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
+        </p>
+        <div class="score-rule-callout">
+          <strong>Please note:</strong> Exact score points require the correct winner pick.
+        </div>
+        <p class="lock-note">Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+
+        <div id="quarterfinalPicksForm"></div>
+        <button id="saveQuarterfinalPicksBtn">Save Quarterfinals Picks</button>
+        <p id="quarterfinalPicksStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card" id="quarterfinalBonusSection" style="display:none;">
+      <div class="section-header">
+        <h2>🎯 Quarterfinals Bonus Questions</h2>
+        <button id="toggleQuarterfinalBonusBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="quarterfinalBonusContent">
+        <p class="lock-note">Quarterfinals bonus answers lock when the first Quarterfinal begins.</p>
+        <div class="quarterfinal-bonus-instructions">
+          Each bonus question is worth <strong>2 points</strong>.
+        </div>
+
+        <div id="quarterfinalBonusForm"></div>
+        <button id="saveQuarterfinalBonusBtn">Save Quarterfinals Bonus Answers</button>
+        <p id="quarterfinalBonusStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
     <section class="card" id="round16PicksSection" style="display:none;">
       <div class="section-header">
         <h2>🏟️ Round of 16 Pick’em</h2>
@@ -104,7 +143,7 @@
           Correct winner = <strong>3 points</strong>. Exact full-time score = <strong>2 points</strong>.<br>
           Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
         </p>
-        <p class="lock-note">Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+        <p class="lock-note">Exact score points require the correct winner pick. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
 
         <div id="round16PicksForm"></div>
         <button id="saveRound16PicksBtn">Save Round of 16 Picks</button>
@@ -183,6 +222,37 @@
 
     <section class="card" id="adminSection" style="display:none;">
       <h2>🛠️ Admin Results</h2>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Quarterfinals</span>
+            <h3>Quarterfinals Match Results</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Enter each official winner, full-time score, and combined free-kick total once. Match and bonus scoring are calculated from these results.</p>
+          <div id="adminQuarterfinalResultsForm"></div>
+          <button id="saveQuarterfinalResultsBtn">Save Quarterfinals Results</button>
+          <p id="quarterfinalResultsStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Quarterfinals bonus</span>
+            <h3>Quarterfinals Bonus Questions + Answer Key</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Admins can review the exact bonus questions and point values here. The answer key is calculated from official Quarterfinals results and awards points only after all four matches are complete.</p>
+          <div id="adminQuarterfinalBonusQuestions"></div>
+          <div id="adminQuarterfinalBonusKey"></div>
+        </div>
+      </div>
 
       <div class="admin-panel admin-primary-panel">
         <div class="section-header admin-panel-header">
@@ -307,6 +377,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=round16-live-kickoff-fix-20260706"></script>
+  <script type="module" src="app.js?v=quarterfinal-save-buttons-20260707"></script>
 </body>
 </html>

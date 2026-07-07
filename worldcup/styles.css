@@ -280,6 +280,64 @@ footer {
   gap: 14px;
 }
 
+#quarterfinalPicksForm,
+#quarterfinalBonusForm {
+  display: grid;
+  gap: 14px;
+}
+
+#quarterfinalPicksForm {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#quarterfinalBonusForm {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quarterfinal-bonus-instructions {
+  grid-column: 1 / -1;
+  color: #dbeafe;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 4px 0 18px;
+  text-align: center;
+}
+
+#quarterfinalPicksForm .quarterfinal-score-label {
+  text-align: center;
+}
+
+#quarterfinalPicksForm .score-entry-row {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#quarterfinalPicksForm .checkbox-row {
+  justify-content: center;
+  text-align: center;
+}
+
+.score-rule-callout {
+  border: 2px solid rgba(250, 204, 21, 0.88);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(250, 204, 21, 0.25), rgba(239, 68, 68, 0.20)),
+    rgba(120, 53, 15, 0.46);
+  box-shadow: 0 12px 26px rgba(250, 204, 21, 0.16);
+  color: #fef3c7;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.25;
+  margin: 14px 0 10px;
+  padding: 14px 16px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.score-rule-callout strong {
+  color: #fde68a;
+}
+
 .pick-card {
   background: rgba(31, 41, 55, 0.92);
   border: 1px solid #334155;
@@ -545,16 +603,16 @@ footer {
 }
 
 .announcement-card {
-  border-color: rgba(132, 204, 22, 0.72);
+  border-color: rgba(168, 85, 247, 0.78);
   background:
-    linear-gradient(135deg, rgba(34, 197, 94, 0.30), rgba(250, 204, 21, 0.22), rgba(132, 204, 22, 0.24)),
+    linear-gradient(135deg, rgba(88, 28, 135, 0.72), rgba(126, 34, 206, 0.48), rgba(192, 132, 252, 0.24)),
     #111827;
-  box-shadow: 0 14px 34px rgba(132, 204, 22, 0.14);
+  box-shadow: 0 14px 34px rgba(168, 85, 247, 0.20);
 }
 
 .announcement-card h2 {
   margin-top: 0;
-  color: #fef3c7;
+  color: #f5d0fe;
 }
 
 .announcement-card p {
@@ -639,11 +697,14 @@ footer {
 #saveRound32BonusBtn,
 #saveRound16PicksBtn,
 #saveRound16BonusBtn,
+#saveQuarterfinalPicksBtn,
+#saveQuarterfinalBonusBtn,
 #saveMatchPicksBtn,
 #saveGroupResultsBtn,
 #saveRound32ResultsBtn,
 #saveRound32BonusResultsBtn,
 #saveRound16ResultsBtn,
+#saveQuarterfinalResultsBtn,
 #saveMatchResultsBtn,
 #resetMatchResultsBtn,
 #refreshLeaderboardBtn {
@@ -1144,4 +1205,11 @@ footer {
   font-weight: 700;
   cursor: pointer;
   margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  #quarterfinalPicksForm,
+  #quarterfinalBonusForm {
+    grid-template-columns: 1fr;
+  }
 }
