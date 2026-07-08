@@ -3166,7 +3166,7 @@ function scoreRound32Picks(picks, results) {
     if (!pick || !result?.winner) return;
 
     // Winner prediction
-    if (pick.winner === result.winner) {
+    if (sameCountryOption(pick.winner, result.winner)) {
       points += 3;
     }
 
@@ -4625,6 +4625,7 @@ async function renderPublicLeaderboard() {
   let rows = snap.data().rows || [];
   rows = await attachPublicRootingForCountries(rows);
   if (currentUser) rows = await attachRootingForCountries(rows);
+  rows = rows.map(row => applyDailyScoringDeltas(row));
   renderLeaderboard(rows);
 }
 
@@ -4726,6 +4727,38 @@ function addScoringEntry(entries, dateKey, category, item, detail, points) {
   });
 }
 
+function dailyPointDeltasFromEntries(entries = [], dateKey = leaderboardDateKey()) {
+  return entries.reduce((deltas, entry) => {
+    if (entry.dateKey !== dateKey) return deltas;
+
+    const points = Number(entry.points || 0);
+    if (entry.category === "Match") {
+      deltas.match += points;
+    } else if (entry.category === "Bonus") {
+      deltas.bonus += points;
+    }
+
+    return deltas;
+  }, { match: 0, bonus: 0 });
+}
+
+function applyDailyScoringDeltas(row, dateKey = leaderboardDateKey()) {
+  if (!Array.isArray(row.publicScoringEntries)) {
+    return {
+      ...row,
+      match_points_delta: Number(row.match_points_delta || 0),
+      bonus_points_delta: Number(row.bonus_points_delta || 0)
+    };
+  }
+
+  const deltas = dailyPointDeltasFromEntries(row.publicScoringEntries, dateKey);
+  return {
+    ...row,
+    match_points_delta: deltas.match,
+    bonus_points_delta: deltas.bonus
+  };
+}
+
 function compareLeaderboardRows(a, b) {
   const pointDiff = (b.total_points || 0) - (a.total_points || 0);
   if (pointDiff !== 0) return pointDiff;
@@ -4778,24 +4811,22 @@ async function applyDailyLeaderboardMovement(rows) {
     });
 
     return rows.map(row => {
-      const currentMatchPoints = (row.group_points || 0) + (row.match_points || 0);
-      const currentBonusPoints = row.bonus_points || 0;
       const baselinePlayer = baseline.players?.[row.uid];
 
       if (!baselinePlayer) {
         return {
           ...row,
           rank_movement: 0,
-          match_points_delta: 0,
-          bonus_points_delta: 0
+          match_points_delta: Number(row.match_points_delta || 0),
+          bonus_points_delta: Number(row.bonus_points_delta || 0)
         };
       }
 
       return {
         ...row,
         rank_movement: baselinePlayer.rank - currentRankByUid[row.uid],
-        match_points_delta: currentMatchPoints - (baselinePlayer.match_points || 0),
-        bonus_points_delta: currentBonusPoints - (baselinePlayer.bonus_points || 0)
+        match_points_delta: Number(row.match_points_delta || 0),
+        bonus_points_delta: Number(row.bonus_points_delta || 0)
       };
     });
   } catch (error) {
@@ -4803,8 +4834,8 @@ async function applyDailyLeaderboardMovement(rows) {
     return rows.map(row => ({
       ...row,
       rank_movement: 0,
-      match_points_delta: 0,
-      bonus_points_delta: 0
+      match_points_delta: Number(row.match_points_delta || 0),
+      bonus_points_delta: Number(row.bonus_points_delta || 0)
     }));
   }
 }
@@ -4826,8 +4857,8 @@ async function attachPublishedDailyMovement(rows) {
       return {
         ...row,
         rank_movement: Number(published.rank_movement || 0),
-        match_points_delta: Number(published.match_points_delta || 0),
-        bonus_points_delta: Number(published.bonus_points_delta || 0)
+        match_points_delta: Number(row.match_points_delta || 0),
+        bonus_points_delta: Number(row.bonus_points_delta || 0)
       };
     });
   } catch (error) {
@@ -5105,7 +5136,7 @@ async function renderLeaderboardFromFirestore() {
     delete player.scoringData;
   });
 
-  let rows = Object.values(scores);
+  let rows = Object.values(scores).map(row => applyDailyScoringDeltas(row));
   if (currentUserIsAdmin()) {
     rows = await applyDailyLeaderboardMovement(rows);
   } else {
