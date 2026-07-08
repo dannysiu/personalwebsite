@@ -4880,6 +4880,12 @@ async function renderLeaderboardFromFirestore() {
   const publicQuarterfinalRevealableMatchIds = quarterfinalMatches
     .filter(match => quarterfinalPickIsRevealable(match))
     .map(match => match.id);
+  const publicQuarterfinalMatchupLabels = Object.fromEntries(
+    quarterfinalMatches.map(match => [
+      match.id,
+      quarterfinalMatchupLabel(match, round16Results, round32Results)
+    ])
+  );
   const publicQuarterfinalBonusRevealable = quarterfinalBonusAnswersAreRevealable();
   const bonusResults = bonusResultsDoc.results || {};
 
@@ -4918,6 +4924,7 @@ async function renderLeaderboardFromFirestore() {
         publicRound16BonusPointDetails: {},
         publicQuarterfinalPicks: {},
         publicQuarterfinalRevealableMatchIds,
+        publicQuarterfinalMatchupLabels,
         publicQuarterfinalPickPoints: {},
         publicQuarterfinalBonusAnswers: {},
         publicQuarterfinalBonusPointDetails: {},
@@ -6109,6 +6116,7 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
     const round16BonusPointDetails = row.publicRound16BonusPointDetails || {};
     const quarterfinalPicks = row.publicQuarterfinalPicks || {};
     const quarterfinalPickPoints = row.publicQuarterfinalPickPoints || {};
+    const quarterfinalMatchupLabels = row.publicQuarterfinalMatchupLabels || {};
     const quarterfinalRevealableMatchIds = Array.isArray(row.publicQuarterfinalRevealableMatchIds)
       ? row.publicQuarterfinalRevealableMatchIds
       : [];
@@ -6129,7 +6137,8 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
             quarterfinalRevealableMatchIds.includes(match.id),
             {},
             {},
-            quarterfinalPickPoints[match.id]
+            quarterfinalPickPoints[match.id],
+            quarterfinalMatchupLabels[match.id]
           )
         ).join("")
       ))}
@@ -6251,8 +6260,8 @@ function renderPublicRound16PickCard(match, pick, isRevealable, round32Results =
   `;
 }
 
-function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Results = {}, round32Results = {}, points = null) {
-  const matchupLabel = quarterfinalMatchupLabel(match, round16Results, round32Results);
+function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Results = {}, round32Results = {}, points = null, matchupLabelOverride = "") {
+  const matchupLabel = matchupLabelOverride || quarterfinalMatchupLabel(match, round16Results, round32Results);
 
   if (!isRevealable) {
     return `
