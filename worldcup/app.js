@@ -301,6 +301,7 @@ const toggleRound32BonusBtn = document.getElementById("toggleRound32BonusBtn");
 const round32BonusForm = document.getElementById("round32BonusForm");
 const saveRound32BonusBtn = document.getElementById("saveRound32BonusBtn");
 const round32BonusStatus = document.getElementById("round32BonusStatus");
+const round32BonusAnswerKey = document.getElementById("round32BonusAnswerKey");
 const round16PicksSection = document.getElementById("round16PicksSection");
 const round16PicksContent = document.getElementById("round16PicksContent");
 const toggleRound16PicksBtn = document.getElementById("toggleRound16PicksBtn");
@@ -313,6 +314,7 @@ const toggleRound16BonusBtn = document.getElementById("toggleRound16BonusBtn");
 const round16BonusForm = document.getElementById("round16BonusForm");
 const saveRound16BonusBtn = document.getElementById("saveRound16BonusBtn");
 const round16BonusStatus = document.getElementById("round16BonusStatus");
+const round16BonusAnswerKey = document.getElementById("round16BonusAnswerKey");
 const quarterfinalPicksSection = document.getElementById("quarterfinalPicksSection");
 const quarterfinalPicksContent = document.getElementById("quarterfinalPicksContent");
 const toggleQuarterfinalPicksBtn = document.getElementById("toggleQuarterfinalPicksBtn");
@@ -496,11 +498,7 @@ saveUsernameBtn?.addEventListener("click", async () => {
 
   usernameStatus.textContent = `✅ Username changed to ${username}!`;
 
-  if (ADMIN_EMAILS.includes(currentUser.email)) {
-    await renderLeaderboardFromFirestore();
-  } else {
-    await renderPublicLeaderboard();
-  }
+  await renderLeaderboardFromFirestore();
 });
 
 saveRootingForBtn?.addEventListener("click", saveRootingForCountries);
@@ -593,6 +591,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadExistingRootingForCountries(userSnap.data());
   await loadExistingQuarterfinalPicks();
   await loadExistingQuarterfinalBonusAnswers();
+  await renderUserBonusAnswerKeys();
 
   if (ADMIN_EMAILS.includes(user.email)) {
     round16PicksSection?.insertAdjacentElement("beforebegin", adminSection);
@@ -618,7 +617,7 @@ onAuthStateChanged(auth, async (user) => {
     await renderLeaderboardFromFirestore();
   } else {
     if (refreshLeaderboardBtn) refreshLeaderboardBtn.style.display = "none";
-    await renderPublicLeaderboard();
+    await renderLeaderboardFromFirestore();
   }
 });
 
@@ -630,7 +629,7 @@ function injectBonusSection() {
 
   bonusSection.innerHTML = `
     <div class="section-header">
-      <h2>🎯 Bonus Questions</h2>
+      <h2>🎯 Opening Bonus Questions</h2>
       <button id="toggleBonusBtn" class="secondary-btn">Expand</button>
     </div>
     <div id="bonusContent" style="display:none;">
@@ -2374,6 +2373,10 @@ function quarterfinalBonusAnswersAreLocked() {
   return quarterfinalMatchIsLocked(quarterfinalMatches[0]);
 }
 
+function quarterfinalBonusAnswersAreRevealable() {
+  return quarterfinalMatchIsLocked(quarterfinalMatches[0]);
+}
+
 async function renderQuarterfinalBonusQuestions() {
   if (!quarterfinalBonusForm) return;
 
@@ -2646,9 +2649,10 @@ function renderBonusQuiz() {
   `;
 
   if (bonusAnswersAreLocked()) {
-    bonusStatus.textContent = "🔒 Bonus answers are locked.";
+    bonusStatus.className = "status-message status-locked";
+    bonusStatus.textContent = "Opening bonus answers are locked.";
     saveBonusBtn.disabled = true;
-    saveBonusBtn.textContent = "Bonus Answers Locked";
+    saveBonusBtn.textContent = "Opening Bonus Locked";
     ["bonus-mostGoalsCountry", "bonus-yellowCards", "bonus-usaOut", "bonus-semifinalist", "bonus-winner"].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.disabled = true;
@@ -2868,11 +2872,7 @@ async function saveRootingForCountries() {
   rootingForStatus.className = "status-message status-success";
   rootingForStatus.textContent = "✅ Rooting-for countries saved!";
 
-  if (ADMIN_EMAILS.includes(currentUser.email)) {
-    await renderLeaderboardFromFirestore();
-  } else {
-    await renderPublicLeaderboard();
-  }
+  await renderLeaderboardFromFirestore();
 }
 
 function renderAdminBonusResults() {
@@ -3600,6 +3600,7 @@ saveRound16ResultsBtn?.addEventListener("click", async () => {
   await loadExistingQuarterfinalResults();
   await renderRound16Picks();
   await renderRound16BonusQuestions();
+  await renderUserRound16BonusAnswerKey();
   await renderQuarterfinalPicks();
   await renderQuarterfinalBonusQuestions();
   await loadExistingRound16Picks();
@@ -3707,6 +3708,7 @@ saveRound32BonusResultsBtn?.addEventListener("click", async () => {
 
   round32BonusResultsStatus.textContent = "✅ Round of 32 bonus results saved!";
   await applyRound32BonusAnswerIndicators();
+  await renderUserRound32BonusAnswerKey();
   await renderLeaderboardFromFirestore();
 });
 
@@ -3735,6 +3737,76 @@ function scoreRound32BonusAnswers(answers, results) {
   }
 
   return points;
+}
+
+function round32PickPointsFor(matchId, pick, results = {}) {
+  const result = results[matchId];
+  if (!pick || !result?.winner) return null;
+
+  let points = sameCountryOption(pick.winner, result.winner) ? 3 : 0;
+  if (pick.extraTimeOrPenalties) {
+    points += result.extraTimeOrPenalties ? 1 : -1;
+  }
+  return points;
+}
+
+function round16PickPointsFor(matchId, pick, results = {}) {
+  const result = results[matchId];
+  if (!pick || !result?.winner) return null;
+
+  let points = 0;
+  const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+  if (winnerCorrect) points += 3;
+
+  const pickScore = normalizeWinnerFirstScore(pick.score);
+  const resultScore = normalizeWinnerFirstScore(result.score);
+  if (
+    winnerCorrect &&
+    parseWinnerFirstScore(pickScore) &&
+    parseWinnerFirstScore(resultScore) &&
+    pickScore === resultScore
+  ) {
+    points += 2;
+  }
+
+  if (pick.extraTimeOrPenalties) {
+    points += result.extraTimeOrPenalties ? 1 : -1;
+  }
+
+  return points;
+}
+
+function quarterfinalPickPointsFor(matchId, pick, results = {}) {
+  return round16PickPointsFor(matchId, pick, results);
+}
+
+function pointDetailLabel(points) {
+  if (points === null || points === undefined) return "Pending";
+  return `${points > 0 ? "+" : ""}${points} pts`;
+}
+
+function renderEarnedPoints(points, label = "Points earned") {
+  return `<p class="earned-points"><strong>${escapeHTML(label)}:</strong> ${escapeHTML(pointDetailLabel(points))}</p>`;
+}
+
+function round32BonusPointDetailsFor(answers = {}, results = {}) {
+  const userThreeGoalWinners = Array.isArray(answers.threeGoalWinners)
+    ? answers.threeGoalWinners
+    : [answers.threeGoalWinner].filter(Boolean);
+  const officialThreeGoalWinners = Array.isArray(results.threeGoalWinners)
+    ? results.threeGoalWinners
+    : [];
+  const teamPoints = team =>
+    team && officialThreeGoalWinners.length
+      ? officialThreeGoalWinners.some(resultTeam => sameCountryOption(team, resultTeam)) ? 2 : 0
+      : null;
+
+  return {
+    extraTimeOrPenaltiesCount: scoreExactOrWithinTwo(answers.extraTimeOrPenaltiesCount, results.extraTimeOrPenaltiesCount),
+    redCards: scoreExactOrWithinTwo(answers.redCards, results.redCards),
+    threeGoalWinner1: teamPoints(userThreeGoalWinners[0]),
+    threeGoalWinner2: teamPoints(userThreeGoalWinners[1])
+  };
 }
 
 function getRound16OfficialScores(results = {}) {
@@ -3973,6 +4045,68 @@ function scoreRound16BonusAnswers(answers, round16Results, round32Results) {
   return points;
 }
 
+function round16BonusPointDetailsFor(answers = {}, round16Results = {}, round32Results = {}) {
+  if (!round16BonusResultsAreComplete(round16Results)) {
+    return {
+      mostGoalsMatch: null,
+      cleanSheets: null,
+      regionRank1: null,
+      regionRank2: null,
+      regionRank3: null,
+      regionRank4: null
+    };
+  }
+
+  const actualRegionOrder = calculateRound16RegionOrder(round16Results, round32Results);
+  const answerRegionOrder = Array.isArray(answers.regionOrder) ? answers.regionOrder : [];
+
+  return {
+    mostGoalsMatch:
+      answers.mostGoalsMatch && calculateRound16MostGoalsMatchIds(round16Results).includes(answers.mostGoalsMatch)
+        ? 2
+        : 0,
+    cleanSheets: scoreExactOrWithinOne(answers.cleanSheets, calculateRound16CleanSheets(round16Results)),
+    regionRank1: answerRegionOrder[0] && answerRegionOrder[0] === actualRegionOrder[0] ? 1 : 0,
+    regionRank2: answerRegionOrder[1] && answerRegionOrder[1] === actualRegionOrder[1] ? 1 : 0,
+    regionRank3: answerRegionOrder[2] && answerRegionOrder[2] === actualRegionOrder[2] ? 1 : 0,
+    regionRank4: answerRegionOrder[3] && answerRegionOrder[3] === actualRegionOrder[3] ? 1 : 0
+  };
+}
+
+function quarterfinalBonusPointDetailsFor(answers = {}, quarterfinalResults = {}, round16Results = {}, round32Results = {}) {
+  if (!quarterfinalBonusResultsAreComplete(quarterfinalResults)) {
+    return {
+      anyCleanSheet: null,
+      mostGoalsTeam: null,
+      mostFreeKicksMatch: null
+    };
+  }
+
+  const key = getQuarterfinalBonusAnswerKey(quarterfinalResults, round16Results, round32Results);
+  if (!key) {
+    return {
+      anyCleanSheet: null,
+      mostGoalsTeam: null,
+      mostFreeKicksMatch: null
+    };
+  }
+
+  return {
+    anyCleanSheet:
+      answers.anyCleanSheet && answers.anyCleanSheet === (key.anyCleanSheet ? "yes" : "no")
+        ? QUARTERFINAL_BONUS_POINTS
+        : 0,
+    mostGoalsTeam:
+      answers.mostGoalsTeam && key.mostGoalsTeams.some(team => sameCountryOption(answers.mostGoalsTeam, team))
+        ? QUARTERFINAL_BONUS_POINTS
+        : 0,
+    mostFreeKicksMatch:
+      answers.mostFreeKicksMatch && key.mostFreeKicksMatchIds.includes(answers.mostFreeKicksMatch)
+        ? QUARTERFINAL_BONUS_POINTS
+        : 0
+  };
+}
+
 function scoreExactOrWithinTwo(answer, result) {
   if (answer === "" || answer == null || result === "" || result == null) return 0;
 
@@ -4012,6 +4146,97 @@ function partialOrCorrectState(points, maxPoints) {
   if (points >= maxPoints) return "correct";
   if (points > 0) return "partial";
   return "wrong";
+}
+
+function renderUserBonusAnswerKey(title, rows) {
+  return `
+    <details class="user-bonus-key">
+      <summary>View ${escapeHTML(title)} Answer Key</summary>
+      <table class="admin-player-table admin-bonus-key-table">
+        <tbody>
+          ${rows.map(([label, value]) => `
+            <tr>
+              <th>${escapeHTML(label)}</th>
+              <td>${value}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </details>
+  `;
+}
+
+async function renderUserRound32BonusAnswerKey() {
+  if (!round32BonusAnswerKey) return;
+
+  const snap = await getDoc(doc(db, "round32BonusResults", "official"));
+  if (!snap.exists()) {
+    round32BonusAnswerKey.innerHTML = "";
+    return;
+  }
+
+  const results = snap.data().results || {};
+  const hasCounts =
+    results.extraTimeOrPenaltiesCount !== "" &&
+    results.extraTimeOrPenaltiesCount != null &&
+    results.redCards !== "" &&
+    results.redCards != null;
+  const threeGoalWinners = Array.isArray(results.threeGoalWinners)
+    ? results.threeGoalWinners
+    : [];
+
+  if (!hasCounts && !threeGoalWinners.length) {
+    round32BonusAnswerKey.innerHTML = "";
+    return;
+  }
+
+  round32BonusAnswerKey.innerHTML = renderUserBonusAnswerKey("Round of 32 Bonus", [
+    ["Extra time / penalties count", hasCounts ? escapeHTML(String(results.extraTimeOrPenaltiesCount)) : "Pending"],
+    ["Red cards", hasCounts ? escapeHTML(String(results.redCards)) : "Pending"],
+    [
+      "3+ goal winners",
+      threeGoalWinners.length
+        ? threeGoalWinners.map(team => escapeHTML(countryOptionLabel(team))).join("<br>")
+        : "Pending"
+    ]
+  ]);
+}
+
+async function renderUserRound16BonusAnswerKey() {
+  if (!round16BonusAnswerKey) return;
+
+  const [round16Snap, round32Snap] = await Promise.all([
+    getDoc(doc(db, "round16Results", "official")),
+    getDoc(doc(db, "round32Results", "official"))
+  ]);
+  const round16Results = round16Snap.exists() ? round16Snap.data().results || {} : {};
+  const round32Results = round32Snap.exists() ? round32Snap.data().results || {} : {};
+  const key = getRound16BonusAnswerKey(round16Results, round32Results);
+
+  if (!key) {
+    round16BonusAnswerKey.innerHTML = "";
+    return;
+  }
+
+  const mostGoalsMatches = key.mostGoalsMatchIds
+    .map(matchId => round16Matches.find(match => match.id === matchId))
+    .filter(Boolean);
+
+  round16BonusAnswerKey.innerHTML = renderUserBonusAnswerKey("Round of 16 Bonus", [
+    [
+      "Most total goals match",
+      mostGoalsMatches.map(match => escapeHTML(round16MatchupLabel(match, round32Results))).join("<br>")
+    ],
+    ["Clean sheets", escapeHTML(String(key.cleanSheets))],
+    ["Region goal order", key.regionOrder.map((region, index) => `${index + 1}. ${escapeHTML(region)}`).join("<br>")]
+  ]);
+}
+
+async function renderUserBonusAnswerKeys() {
+  await Promise.all([
+    renderUserRound32BonusAnswerKey(),
+    renderUserRound16BonusAnswerKey()
+  ]);
 }
 
 async function renderAdminPlayerList() {
@@ -4584,6 +4809,38 @@ async function applyDailyLeaderboardMovement(rows) {
   }
 }
 
+async function attachPublishedDailyMovement(rows) {
+  try {
+    const snap = await getDoc(doc(db, "publicLeaderboard", "current"));
+    if (!snap.exists()) return rows;
+
+    const publishedRows = Array.isArray(snap.data().rows) ? snap.data().rows : [];
+    const publishedByUid = {};
+
+    publishedRows.forEach(row => {
+      if (row.uid) publishedByUid[row.uid] = row;
+    });
+
+    return rows.map(row => {
+      const published = publishedByUid[row.uid] || {};
+      return {
+        ...row,
+        rank_movement: Number(published.rank_movement || 0),
+        match_points_delta: Number(published.match_points_delta || 0),
+        bonus_points_delta: Number(published.bonus_points_delta || 0)
+      };
+    });
+  } catch (error) {
+    console.warn("Could not attach published daily leaderboard movement:", error);
+    return rows.map(row => ({
+      ...row,
+      rank_movement: Number(row.rank_movement || 0),
+      match_points_delta: Number(row.match_points_delta || 0),
+      bonus_points_delta: Number(row.bonus_points_delta || 0)
+    }));
+  }
+}
+
 async function renderLeaderboardFromFirestore() {
   const usersSnap = await getDocs(collection(db, "users"));
   const groupPicksSnap = await getDocs(collection(db, "groupPicks"));
@@ -4602,22 +4859,29 @@ async function renderLeaderboardFromFirestore() {
   const quarterfinalResultsSnap = await getOptionalDoc("quarterfinalResults", "official");
   const bonusResultsSnap = await getDoc(doc(db, "bonusResults", "official"));
 
-  const groupResults = groupResultsSnap.exists() ? groupResultsSnap.data().results || {} : {};
-  const round32Results = round32ResultsSnap.exists() ? round32ResultsSnap.data().results || {} : {};
+  const groupResultsDoc = groupResultsSnap.exists() ? groupResultsSnap.data() : {};
+  const round32ResultsDoc = round32ResultsSnap.exists() ? round32ResultsSnap.data() : {};
+  const round32BonusResultsDoc = round32BonusResultsSnap.exists() ? round32BonusResultsSnap.data() : {};
+  const round16ResultsDoc = round16ResultsSnap.exists() ? round16ResultsSnap.data() : {};
+  const quarterfinalResultsDoc = quarterfinalResultsSnap?.exists() ? quarterfinalResultsSnap.data() : {};
+  const bonusResultsDoc = bonusResultsSnap.exists() ? bonusResultsSnap.data() : {};
+
+  const groupResults = groupResultsDoc.results || {};
+  const round32Results = round32ResultsDoc.results || {};
   const publicRound32RevealableMatchIds = round32Matches
     .filter(match => round32PickIsRevealable(match, round32Results))
     .map(match => match.id);
-  const round32BonusResults =
-    round32BonusResultsSnap.exists() ? round32BonusResultsSnap.data().results || {} : {};
-  const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
+  const round32BonusResults = round32BonusResultsDoc.results || {};
+  const round16Results = round16ResultsDoc.results || {};
   const publicRound16RevealableMatchIds = round16Matches
     .filter(match => round16PickIsRevealable(match))
     .map(match => match.id);
-  const quarterfinalResults = quarterfinalResultsSnap?.exists() ? quarterfinalResultsSnap.data().results || {} : {};
+  const quarterfinalResults = quarterfinalResultsDoc.results || {};
   const publicQuarterfinalRevealableMatchIds = quarterfinalMatches
     .filter(match => quarterfinalPickIsRevealable(match))
     .map(match => match.id);
-  const bonusResults = bonusResultsSnap.exists() ? bonusResultsSnap.data().results || {} : {};
+  const publicQuarterfinalBonusRevealable = quarterfinalBonusAnswersAreRevealable();
+  const bonusResults = bonusResultsDoc.results || {};
 
   const users = {};
   usersSnap.forEach(docSnap => {
@@ -4644,14 +4908,48 @@ async function renderLeaderboardFromFirestore() {
         rootingForCountries: user.rootingForCountries,
         publicRound32Picks: {},
         publicRound32RevealableMatchIds,
+        publicRound32PickPoints: {},
+        publicRound32BonusAnswers: {},
+        publicRound32BonusPointDetails: {},
         publicRound16Picks: {},
         publicRound16RevealableMatchIds,
+        publicRound16PickPoints: {},
+        publicRound16BonusAnswers: {},
+        publicRound16BonusPointDetails: {},
         publicQuarterfinalPicks: {},
         publicQuarterfinalRevealableMatchIds,
+        publicQuarterfinalPickPoints: {},
+        publicQuarterfinalBonusAnswers: {},
+        publicQuarterfinalBonusPointDetails: {},
+        publicQuarterfinalBonusRevealable,
         match_points: 0,
         group_points: 0,
         bonus_points: 0,
-        total_points: 0
+        total_points: 0,
+        scoringData: {
+          groupPicks: {},
+          round32Picks: {},
+          round16Picks: {},
+          quarterfinalPicks: {},
+          round32BonusAnswers: {},
+          round16BonusAnswers: {},
+          quarterfinalBonusAnswers: {},
+          bonusAnswers: {},
+          groupResults,
+          groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
+          round32Results,
+          round32BonusResults,
+          round32BonusResultsDateKey:
+            dateKeyFromValue(round32BonusResultsDoc.updatedAt) || roundLastMatchDateKey(round32Matches),
+          round16Results,
+          round16ResultsDateKey:
+            dateKeyFromValue(round16ResultsDoc.updatedAt) || roundLastMatchDateKey(round16Matches),
+          quarterfinalResults,
+          quarterfinalResultsDateKey:
+            dateKeyFromValue(quarterfinalResultsDoc.updatedAt) || roundLastMatchDateKey(quarterfinalMatches),
+          bonusResults,
+          bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
+        }
       };
     }
 
@@ -4662,6 +4960,7 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.scoringData.groupPicks = data.picks || {};
 
     Object.entries(data.picks || {}).forEach(([groupName, pick]) => {
       const result = groupResults[groupName];
@@ -4686,6 +4985,7 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.scoringData.round32Picks = data.picks || {};
 
     Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
       if (!pick?.winner) return;
@@ -4694,6 +4994,7 @@ async function renderLeaderboardFromFirestore() {
         winner: pick.winner,
         extraTimeOrPenalties: !!pick.extraTimeOrPenalties
       };
+      player.publicRound32PickPoints[matchId] = round32PickPointsFor(matchId, pick, round32Results);
     });
 
     player.match_points += scoreRound32Picks(data.picks, round32Results);
@@ -4703,6 +5004,7 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.scoringData.round16Picks = data.picks || {};
 
     Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
       if (!pick?.winner) return;
@@ -4712,6 +5014,7 @@ async function renderLeaderboardFromFirestore() {
         score: normalizeWinnerFirstScore(pick.score),
         extraTimeOrPenalties: !!pick.extraTimeOrPenalties
       };
+      player.publicRound16PickPoints[matchId] = round16PickPointsFor(matchId, pick, round16Results);
     });
 
     player.match_points += scoreRound16Picks(data.picks, round16Results);
@@ -4721,6 +5024,7 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.scoringData.quarterfinalPicks = data.picks || {};
 
     Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
       if (!pick?.winner) return;
@@ -4730,6 +5034,7 @@ async function renderLeaderboardFromFirestore() {
         score: normalizeWinnerFirstScore(pick.score),
         extraTimeOrPenalties: !!pick.extraTimeOrPenalties
       };
+      player.publicQuarterfinalPickPoints[matchId] = quarterfinalPickPointsFor(matchId, pick, quarterfinalResults);
     });
 
     player.match_points += scoreQuarterfinalPicks(data.picks, quarterfinalResults);
@@ -4739,6 +5044,9 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.publicRound32BonusAnswers = data.answers || {};
+    player.publicRound32BonusPointDetails = round32BonusPointDetailsFor(data.answers || {}, round32BonusResults);
+    player.scoringData.round32BonusAnswers = data.answers || {};
 
     player.bonus_points += scoreRound32BonusAnswers(data.answers, round32BonusResults);
   });
@@ -4747,6 +5055,9 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.publicRound16BonusAnswers = data.answers || {};
+    player.publicRound16BonusPointDetails = round16BonusPointDetailsFor(data.answers || {}, round16Results, round32Results);
+    player.scoringData.round16BonusAnswers = data.answers || {};
 
     player.bonus_points += scoreRound16BonusAnswers(data.answers, round16Results, round32Results);
   });
@@ -4755,6 +5066,14 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.publicQuarterfinalBonusAnswers = data.answers || {};
+    player.publicQuarterfinalBonusPointDetails = quarterfinalBonusPointDetailsFor(
+      data.answers || {},
+      quarterfinalResults,
+      round16Results,
+      round32Results
+    );
+    player.scoringData.quarterfinalBonusAnswers = data.answers || {};
 
     player.bonus_points += scoreQuarterfinalBonusAnswers(
       data.answers,
@@ -4768,22 +5087,27 @@ async function renderLeaderboardFromFirestore() {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
     if (!player) return;
+    player.scoringData.bonusAnswers = data.answers || {};
 
     player.bonus_points += scoreBonusAnswers(data.answers, bonusResults);
   });
 
   Object.values(scores).forEach(player => {
     player.total_points = player.group_points + player.match_points + player.bonus_points;
+    player.publicScoringEntries = buildScoringBreakdownEntries(player.scoringData);
+    delete player.scoringData;
   });
 
   let rows = Object.values(scores);
-  if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) {
+  if (currentUserIsAdmin()) {
     rows = await applyDailyLeaderboardMovement(rows);
+  } else {
+    rows = await attachPublishedDailyMovement(rows);
   }
 
   renderLeaderboard(rows);
 
-  if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) {
+  if (currentUserIsAdmin()) {
     await setDoc(doc(db, "publicLeaderboard", "current"), {
       rows,
       updatedAt: new Date().toISOString(),
@@ -4800,7 +5124,6 @@ function renderLeaderboard(rows) {
 
   const sorted = rows.sort(compareLeaderboardRows);
   latestLeaderboardRows = sorted;
-  const showPointDeltas = currentUser && ADMIN_EMAILS.includes(currentUser.email);
 
   sorted.forEach((r, i) => {
     const tr = document.createElement("tr");
@@ -4815,8 +5138,8 @@ function renderLeaderboard(rows) {
             : renderLeaderboardDisplayName(r.display_name)
         }
       </td>
-      <td>${matchPoints}${showPointDeltas ? renderPointDelta(r.match_points_delta) : ""}</td>
-      <td>${r.bonus_points}${showPointDeltas ? renderPointDelta(r.bonus_points_delta) : ""}</td>
+      <td>${matchPoints}${renderPointDelta(r.match_points_delta)}</td>
+      <td>${r.bonus_points}${renderPointDelta(r.bonus_points_delta)}</td>
       <td><strong>${r.total_points}</strong></td>
       <td class="daily-change-table-cell">${renderDailyChange(r)}</td>
     `;
@@ -5303,8 +5626,24 @@ function buildScoringBreakdownEntries(data) {
   });
 }
 
+function scoringEntriesForData(data) {
+  return Array.isArray(data) ? data : buildScoringBreakdownEntries(data);
+}
+
+function defaultDailyPointsDateKey(data) {
+  const todayKey = leaderboardDateKey();
+  const entries = scoringEntriesForData(data).filter(entry => entry.dateKey);
+  if (entries.some(entry => entry.dateKey === todayKey)) return todayKey;
+
+  return entries
+    .map(entry => entry.dateKey)
+    .sort()
+    .pop() || todayKey;
+}
+
 function renderAdminDailyPointsBreakdown(data, selectedDateKey) {
-  const entries = buildScoringBreakdownEntries(data)
+  const allEntries = scoringEntriesForData(data);
+  const entries = allEntries
     .filter(entry => entry.dateKey === selectedDateKey);
   const matchPoints = entries
     .filter(entry => entry.category === "Match")
@@ -5354,12 +5693,11 @@ function renderAdminDailyPointsBreakdown(data, selectedDateKey) {
   `;
 }
 
-function renderAdminDailyPointsPanel(data, selectedDateKey = leaderboardDateKey()) {
+function renderAdminDailyPointsPanel(data, selectedDateKey = defaultDailyPointsDateKey(data)) {
   return `
     <div class="admin-daily-points-panel">
       <div class="admin-daily-points-header">
         <div>
-          <span class="admin-panel-label">Admin</span>
           <h3>Daily Points Breakdown</h3>
         </div>
         <label class="admin-date-control">
@@ -5374,6 +5712,37 @@ function renderAdminDailyPointsPanel(data, selectedDateKey = leaderboardDateKey(
   `;
 }
 
+function renderPublicDailyPointsPanel(row = {}) {
+  const entries = Array.isArray(row.publicScoringEntries) ? row.publicScoringEntries : [];
+  if (entries.length) return renderAdminDailyPointsPanel(entries);
+
+  const matchPoints = Number(row.match_points_delta || 0);
+  const bonusPoints = Number(row.bonus_points_delta || 0);
+  const totalPoints = matchPoints + bonusPoints;
+
+  return `
+    <div class="admin-daily-points-panel">
+      <div class="admin-daily-points-header">
+        <div>
+          <h3>Daily Points Breakdown</h3>
+        </div>
+        <label class="admin-date-control">
+          Day
+          <input id="adminDailyPointsDate" type="date" value="${escapeHTML(leaderboardDateKey())}" disabled />
+        </label>
+      </div>
+      <div id="adminDailyPointsBreakdown">
+        <div class="admin-daily-points-summary">
+          <span>Match ${signedPointLabel(matchPoints)}</span>
+          <span>Bonus ${signedPointLabel(bonusPoints)}</span>
+          <strong>Total ${signedPointLabel(totalPoints)}</strong>
+        </div>
+        <p class="mini-note">Detailed scored items will appear here after the next leaderboard refresh.</p>
+      </div>
+    </div>
+  `;
+}
+
 function bindAdminDailyPointsPanel(data) {
   const input = document.getElementById("adminDailyPointsDate");
   const output = document.getElementById("adminDailyPointsBreakdown");
@@ -5382,6 +5751,200 @@ function bindAdminDailyPointsPanel(data) {
   input.addEventListener("change", () => {
     output.innerHTML = renderAdminDailyPointsBreakdown(data, input.value);
   });
+}
+
+function renderPlayerDrawerSection(title, contentHtml, startsExpanded = true) {
+  return `
+    <section class="player-drawer-section">
+      <div class="player-drawer-section-header">
+        <h3>${escapeHTML(title)}</h3>
+        <button class="secondary-btn player-drawer-toggle">${startsExpanded ? "Minimize" : "Expand"}</button>
+      </div>
+      <div class="player-drawer-section-content" style="display:${startsExpanded ? "block" : "none"};">
+        ${contentHtml}
+      </div>
+    </section>
+  `;
+}
+
+function bindPlayerDrawerSections() {
+  playerPicksContent.querySelectorAll(".player-drawer-section").forEach(section => {
+    const button = section.querySelector(".player-drawer-toggle");
+    const content = section.querySelector(".player-drawer-section-content");
+    if (!button || !content) return;
+
+    button.addEventListener("click", () => {
+      const isHidden = content.style.display === "none";
+      content.style.display = isHidden ? "block" : "none";
+      button.textContent = isHidden ? "Minimize" : "Expand";
+    });
+  });
+}
+
+function renderPublicPickGrid(cardsHtml) {
+  return `<div class="public-picks-grid">${cardsHtml}</div>`;
+}
+
+function renderPublicAnswerCard(title, answerHtml, note = "", points = null) {
+  return `
+    <div class="public-pick-card">
+      <h3>${escapeHTML(title)}</h3>
+      ${note ? `<p class="mini-note">${escapeHTML(note)}</p>` : ""}
+      <p>${answerHtml || `<span class="mini-note">No saved answer.</span>`}</p>
+      ${renderEarnedPoints(points)}
+    </div>
+  `;
+}
+
+function publicRound16BonusMatchLabel(matchId, round32Results = {}) {
+  const match = round16Matches.find(item => item.id === matchId);
+  return match ? round16MatchupLabel(match, round32Results) : "";
+}
+
+function publicQuarterfinalBonusMatchLabel(matchId, round16Results = {}, round32Results = {}) {
+  const match = quarterfinalMatches.find(item => item.id === matchId);
+  return match ? quarterfinalMatchupLabel(match, round16Results, round32Results) : "";
+}
+
+function renderPublicRound32BonusAnswers(answers = {}, pointDetails = {}, hasPublishedAnswers = true) {
+  if (!hasPublishedAnswers) {
+    return `
+      <div class="public-pick-card">
+        <h3>Round of 32 bonus answers</h3>
+        <p class="mini-note">Detailed answers will appear here after the next leaderboard refresh.</p>
+      </div>
+    `;
+  }
+
+  const threeGoalWinners = Array.isArray(answers.threeGoalWinners)
+    ? answers.threeGoalWinners
+    : [answers.threeGoalWinner].filter(Boolean);
+
+  return renderPublicPickGrid(`
+    ${renderPublicAnswerCard(
+      "Extra time / penalties count",
+      answers.extraTimeOrPenaltiesCount !== "" && answers.extraTimeOrPenaltiesCount != null
+        ? escapeHTML(String(answers.extraTimeOrPenaltiesCount))
+        : "",
+      "",
+      pointDetails.extraTimeOrPenaltiesCount
+    )}
+    ${renderPublicAnswerCard(
+      "Red cards",
+      answers.redCards !== "" && answers.redCards != null ? escapeHTML(String(answers.redCards)) : "",
+      "",
+      pointDetails.redCards
+    )}
+    ${renderPublicAnswerCard(
+      "3+ goal winner #1",
+      threeGoalWinners[0] ? escapeHTML(countryOptionLabel(threeGoalWinners[0])) : "",
+      "",
+      pointDetails.threeGoalWinner1
+    )}
+    ${renderPublicAnswerCard(
+      "3+ goal winner #2",
+      threeGoalWinners[1] ? escapeHTML(countryOptionLabel(threeGoalWinners[1])) : "",
+      "",
+      pointDetails.threeGoalWinner2
+    )}
+  `);
+}
+
+function renderPublicRound16BonusAnswers(answers = {}, round32Results = {}, hasPublishedAnswers = true, pointDetails = {}) {
+  if (!hasPublishedAnswers) {
+    return `
+      <div class="public-pick-card">
+        <h3>Round of 16 bonus answers</h3>
+        <p class="mini-note">Detailed answers will appear here after the next leaderboard refresh.</p>
+      </div>
+    `;
+  }
+
+  const regionOrder = Array.isArray(answers.regionOrder)
+    ? answers.regionOrder.filter(Boolean)
+    : [];
+  const regionOrderHtml = regionOrder.length
+    ? regionOrder.map((region, index) => `${index + 1}. ${escapeHTML(region)}`).join("<br>")
+    : "";
+
+  return renderPublicPickGrid(`
+    ${renderPublicAnswerCard(
+      "Most total goals match",
+      publicRound16BonusMatchLabel(answers.mostGoalsMatch, round32Results)
+        ? escapeHTML(publicRound16BonusMatchLabel(answers.mostGoalsMatch, round32Results))
+        : "",
+      "",
+      pointDetails.mostGoalsMatch
+    )}
+    ${renderPublicAnswerCard(
+      "Clean sheets",
+      answers.cleanSheets !== "" && answers.cleanSheets != null ? escapeHTML(String(answers.cleanSheets)) : "",
+      "",
+      pointDetails.cleanSheets
+    )}
+    ${renderPublicAnswerCard(
+      "Region rank #1",
+      regionOrder[0] ? escapeHTML(regionOrder[0]) : "",
+      "",
+      pointDetails.regionRank1
+    )}
+    ${renderPublicAnswerCard(
+      "Region rank #2",
+      regionOrder[1] ? escapeHTML(regionOrder[1]) : "",
+      "",
+      pointDetails.regionRank2
+    )}
+    ${renderPublicAnswerCard(
+      "Region rank #3",
+      regionOrder[2] ? escapeHTML(regionOrder[2]) : "",
+      "",
+      pointDetails.regionRank3
+    )}
+    ${renderPublicAnswerCard(
+      "Region rank #4",
+      regionOrder[3] ? escapeHTML(regionOrder[3]) : "",
+      "",
+      pointDetails.regionRank4
+    )}
+  `);
+}
+
+function renderPublicQuarterfinalBonusAnswers(answers = {}, isRevealable, round16Results = {}, round32Results = {}, pointDetails = {}) {
+  if (!isRevealable) {
+    return `
+      <div class="public-pick-card public-pick-hidden">
+        <h3>Quarterfinals bonus answers</h3>
+        <p class="hidden-pick-marker">Hidden until the first Quarterfinal starts</p>
+      </div>
+    `;
+  }
+
+  const mostFreeKicksMatchLabel = publicQuarterfinalBonusMatchLabel(
+    answers.mostFreeKicksMatch,
+    round16Results,
+    round32Results
+  );
+
+  return renderPublicPickGrid(`
+    ${renderPublicAnswerCard(
+      "Any clean sheet?",
+      answers.anyCleanSheet ? escapeHTML(answers.anyCleanSheet === "yes" ? "Yes" : "No") : "",
+      "",
+      pointDetails.anyCleanSheet
+    )}
+    ${renderPublicAnswerCard(
+      "Most goals team",
+      answers.mostGoalsTeam ? escapeHTML(round32TeamLabel(answers.mostGoalsTeam)) : "",
+      "Tied top scorer counts.",
+      pointDetails.mostGoalsTeam
+    )}
+    ${renderPublicAnswerCard(
+      "Most free kicks match",
+      mostFreeKicksMatchLabel ? escapeHTML(mostFreeKicksMatchLabel) : "",
+      "Combined total for both teams.",
+      pointDetails.mostFreeKicksMatch
+    )}
+  `);
 }
 
 function renderRootingForFlags(rootingForCountries = []) {
@@ -5407,66 +5970,113 @@ async function showPlayerRound32Picks(uid, displayName) {
     return;
   }
 
-  const [picksSnap, resultsSnap, round16PicksSnap, quarterfinalPicksSnap, round16ResultsSnap] = await Promise.all([
+  const [
+    picksSnap,
+    resultsSnap,
+    round16PicksSnap,
+    quarterfinalPicksSnap,
+    round16ResultsSnap,
+    round16BonusAnswersSnap,
+    quarterfinalBonusAnswersSnap,
+    scoringBreakdownData
+  ] = await Promise.all([
     getDoc(doc(db, "round32Picks", uid)),
     getDoc(doc(db, "round32Results", "official")),
     getDoc(doc(db, "round16Picks", uid)),
     getOptionalDoc("quarterfinalPicks", uid),
-    getDoc(doc(db, "round16Results", "official"))
+    getDoc(doc(db, "round16Results", "official")),
+    getDoc(doc(db, "round16BonusAnswers", uid)),
+    getOptionalDoc("quarterfinalBonusAnswers", uid),
+    loadPlayerScoringBreakdownData(uid)
   ]);
-
-  const adminBreakdownData = currentUserIsAdmin()
-    ? await loadPlayerScoringBreakdownData(uid)
-    : null;
-  const adminBreakdownPanel = adminBreakdownData
-    ? renderAdminDailyPointsPanel(adminBreakdownData)
-    : "";
-
-  if (!picksSnap.exists() && !round16PicksSnap.exists() && !quarterfinalPicksSnap?.exists()) {
-    playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
-    playerPicksContent.innerHTML = `
-      ${adminBreakdownPanel}
-      <p class="mini-note">No knockout picks found for this player.</p>
-    `;
-    if (adminBreakdownData) bindAdminDailyPointsPanel(adminBreakdownData);
-    playerPicksViewer.style.display = "block";
-    playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
 
   const picks = picksSnap.exists() ? picksSnap.data().picks || {} : {};
   const results = resultsSnap.exists() ? resultsSnap.data().results || {} : {};
   const round16Picks = round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {};
   const quarterfinalPicks = quarterfinalPicksSnap?.exists() ? quarterfinalPicksSnap.data().picks || {} : {};
   const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
+  const round16BonusAnswers = round16BonusAnswersSnap.exists() ? round16BonusAnswersSnap.data().answers || {} : {};
+  const quarterfinalBonusAnswers = quarterfinalBonusAnswersSnap?.exists()
+    ? quarterfinalBonusAnswersSnap.data().answers || {}
+    : {};
 
   playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
   playerPicksContent.innerHTML = `
-    ${adminBreakdownPanel}
-
-    <h3>Round of 32</h3>
-    <div class="public-picks-grid">
-      ${round32Matches.map(match =>
-        renderPublicRound32PickCard(match, picks[match.id], round32PickIsRevealable(match, results))
-      ).join("")}
-    </div>
-
-    <h3>Round of 16</h3>
-    <div class="public-picks-grid">
-      ${round16Matches.map(match =>
-        renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match), results)
-      ).join("")}
-    </div>
-
-    <h3>Quarterfinals</h3>
-    <div class="public-picks-grid">
-      ${quarterfinalMatches.map(match =>
-        renderPublicQuarterfinalPickCard(match, quarterfinalPicks[match.id], quarterfinalPickIsRevealable(match), round16Results, results)
-      ).join("")}
-    </div>
+    ${renderAdminDailyPointsPanel(scoringBreakdownData)}
+    ${renderPlayerDrawerSection("Quarterfinals Picks", renderPublicPickGrid(
+      quarterfinalMatches.map(match =>
+        renderPublicQuarterfinalPickCard(
+          match,
+          quarterfinalPicks[match.id],
+          quarterfinalPickIsRevealable(match),
+          round16Results,
+          results,
+          quarterfinalPickPointsFor(match.id, quarterfinalPicks[match.id], scoringBreakdownData.quarterfinalResults)
+        )
+      ).join("")
+    ))}
+    ${renderPlayerDrawerSection(
+      "Quarterfinals Bonus Questions",
+      renderPublicQuarterfinalBonusAnswers(
+        quarterfinalBonusAnswers,
+        quarterfinalBonusAnswersAreRevealable(),
+        round16Results,
+        results,
+        quarterfinalBonusPointDetailsFor(
+          quarterfinalBonusAnswers,
+          scoringBreakdownData.quarterfinalResults,
+          scoringBreakdownData.round16Results,
+          scoringBreakdownData.round32Results
+        )
+      )
+    )}
+    ${renderPlayerDrawerSection("Round of 16 Picks", renderPublicPickGrid(
+      round16Matches.map(match =>
+        renderPublicRound16PickCard(
+          match,
+          round16Picks[match.id],
+          round16PickIsRevealable(match),
+          results,
+          round16PickPointsFor(match.id, round16Picks[match.id], scoringBreakdownData.round16Results)
+        )
+      ).join("")
+    ))}
+    ${renderPlayerDrawerSection(
+      "Round of 16 Bonus Question Answers",
+      renderPublicRound16BonusAnswers(
+        round16BonusAnswers,
+        results,
+        true,
+        round16BonusPointDetailsFor(
+          round16BonusAnswers,
+          scoringBreakdownData.round16Results,
+          scoringBreakdownData.round32Results
+        )
+      )
+    )}
+    ${renderPlayerDrawerSection("Round of 32 Picks", renderPublicPickGrid(
+      round32Matches.map(match =>
+        renderPublicRound32PickCard(
+          match,
+          picks[match.id],
+          round32PickIsRevealable(match, results),
+          round32PickPointsFor(match.id, picks[match.id], scoringBreakdownData.round32Results)
+        )
+      ).join("")
+    ), false)}
+    ${renderPlayerDrawerSection(
+      "Round of 32 Bonus Question Answers",
+      renderPublicRound32BonusAnswers(
+        scoringBreakdownData.round32BonusAnswers,
+        round32BonusPointDetailsFor(scoringBreakdownData.round32BonusAnswers, scoringBreakdownData.round32BonusResults),
+        true
+      ),
+      false
+    )}
   `;
 
-  if (adminBreakdownData) bindAdminDailyPointsPanel(adminBreakdownData);
+  bindAdminDailyPointsPanel(scoringBreakdownData);
+  bindPlayerDrawerSections();
   playerPicksViewer.style.display = "block";
   playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -5478,46 +6088,113 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
     playerPicksContent.innerHTML = `<p class="mini-note">Could not find this player on the public leaderboard.</p>`;
   } else {
     const picks = row.publicRound32Picks || {};
+    const round32PickPoints = row.publicRound32PickPoints || {};
+    const hasPublishedRound32BonusAnswers =
+      Object.prototype.hasOwnProperty.call(row, "publicRound32BonusAnswers");
+    const round32BonusAnswers = row.publicRound32BonusAnswers || {};
+    const round32BonusPointDetails = row.publicRound32BonusPointDetails || {};
     const revealableMatchIds = Array.isArray(row.publicRound32RevealableMatchIds)
       ? row.publicRound32RevealableMatchIds
       : Array.isArray(row.publicRound32FinishedMatchIds)
         ? row.publicRound32FinishedMatchIds
       : [];
     const round16Picks = row.publicRound16Picks || {};
+    const round16PickPoints = row.publicRound16PickPoints || {};
+    const round16RevealableMatchIds = Array.isArray(row.publicRound16RevealableMatchIds)
+      ? row.publicRound16RevealableMatchIds
+      : round16Matches.filter(match => round16PickIsRevealable(match)).map(match => match.id);
+    const hasPublishedRound16BonusAnswers =
+      Object.prototype.hasOwnProperty.call(row, "publicRound16BonusAnswers");
+    const round16BonusAnswers = row.publicRound16BonusAnswers || {};
+    const round16BonusPointDetails = row.publicRound16BonusPointDetails || {};
     const quarterfinalPicks = row.publicQuarterfinalPicks || {};
+    const quarterfinalPickPoints = row.publicQuarterfinalPickPoints || {};
     const quarterfinalRevealableMatchIds = Array.isArray(row.publicQuarterfinalRevealableMatchIds)
       ? row.publicQuarterfinalRevealableMatchIds
       : [];
+    const quarterfinalBonusAnswers = row.publicQuarterfinalBonusAnswers || {};
+    const quarterfinalBonusPointDetails = row.publicQuarterfinalBonusPointDetails || {};
+    const quarterfinalBonusRevealable =
+      typeof row.publicQuarterfinalBonusRevealable === "boolean"
+        ? row.publicQuarterfinalBonusRevealable
+        : quarterfinalBonusAnswersAreRevealable();
 
     playerPicksContent.innerHTML = `
-      <h3>Round of 32</h3>
-      <div class="public-picks-grid">
-        ${round32Matches.map(match =>
-          renderPublicRound32PickCard(match, picks[match.id], revealableMatchIds.includes(match.id))
-        ).join("")}
-      </div>
-
-      <h3>Round of 16</h3>
-      <div class="public-picks-grid">
-        ${round16Matches.map(match =>
-          renderPublicRound16PickCard(match, round16Picks[match.id], round16PickIsRevealable(match))
-        ).join("")}
-      </div>
-
-      <h3>Quarterfinals</h3>
-      <div class="public-picks-grid">
-        ${quarterfinalMatches.map(match =>
-          renderPublicQuarterfinalPickCard(match, quarterfinalPicks[match.id], quarterfinalRevealableMatchIds.includes(match.id))
-        ).join("")}
-      </div>
+      ${renderPublicDailyPointsPanel(row)}
+      ${renderPlayerDrawerSection("Quarterfinals Picks", renderPublicPickGrid(
+        quarterfinalMatches.map(match =>
+          renderPublicQuarterfinalPickCard(
+            match,
+            quarterfinalPicks[match.id],
+            quarterfinalRevealableMatchIds.includes(match.id),
+            {},
+            {},
+            quarterfinalPickPoints[match.id]
+          )
+        ).join("")
+      ))}
+      ${renderPlayerDrawerSection(
+        "Quarterfinals Bonus Questions",
+        renderPublicQuarterfinalBonusAnswers(
+          quarterfinalBonusAnswers,
+          quarterfinalBonusRevealable,
+          {},
+          {},
+          quarterfinalBonusPointDetails
+        )
+      )}
+      ${renderPlayerDrawerSection("Round of 16 Picks", renderPublicPickGrid(
+        round16Matches.map(match =>
+          renderPublicRound16PickCard(
+            match,
+            round16Picks[match.id],
+            round16RevealableMatchIds.includes(match.id),
+            {},
+            round16PickPoints[match.id]
+          )
+        ).join("")
+      ))}
+      ${renderPlayerDrawerSection(
+        "Round of 16 Bonus Question Answers",
+        renderPublicRound16BonusAnswers(
+          round16BonusAnswers,
+          {},
+          hasPublishedRound16BonusAnswers,
+          round16BonusPointDetails
+        )
+      )}
+      ${renderPlayerDrawerSection("Round of 32 Picks", renderPublicPickGrid(
+        round32Matches.map(match =>
+          renderPublicRound32PickCard(
+            match,
+            picks[match.id],
+            revealableMatchIds.includes(match.id),
+            round32PickPoints[match.id]
+          )
+        ).join("")
+      ), false)}
+      ${renderPlayerDrawerSection(
+        "Round of 32 Bonus Question Answers",
+        renderPublicRound32BonusAnswers(
+          round32BonusAnswers,
+          round32BonusPointDetails,
+          hasPublishedRound32BonusAnswers
+        ),
+        false
+      )}
     `;
+
+    if (Array.isArray(row.publicScoringEntries) && row.publicScoringEntries.length) {
+      bindAdminDailyPointsPanel(row.publicScoringEntries);
+    }
+    bindPlayerDrawerSections();
   }
 
   playerPicksViewer.style.display = "block";
   playerPicksViewer.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderPublicRound32PickCard(match, pick, isRevealable) {
+function renderPublicRound32PickCard(match, pick, isRevealable, points = null) {
   const matchupLabel = round32MatchupLabel(match);
 
   if (!isRevealable) {
@@ -5537,6 +6214,7 @@ function renderPublicRound32PickCard(match, pick, isRevealable) {
           ? `
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
+            ${renderEarnedPoints(points)}
           `
           : `<p class="mini-note">No saved pick for this match.</p>`
       }
@@ -5544,7 +6222,7 @@ function renderPublicRound32PickCard(match, pick, isRevealable) {
   `;
 }
 
-function renderPublicRound16PickCard(match, pick, isRevealable, round32Results = {}) {
+function renderPublicRound16PickCard(match, pick, isRevealable, round32Results = {}, points = null) {
   const matchupLabel = round16MatchupLabel(match, round32Results);
 
   if (!isRevealable) {
@@ -5565,6 +6243,7 @@ function renderPublicRound16PickCard(match, pick, isRevealable, round32Results =
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Full-time score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
             <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
+            ${renderEarnedPoints(points)}
           `
           : `<p class="mini-note">No saved pick for this match.</p>`
       }
@@ -5572,7 +6251,7 @@ function renderPublicRound16PickCard(match, pick, isRevealable, round32Results =
   `;
 }
 
-function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Results = {}, round32Results = {}) {
+function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Results = {}, round32Results = {}, points = null) {
   const matchupLabel = quarterfinalMatchupLabel(match, round16Results, round32Results);
 
   if (!isRevealable) {
@@ -5593,6 +6272,7 @@ function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Resu
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Full-time score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
             <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
+            ${renderEarnedPoints(points)}
           `
           : `<p class="mini-note">No saved pick for this match.</p>`
       }

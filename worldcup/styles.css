@@ -693,6 +693,7 @@ footer {
 }
 
 #saveGroupPicksBtn,
+#saveBonusBtn,
 #saveRound32PicksBtn,
 #saveRound32BonusBtn,
 #saveRound16PicksBtn,
@@ -1095,6 +1096,24 @@ footer {
   margin-top: 12px;
 }
 
+.player-drawer-section {
+  border-top: 1px solid rgba(148, 163, 184, 0.24);
+  margin-top: 18px;
+  padding-top: 14px;
+  text-align: left;
+}
+
+.player-drawer-section-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.player-drawer-section-header h3 {
+  margin: 0;
+}
+
 .public-pick-card {
   background: rgba(31, 41, 55, 0.92);
   border: 1px solid #334155;
@@ -1105,6 +1124,14 @@ footer {
 
 .public-pick-card h3 {
   margin-top: 0;
+}
+
+.earned-points {
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+  color: #dbeafe;
+  font-size: 14px;
+  margin: 10px 0 0;
+  padding-top: 8px;
 }
 
 .public-pick-hidden {
@@ -1194,6 +1221,30 @@ footer {
 .daily-points-negative {
   color: #fecaca;
   font-weight: 900;
+}
+
+.user-bonus-key {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.user-bonus-key summary {
+  color: #dbeafe;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.user-bonus-key table {
+  margin-top: 10px;
+}
+
+.player-picks-close-divider {
+  border-top: 1px solid rgba(148, 163, 184, 0.28);
+  margin: 18px 0 14px;
 }
 
 #closePlayerPicksBtn {
