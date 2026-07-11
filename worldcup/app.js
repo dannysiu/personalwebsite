@@ -260,10 +260,10 @@ const round16TeamRegions = {
 };
 
 const quarterfinalMatches = [
-  { id: "97", label: "Match 97", sourceMatchIds: ["89", "90"], startTime: "2026-07-09T19:00:00.000Z", venue: "Boston" },
-  { id: "98", label: "Match 98", sourceMatchIds: ["93", "94"], startTime: "2026-07-10T19:00:00.000Z", venue: "Los Angeles" },
-  { id: "99", label: "Match 99", sourceMatchIds: ["91", "92"], startTime: "2026-07-11T19:00:00.000Z", venue: "Miami" },
-  { id: "100", label: "Match 100", sourceMatchIds: ["95", "96"], startTime: "2026-07-11T23:00:00.000Z", venue: "Kansas City" }
+  { id: "97", label: "Match 97", sourceMatchIds: ["89", "90"], startTime: "2026-07-09T16:00:00-04:00", venue: "Boston" },
+  { id: "98", label: "Match 98", sourceMatchIds: ["93", "94"], startTime: "2026-07-10T12:00:00-07:00", venue: "Los Angeles" },
+  { id: "99", label: "Match 99", sourceMatchIds: ["91", "92"], startTime: "2026-07-11T17:00:00-04:00", venue: "Miami" },
+  { id: "100", label: "Match 100", sourceMatchIds: ["95", "96"], startTime: "2026-07-11T20:00:00-05:00", venue: "Kansas City" }
 ];
 
 const QUARTERFINAL_BONUS_POINTS = 2;
@@ -2103,7 +2103,8 @@ function quarterfinalMatchTimeLabel(match) {
     month: "short",
     day: "numeric",
     hour: "numeric",
-    minute: "2-digit"
+    minute: "2-digit",
+    timeZoneName: "short"
   });
 }
 
@@ -3806,6 +3807,36 @@ function round32BonusPointDetailsFor(answers = {}, results = {}) {
     redCards: scoreExactOrWithinTwo(answers.redCards, results.redCards),
     threeGoalWinner1: teamPoints(userThreeGoalWinners[0]),
     threeGoalWinner2: teamPoints(userThreeGoalWinners[1])
+  };
+}
+
+function openingBonusPointDetailsFor(answers = {}, results = {}) {
+  const yellowCardsAnswered = answers.yellowCards !== "" && answers.yellowCards != null;
+  const yellowCardsResultReady = results.yellowCards !== "" && results.yellowCards != null;
+  const yellowCardsGuess = Number(answers.yellowCards);
+  const yellowCardsActual = Number(results.yellowCards);
+
+  return {
+    mostGoalsCountry:
+      answers.mostGoalsCountry && results.mostGoalsCountry
+        ? sameCountryOption(answers.mostGoalsCountry, results.mostGoalsCountry) ? 1 : 0
+        : null,
+    yellowCards:
+      yellowCardsAnswered && yellowCardsResultReady && !Number.isNaN(yellowCardsGuess) && !Number.isNaN(yellowCardsActual)
+        ? Math.abs(yellowCardsGuess - yellowCardsActual) <= 10 ? 1 : 0
+        : null,
+    usaOut:
+      answers.usaOut && results.usaOut
+        ? answers.usaOut === results.usaOut ? 1 : 0
+        : null,
+    semifinalist:
+      answers.semifinalist && Array.isArray(results.semifinalists) && results.semifinalists.length
+        ? results.semifinalists.some(team => sameCountryOption(answers.semifinalist, team)) ? 1 : 0
+        : null,
+    winner:
+      answers.winner && results.winner
+        ? sameCountryOption(answers.winner, results.winner) ? 1 : 0
+        : null
   };
 }
 
@@ -5834,6 +5865,62 @@ function renderPublicAnswerCard(title, answerHtml, note = "", points = null) {
   `;
 }
 
+function renderPublicGroupPicks(picks = {}) {
+  return renderPublicPickGrid(
+    Object.keys(groups).map(groupName => {
+      const pick = picks[groupName] || {};
+      return `
+        <div class="public-pick-card">
+          <h3>Group ${escapeHTML(groupName)}</h3>
+          ${
+            pick.first || pick.second
+              ? `
+                <p><strong>Pick #1:</strong> ${pick.first ? escapeHTML(countryOptionLabel(pick.first)) : `<span class="mini-note">No saved pick.</span>`}</p>
+                <p><strong>Pick #2:</strong> ${pick.second ? escapeHTML(countryOptionLabel(pick.second)) : `<span class="mini-note">No saved pick.</span>`}</p>
+              `
+              : `<p class="mini-note">No saved picks for this group.</p>`
+          }
+        </div>
+      `;
+    }).join("")
+  );
+}
+
+function renderPublicOpeningBonusAnswers(answers = {}, pointDetails = {}) {
+  return renderPublicPickGrid(`
+    ${renderPublicAnswerCard(
+      "Most goals country",
+      answers.mostGoalsCountry ? escapeHTML(countryOptionLabel(answers.mostGoalsCountry)) : "",
+      "",
+      pointDetails.mostGoalsCountry
+    )}
+    ${renderPublicAnswerCard(
+      "Yellow cards",
+      answers.yellowCards !== "" && answers.yellowCards != null ? escapeHTML(String(answers.yellowCards)) : "",
+      "Within 10 counts as correct.",
+      pointDetails.yellowCards
+    )}
+    ${renderPublicAnswerCard(
+      "USA elimination round",
+      answers.usaOut ? escapeHTML(answers.usaOut) : "",
+      "",
+      pointDetails.usaOut
+    )}
+    ${renderPublicAnswerCard(
+      "Semifinalist",
+      answers.semifinalist ? escapeHTML(countryOptionLabel(answers.semifinalist)) : "",
+      "",
+      pointDetails.semifinalist
+    )}
+    ${renderPublicAnswerCard(
+      "World Cup winner",
+      answers.winner ? escapeHTML(countryOptionLabel(answers.winner)) : "",
+      "",
+      pointDetails.winner
+    )}
+  `);
+}
+
 function publicRound16BonusMatchLabel(matchId, round32Results = {}) {
   const match = round16Matches.find(item => item.id === matchId);
   return match ? round16MatchupLabel(match, round32Results) : "";
@@ -6002,6 +6089,7 @@ function renderRootingForFlags(rootingForCountries = []) {
 
 async function showPlayerRound32Picks(uid, displayName) {
   const publicRow = latestLeaderboardRows.find(row => row.uid === uid);
+  const revealAllSavedAnswers = currentUserIsAdmin();
 
   if (!currentUser) {
     showPublicRound32PicksFromLeaderboard(publicRow, displayName);
@@ -6046,7 +6134,7 @@ async function showPlayerRound32Picks(uid, displayName) {
         renderPublicQuarterfinalPickCard(
           match,
           quarterfinalPicks[match.id],
-          quarterfinalPickIsRevealable(match),
+          revealAllSavedAnswers || quarterfinalPickIsRevealable(match),
           round16Results,
           results,
           quarterfinalPickPointsFor(match.id, quarterfinalPicks[match.id], scoringBreakdownData.quarterfinalResults)
@@ -6057,7 +6145,7 @@ async function showPlayerRound32Picks(uid, displayName) {
       "Quarterfinals Bonus Questions",
       renderPublicQuarterfinalBonusAnswers(
         quarterfinalBonusAnswers,
-        quarterfinalBonusAnswersAreRevealable(),
+        revealAllSavedAnswers || quarterfinalBonusAnswersAreRevealable(),
         round16Results,
         results,
         quarterfinalBonusPointDetailsFor(
@@ -6073,7 +6161,7 @@ async function showPlayerRound32Picks(uid, displayName) {
         renderPublicRound16PickCard(
           match,
           round16Picks[match.id],
-          round16PickIsRevealable(match),
+          revealAllSavedAnswers || round16PickIsRevealable(match),
           results,
           round16PickPointsFor(match.id, round16Picks[match.id], scoringBreakdownData.round16Results)
         )
@@ -6097,7 +6185,7 @@ async function showPlayerRound32Picks(uid, displayName) {
         renderPublicRound32PickCard(
           match,
           picks[match.id],
-          round32PickIsRevealable(match, results),
+          revealAllSavedAnswers || round32PickIsRevealable(match, results),
           round32PickPointsFor(match.id, picks[match.id], scoringBreakdownData.round32Results)
         )
       ).join("")
@@ -6111,6 +6199,17 @@ async function showPlayerRound32Picks(uid, displayName) {
       ),
       false
     )}
+    ${revealAllSavedAnswers ? renderPlayerDrawerSection(
+      "Group Stage Picks",
+      renderPublicGroupPicks(scoringBreakdownData.groupPicks)
+    ) : ""}
+    ${revealAllSavedAnswers ? renderPlayerDrawerSection(
+      "Opening Bonus Question Answers",
+      renderPublicOpeningBonusAnswers(
+        scoringBreakdownData.bonusAnswers,
+        openingBonusPointDetailsFor(scoringBreakdownData.bonusAnswers, scoringBreakdownData.bonusResults)
+      )
+    ) : ""}
   `;
 
   bindAdminDailyPointsPanel(scoringBreakdownData);
