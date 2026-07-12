@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=quarterfinal-timezone-fix-20260711" />
+  <link rel="stylesheet" href="styles.css?v=semifinals-ticker-bonus-20260712" />
 </head>
 <body>
   <div class="home-link">
@@ -38,11 +38,11 @@
   </header>
 
   <main class="container">
-    <section class="card announcement-card">
-      <h2>🚨 Quarterfinals Picks are open!</h2>
+    <section class="card announcement-card semifinal-announcement-card">
+      <h2>🚨 Semifinals Picks are open!</h2>
       <p>
-        ✅ Make your Quarterfinals picks and predict every full-time score.<br>
-        ⭐ Quarterfinals bonus questions are live too.<br>
+        ✅ Make your Semifinals picks and predict every final score.<br>
+        ⭐ Semifinal bonus questions are live too.<br>
         Good luck! ⚽
       </p>
     </section>
@@ -93,6 +93,46 @@
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
+    <section class="card" id="semifinalPicksSection" style="display:none;">
+      <div class="section-header">
+        <h2>🏟️ Semifinals Pick’em</h2>
+        <button id="toggleSemifinalPicksBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="semifinalPicksContent">
+        <p>
+          Pick the winner of each Semifinal and predict the final score, which <strong>includes extra time</strong> if played.<br>
+          Correct winner = <strong>3 points</strong>. Exact final score = <strong>2 points</strong>.<br>
+          Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
+        </p>
+        <div class="score-rule-callout">
+          <strong>Please note:</strong> Exact score points require the correct winner pick.
+        </div>
+        <p class="lock-note">For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+
+        <div id="semifinalPicksForm"></div>
+        <button id="saveSemifinalPicksBtn">Save Semifinals Picks</button>
+        <p id="semifinalPicksStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card" id="semifinalBonusSection" style="display:none;">
+      <div class="section-header">
+        <h2>🎯 Semifinal Bonus Questions</h2>
+        <button id="toggleSemifinalBonusBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="semifinalBonusContent">
+        <p class="lock-note">Semifinal bonus answers lock when the first Semifinal begins.</p>
+        <p class="semifinal-bonus-note">Note that all questions include the entire regulation time, plus any additional extra time played. This includes all match time before penalties.</p>
+        <div class="quarterfinal-bonus-instructions">
+          Each bonus question is worth <strong>2 points</strong>.
+        </div>
+
+        <div id="semifinalBonusForm"></div>
+        <button id="saveSemifinalBonusBtn">Save Semifinal Bonus Answers</button>
+        <p id="semifinalBonusStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
     <section class="card" id="quarterfinalPicksSection" style="display:none;">
       <div class="section-header">
         <h2>🏟️ Quarterfinals Pick’em</h2>
@@ -100,14 +140,14 @@
       </div>
       <div id="quarterfinalPicksContent">
         <p>
-          Pick the winner of each Quarterfinal and enter the full-time score.<br>
-          Correct winner = <strong>3 points</strong>. Exact full-time score = <strong>2 points</strong>.<br>
+          Pick the winner of each Quarterfinal and enter the final score, including extra time if played.<br>
+          Correct winner = <strong>3 points</strong>. Exact final score = <strong>2 points</strong>.<br>
           Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
         </p>
         <div class="score-rule-callout">
           <strong>Please note:</strong> Exact score points require the correct winner pick.
         </div>
-        <p class="lock-note">Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+        <p class="lock-note">For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
 
         <div id="quarterfinalPicksForm"></div>
         <button id="saveQuarterfinalPicksBtn">Save Quarterfinals Picks</button>
@@ -129,6 +169,7 @@
         <div id="quarterfinalBonusForm"></div>
         <button id="saveQuarterfinalBonusBtn">Save Quarterfinals Bonus Answers</button>
         <p id="quarterfinalBonusStatus" role="status" aria-live="polite"></p>
+        <div id="quarterfinalBonusAnswerKey"></div>
       </div>
     </section>
 
@@ -139,11 +180,11 @@
       </div>
       <div id="round16PicksContent">
         <p>
-          Pick the winner of each Round of 16 match and enter the full-time score.<br>
-          Correct winner = <strong>3 points</strong>. Exact full-time score = <strong>2 points</strong>.<br>
+          Pick the winner of each Round of 16 match and enter the final score, including extra time if played.<br>
+          Correct winner = <strong>3 points</strong>. Exact final score = <strong>2 points</strong>.<br>
           Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
         </p>
-        <p class="lock-note">Exact score points require the correct winner pick. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+        <p class="lock-note">For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
 
         <div id="round16PicksForm"></div>
         <button id="saveRound16PicksBtn">Save Round of 16 Picks</button>
@@ -234,7 +275,7 @@
           <button class="secondary-btn admin-toggle-btn">Minimize</button>
         </div>
         <div class="admin-panel-content">
-          <p class="mini-note">Enter each official winner, full-time score, and combined free-kick total once. Match and bonus scoring are calculated from these results.</p>
+          <p class="mini-note">Enter each official winner, final score, and combined free-kick total once. Match scoring is calculated from these results.</p>
           <div id="adminQuarterfinalResultsForm"></div>
           <button id="saveQuarterfinalResultsBtn">Save Quarterfinals Results</button>
           <p id="quarterfinalResultsStatus"></p>
@@ -250,8 +291,11 @@
           <button class="secondary-btn admin-toggle-btn">Minimize</button>
         </div>
         <div class="admin-panel-content">
-          <p class="mini-note">Admins can review the exact bonus questions and point values here. The answer key is calculated from official Quarterfinals results and awards points only after all four matches are complete.</p>
+          <p class="mini-note">Admins can review the exact bonus questions and set the official answer key here.</p>
           <div id="adminQuarterfinalBonusQuestions"></div>
+          <div id="adminQuarterfinalBonusResultsForm"></div>
+          <button id="saveQuarterfinalBonusResultsBtn">Save Quarterfinals Bonus Answer Key</button>
+          <p id="quarterfinalBonusResultsStatus"></p>
           <div id="adminQuarterfinalBonusKey"></div>
         </div>
       </div>
@@ -265,10 +309,42 @@
           <button class="secondary-btn admin-toggle-btn">Minimize</button>
         </div>
         <div class="admin-panel-content">
-          <p class="mini-note">Enter each official winner and full-time score once. Match scoring is calculated from these results.</p>
+          <p class="mini-note">Enter each official winner and final score once. Match scoring is calculated from these results.</p>
           <div id="adminRound16ResultsForm"></div>
           <button id="saveRound16ResultsBtn">Save Round of 16 Results</button>
           <p id="round16ResultsStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Semifinals</span>
+            <h3>Semifinals Match Results</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Enter each official Semifinal winner and final score once.</p>
+          <div id="adminSemifinalResultsForm"></div>
+          <button id="saveSemifinalResultsBtn">Save Semifinals Results</button>
+          <p id="semifinalResultsStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Semifinals bonus</span>
+            <h3>Semifinal Bonus Answer Key</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Set the official answers for the Semifinal bonus questions. Team-stat ties can include multiple correct teams; match-stat ties should be marked as no points.</p>
+          <div id="adminSemifinalBonusResultsForm"></div>
+          <button id="saveSemifinalBonusResultsBtn">Save Semifinal Bonus Answer Key</button>
+          <p id="semifinalBonusResultsStatus"></p>
         </div>
       </div>
 
@@ -380,6 +456,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=quarterfinal-timezone-fix-20260711"></script>
+  <script type="module" src="app.js?v=semifinals-ticker-bonus-20260712"></script>
 </body>
 </html>

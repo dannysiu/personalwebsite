@@ -281,17 +281,41 @@ footer {
 }
 
 #quarterfinalPicksForm,
-#quarterfinalBonusForm {
+#quarterfinalBonusForm,
+#semifinalPicksForm,
+#semifinalBonusForm {
   display: grid;
   gap: 14px;
 }
 
-#quarterfinalPicksForm {
+#quarterfinalPicksForm,
+#semifinalPicksForm {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 #quarterfinalBonusForm {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#semifinalBonusForm {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.semifinal-bonus-card {
+  grid-column: span 2;
+}
+
+.semifinal-bonus-top-one {
+  grid-column: 2 / span 2;
+}
+
+.semifinal-bonus-top-two {
+  grid-column: 4 / span 2;
+}
+
+.semifinal-rooting-card {
+  grid-column: 2 / span 4;
+  text-align: center;
 }
 
 .quarterfinal-bonus-instructions {
@@ -303,16 +327,32 @@ footer {
   text-align: center;
 }
 
-#quarterfinalPicksForm .quarterfinal-score-label {
+.semifinal-bonus-note {
+  border: 1px solid rgba(59, 130, 246, 0.34);
+  border-radius: 10px;
+  background: rgba(30, 64, 175, 0.18);
+  color: #dbeafe;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 10px 0 12px;
+  padding: 10px 12px;
   text-align: center;
 }
 
-#quarterfinalPicksForm .score-entry-row {
+#quarterfinalPicksForm .quarterfinal-score-label,
+#semifinalPicksForm .quarterfinal-score-label {
+  text-align: center;
+}
+
+#quarterfinalPicksForm .score-entry-row,
+#semifinalPicksForm .score-entry-row {
   margin-left: auto;
   margin-right: auto;
 }
 
-#quarterfinalPicksForm .checkbox-row {
+#quarterfinalPicksForm .checkbox-row,
+#semifinalPicksForm .checkbox-row {
   justify-content: center;
   text-align: center;
 }
@@ -622,6 +662,18 @@ footer {
   color: #f8fafc;
 }
 
+.semifinal-announcement-card {
+  border-color: rgba(20, 184, 166, 0.82);
+  background:
+    linear-gradient(135deg, rgba(13, 148, 136, 0.74), rgba(8, 145, 178, 0.52), rgba(250, 204, 21, 0.20)),
+    #111827;
+  box-shadow: 0 14px 34px rgba(20, 184, 166, 0.20);
+}
+
+.semifinal-announcement-card h2 {
+  color: #ccfbf1;
+}
+
 .checkbox-row {
   display: flex !important;
   align-items: center;
@@ -700,6 +752,11 @@ footer {
 #saveRound16BonusBtn,
 #saveQuarterfinalPicksBtn,
 #saveQuarterfinalBonusBtn,
+#saveQuarterfinalBonusResultsBtn,
+#saveSemifinalPicksBtn,
+#saveSemifinalBonusBtn,
+#saveSemifinalResultsBtn,
+#saveSemifinalBonusResultsBtn,
 #saveMatchPicksBtn,
 #saveGroupResultsBtn,
 #saveRound32ResultsBtn,
@@ -750,6 +807,30 @@ footer {
 
 .floating-leaderboard-btn:hover {
   background: #86efac;
+}
+
+.save-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  z-index: 40;
+  transform: translate(-50%, 12px);
+  border: 1px solid rgba(34, 197, 94, 0.58);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.40);
+  color: #bbf7d0;
+  font-size: 16px;
+  font-weight: 900;
+  opacity: 0;
+  padding: 12px 16px;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.save-toast-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .admin-primary-panel {
@@ -908,6 +989,14 @@ footer {
   color: #bbf7d0;
   background: rgba(34, 197, 94, 0.14);
   border: 1px solid rgba(34, 197, 94, 0.32);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.started-pill {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: 999px;
   padding: 2px 8px;
 }
@@ -1260,7 +1349,16 @@ footer {
 
 @media (max-width: 760px) {
   #quarterfinalPicksForm,
-  #quarterfinalBonusForm {
+  #quarterfinalBonusForm,
+  #semifinalPicksForm,
+  #semifinalBonusForm {
     grid-template-columns: 1fr;
+  }
+
+  .semifinal-bonus-card,
+  .semifinal-bonus-top-one,
+  .semifinal-bonus-top-two,
+  .semifinal-rooting-card {
+    grid-column: 1;
   }
 }
