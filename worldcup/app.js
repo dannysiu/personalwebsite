@@ -279,9 +279,36 @@ const quarterfinalMatches = [
 const QUARTERFINAL_BONUS_POINTS = 2;
 
 const semifinalMatches = [
-  { id: "101", label: "Match 101", matchupId: "france-spain", home: "France", away: "Spain", startTime: "2026-07-14T14:00:00-05:00", venue: "Dallas" },
-  { id: "102", label: "Match 102", matchupId: "england-argentina", home: "England", away: "Argentina", startTime: "2026-07-15T15:00:00-04:00", venue: "Atlanta" }
+  { id: "101", label: "Match 101", matchupId: "france-spain", home: "France", away: "Spain", startTime: "2026-07-14T14:00:00-05:00", venue: "Dallas", tickerVenue: "AT&T Stadium", tickerLocation: "Arlington, Texas" },
+  { id: "102", label: "Match 102", matchupId: "england-argentina", home: "England", away: "Argentina", startTime: "2026-07-15T15:00:00-04:00", venue: "Atlanta", tickerVenue: "Mercedes-Benz Stadium", tickerLocation: "Atlanta, Georgia" }
 ];
+
+const completedSemifinalTickerResults = {
+  "101": { homeScore: 0, awayScore: 2, winner: "Spain" },
+  "102": { homeScore: 1, awayScore: 2, winner: "Argentina" }
+};
+
+const finalMatch = {
+  id: "104",
+  label: "Final",
+  home: "Spain",
+  away: "Argentina",
+  startTime: "2026-07-19T15:00:00-04:00",
+  venue: "MetLife Stadium",
+  tickerVenue: "MetLife Stadium",
+  tickerLocation: "East Rutherford, New Jersey"
+};
+
+const thirdPlaceMatch = {
+  id: "103",
+  label: "Match for Third Place",
+  home: "England",
+  away: "France",
+  startTime: "2026-07-18T17:00:00-04:00",
+  venue: "Hard Rock Stadium",
+  tickerVenue: "Hard Rock Stadium",
+  tickerLocation: "Miami Gardens, Florida"
+};
 
 const SEMIFINAL_BONUS_POINTS = 2;
 const SEMIFINAL_TEAM_OPTIONS = ["France", "Spain", "England", "Argentina"];
@@ -3761,57 +3788,95 @@ function renderAdminSemifinalBonusResults() {
   adminSemifinalBonusResultsForm.innerHTML = `
     <div class="pick-card">
       <label>1. Which semifinal had more total goals?</label>
-      <p class="mini-note">An unlucky tie results in zero points awarded for this question.</p>
-      <select id="result-semifinal-bonus-moreGoalsMatch">
-        ${renderSemifinalMatchOrTieOptions("Select semifinal")}
-      </select>
+      <p class="mini-note">Worth 2 points. Higher match is correct; an unlucky tie awards 0 points.</p>
+      ${renderAdminSemifinalMatchStatInputs("goals", "Total goals")}
+      <p class="admin-derived-answer-label">Final answer key</p>
+      <p id="result-semifinal-bonus-moreGoalsMatch-summary" class="answer-result"></p>
     </div>
 
     <div class="pick-card">
       <label>2. Which semifinal had more total corner kicks?</label>
-      <p class="mini-note">An unlucky tie results in zero points awarded for this question.</p>
-      <select id="result-semifinal-bonus-moreCornerKicksMatch">
-        ${renderSemifinalMatchOrTieOptions("Select semifinal")}
-      </select>
+      <p class="mini-note">Worth 2 points. Higher match is correct; an unlucky tie awards 0 points.</p>
+      ${renderAdminSemifinalMatchStatInputs("cornerKicks", "Corner kicks")}
+      <p class="admin-derived-answer-label">Final answer key</p>
+      <p id="result-semifinal-bonus-moreCornerKicksMatch-summary" class="answer-result"></p>
     </div>
 
     <div class="pick-card">
       <label>3. Team(s) with the most shots on target</label>
-      <p class="mini-note">Select every tied team.</p>
-      <div class="admin-checkbox-grid">
-        ${SEMIFINAL_TEAM_OPTIONS.map(team => `
-          <label class="checkbox-row">
-            <input type="checkbox" data-semifinal-bonus-shots-team="${escapeHTML(team)}" />
-            ${escapeHTML(round32TeamLabel(team))}
-          </label>
-        `).join("")}
-      </div>
+      <p class="mini-note">Worth 2 points. Highest team is correct; tied highest teams all earn points.</p>
+      ${renderAdminSemifinalTeamStatInputs("shotsOnTarget", "Shots on target")}
+      <p class="admin-derived-answer-label">Final answer key</p>
+      <p id="result-semifinal-bonus-mostShotsOnTargetTeam-summary" class="answer-result"></p>
     </div>
 
     <div class="pick-card">
       <label>4. Team(s) with the most yellow cards</label>
-      <p class="mini-note">Select every tied team.</p>
-      <div class="admin-checkbox-grid">
-        ${SEMIFINAL_TEAM_OPTIONS.map(team => `
-          <label class="checkbox-row">
-            <input type="checkbox" data-semifinal-bonus-yellow-team="${escapeHTML(team)}" />
-            ${escapeHTML(round32TeamLabel(team))}
-          </label>
-        `).join("")}
-      </div>
+      <p class="mini-note">Worth 2 points. Highest team is correct; tied highest teams all earn points.</p>
+      ${renderAdminSemifinalTeamStatInputs("yellowCards", "Yellow cards")}
+      <p class="admin-derived-answer-label">Final answer key</p>
+      <p id="result-semifinal-bonus-mostYellowCardsTeam-summary" class="answer-result"></p>
     </div>
 
     <div class="pick-card">
       <label>5. Team(s) with the most completed passes</label>
-      <p class="mini-note">Select every tied team.</p>
-      <div class="admin-checkbox-grid">
-        ${SEMIFINAL_TEAM_OPTIONS.map(team => `
-          <label class="checkbox-row">
-            <input type="checkbox" data-semifinal-bonus-passes-team="${escapeHTML(team)}" />
-            ${escapeHTML(round32TeamLabel(team))}
-          </label>
-        `).join("")}
-      </div>
+      <p class="mini-note">Worth 2 points. Highest team is correct; tied highest teams all earn points.</p>
+      ${renderAdminSemifinalTeamStatInputs("passes", "Completed passes")}
+      <p class="admin-derived-answer-label">Final answer key</p>
+      <p id="result-semifinal-bonus-mostPassesTeam-summary" class="answer-result"></p>
+    </div>
+
+    <div class="admin-semifinal-answer-key-box">
+      <h3>All Correct Semifinal Bonus Answers</h3>
+      <p class="mini-note">This updates automatically after all stat totals are entered.</p>
+      <div id="adminSemifinalBonusFinalAnswers" class="admin-final-answer-list"></div>
+    </div>
+  `;
+
+  bindAdminSemifinalBonusStatPreview();
+  updateAdminSemifinalBonusSummaries({});
+}
+
+function renderAdminSemifinalMatchStatInputs(statKey, label) {
+  return `
+    <div class="admin-stat-grid">
+      ${semifinalMatches.map(match => `
+        <label class="admin-stat-row">
+          <span>${escapeHTML(semifinalMatchupLabel(match))}</span>
+          <input
+            id="result-semifinal-bonus-${escapeHTML(match.id)}-${escapeHTML(statKey)}"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            data-semifinal-bonus-match-stat="${escapeHTML(match.id)}"
+            data-stat-key="${escapeHTML(statKey)}"
+            data-stat-label="${escapeHTML(label)} for ${escapeHTML(semifinalMatchupLabel(match))}"
+          />
+        </label>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderAdminSemifinalTeamStatInputs(statKey, label) {
+  return `
+    <div class="admin-stat-grid">
+      ${SEMIFINAL_TEAM_OPTIONS.map(team => `
+        <label class="admin-stat-row">
+          <span>${escapeHTML(round32TeamLabel(team))}</span>
+          <input
+            id="result-semifinal-bonus-${escapeHTML(cleanCountryName(team).replace(/\s+/g, "-"))}-${escapeHTML(statKey)}"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            data-semifinal-bonus-team-stat="${escapeHTML(team)}"
+            data-stat-key="${escapeHTML(statKey)}"
+            data-stat-label="${escapeHTML(label)} for ${escapeHTML(round32TeamLabel(team))}"
+          />
+        </label>
+      `).join("")}
     </div>
   `;
 }
@@ -3821,27 +3886,23 @@ async function loadExistingSemifinalBonusResults() {
   if (!snap?.exists()) return;
 
   const results = snap.data().results || {};
-  setValue("result-semifinal-bonus-moreGoalsMatch", results.moreGoalsMatch);
-  setValue("result-semifinal-bonus-moreCornerKicksMatch", results.moreCornerKicksMatch);
+  const matchStats = results.matchStats || {};
+  const teamStats = results.teamStats || {};
 
-  setCheckedTeams(
-    adminSemifinalBonusResultsForm,
-    "[data-semifinal-bonus-shots-team]",
-    "semifinalBonusShotsTeam",
-    results.mostShotsOnTargetTeams
-  );
-  setCheckedTeams(
-    adminSemifinalBonusResultsForm,
-    "[data-semifinal-bonus-yellow-team]",
-    "semifinalBonusYellowTeam",
-    results.mostYellowCardsTeams
-  );
-  setCheckedTeams(
-    adminSemifinalBonusResultsForm,
-    "[data-semifinal-bonus-passes-team]",
-    "semifinalBonusPassesTeam",
-    results.mostPassesTeams
-  );
+  semifinalMatches.forEach(match => {
+    ["goals", "cornerKicks"].forEach(statKey => {
+      setValue(`result-semifinal-bonus-${match.id}-${statKey}`, matchStats[match.id]?.[statKey]);
+    });
+  });
+
+  SEMIFINAL_TEAM_OPTIONS.forEach(team => {
+    const teamId = cleanCountryName(team).replace(/\s+/g, "-");
+    ["shotsOnTarget", "yellowCards", "passes"].forEach(statKey => {
+      setValue(`result-semifinal-bonus-${teamId}-${statKey}`, teamStats[team]?.[statKey]);
+    });
+  });
+
+  updateAdminSemifinalBonusSummaries(getSemifinalBonusScoringKey(results));
 }
 
 function getCheckedDatasetValues(root, selector, datasetKey) {
@@ -3857,32 +3918,200 @@ function setCheckedTeams(root, selector, datasetKey, teams = []) {
   });
 }
 
-saveSemifinalBonusResultsBtn?.addEventListener("click", async () => {
-  const results = {
-    moreGoalsMatch: getValue("result-semifinal-bonus-moreGoalsMatch"),
-    moreCornerKicksMatch: getValue("result-semifinal-bonus-moreCornerKicksMatch"),
-    mostShotsOnTargetTeams: getCheckedDatasetValues(
-      adminSemifinalBonusResultsForm,
-      "[data-semifinal-bonus-shots-team]",
-      "semifinalBonusShotsTeam"
-    ),
-    mostYellowCardsTeams: getCheckedDatasetValues(
-      adminSemifinalBonusResultsForm,
-      "[data-semifinal-bonus-yellow-team]",
-      "semifinalBonusYellowTeam"
-    ),
-    mostPassesTeams: getCheckedDatasetValues(
-      adminSemifinalBonusResultsForm,
-      "[data-semifinal-bonus-passes-team]",
-      "semifinalBonusPassesTeam"
-    )
+function readAdminSemifinalBonusStats({ requireComplete = false } = {}) {
+  const matchStats = Object.fromEntries(semifinalMatches.map(match => [match.id, {}]));
+  const teamStats = Object.fromEntries(SEMIFINAL_TEAM_OPTIONS.map(team => [team, {}]));
+
+  const readInput = input => {
+    const rawValue = String(input.value || "").trim();
+    const label = input.dataset.statLabel || "this stat";
+
+    if (rawValue === "") {
+      return requireComplete ? { error: `Enter ${label}.` } : { value: null };
+    }
+
+    const value = Number(rawValue);
+    if (!Number.isInteger(value) || value < 0) {
+      return { error: `${label} must be a whole number of 0 or more.` };
+    }
+
+    return { value };
   };
 
-  if (!results.moreGoalsMatch) return alert("Select the official more-goals semifinal answer.");
-  if (!results.moreCornerKicksMatch) return alert("Select the official more-corner-kicks semifinal answer.");
-  if (!results.mostShotsOnTargetTeams.length) return alert("Select at least one team for most shots on target.");
-  if (!results.mostYellowCardsTeams.length) return alert("Select at least one team for most yellow cards.");
-  if (!results.mostPassesTeams.length) return alert("Select at least one team for most completed passes.");
+  for (const input of adminSemifinalBonusResultsForm?.querySelectorAll("[data-semifinal-bonus-match-stat]") || []) {
+    const { error, value } = readInput(input);
+    if (error) return { error };
+    if (value == null) continue;
+
+    const matchId = input.dataset.semifinalBonusMatchStat;
+    const statKey = input.dataset.statKey;
+    if (matchStats[matchId]) matchStats[matchId][statKey] = value;
+  }
+
+  for (const input of adminSemifinalBonusResultsForm?.querySelectorAll("[data-semifinal-bonus-team-stat]") || []) {
+    const { error, value } = readInput(input);
+    if (error) return { error };
+    if (value == null) continue;
+
+    const team = input.dataset.semifinalBonusTeamStat;
+    const statKey = input.dataset.statKey;
+    if (teamStats[team]) teamStats[team][statKey] = value;
+  }
+
+  return { matchStats, teamStats };
+}
+
+function semifinalBonusStatsAreComplete(matchStats = {}, teamStats = {}) {
+  return semifinalMatches.every(match =>
+    ["goals", "cornerKicks"].every(statKey => Number.isInteger(matchStats[match.id]?.[statKey]))
+  ) && SEMIFINAL_TEAM_OPTIONS.every(team =>
+    ["shotsOnTarget", "yellowCards", "passes"].every(statKey => Number.isInteger(teamStats[team]?.[statKey]))
+  );
+}
+
+function highestSemifinalMatchStat(matchStats = {}, statKey) {
+  const entries = semifinalMatches.map(match => ({
+    id: match.id,
+    value: matchStats[match.id]?.[statKey]
+  }));
+  if (entries.some(entry => !Number.isInteger(entry.value))) return "";
+
+  const maxValue = Math.max(...entries.map(entry => entry.value));
+  const winners = entries.filter(entry => entry.value === maxValue);
+  return winners.length === 1 ? winners[0].id : "tie";
+}
+
+function highestSemifinalTeamStats(teamStats = {}, statKey) {
+  const entries = SEMIFINAL_TEAM_OPTIONS.map(team => ({
+    team,
+    value: teamStats[team]?.[statKey]
+  }));
+  if (entries.some(entry => !Number.isInteger(entry.value))) return [];
+
+  const maxValue = Math.max(...entries.map(entry => entry.value));
+  return entries
+    .filter(entry => entry.value === maxValue)
+    .map(entry => entry.team);
+}
+
+function deriveSemifinalBonusResultsFromStats(matchStats = {}, teamStats = {}) {
+  return {
+    moreGoalsMatch: highestSemifinalMatchStat(matchStats, "goals"),
+    moreCornerKicksMatch: highestSemifinalMatchStat(matchStats, "cornerKicks"),
+    mostShotsOnTargetTeams: highestSemifinalTeamStats(teamStats, "shotsOnTarget"),
+    mostYellowCardsTeams: highestSemifinalTeamStats(teamStats, "yellowCards"),
+    mostPassesTeams: highestSemifinalTeamStats(teamStats, "passes"),
+    matchStats,
+    teamStats
+  };
+}
+
+function semifinalBonusDirectKeyIsComplete(key = {}) {
+  return !!key.moreGoalsMatch &&
+    !!key.moreCornerKicksMatch &&
+    Array.isArray(key.mostShotsOnTargetTeams) &&
+    key.mostShotsOnTargetTeams.length > 0 &&
+    Array.isArray(key.mostYellowCardsTeams) &&
+    key.mostYellowCardsTeams.length > 0 &&
+    Array.isArray(key.mostPassesTeams) &&
+    key.mostPassesTeams.length > 0;
+}
+
+function getSemifinalBonusScoringKey(results = {}) {
+  if (semifinalBonusDirectKeyIsComplete(results)) {
+    return {
+      ...results,
+      mostShotsOnTargetTeams: results.mostShotsOnTargetTeams || [],
+      mostYellowCardsTeams: results.mostYellowCardsTeams || [],
+      mostPassesTeams: results.mostPassesTeams || []
+    };
+  }
+
+  if (semifinalBonusStatsAreComplete(results.matchStats, results.teamStats)) {
+    return deriveSemifinalBonusResultsFromStats(results.matchStats, results.teamStats);
+  }
+
+  return {};
+}
+
+function bindAdminSemifinalBonusStatPreview() {
+  adminSemifinalBonusResultsForm
+    ?.querySelectorAll("[data-semifinal-bonus-match-stat], [data-semifinal-bonus-team-stat]")
+    .forEach(input => {
+      input.addEventListener("input", () => {
+        const statResult = readAdminSemifinalBonusStats();
+        if (statResult.error || !semifinalBonusStatsAreComplete(statResult.matchStats, statResult.teamStats)) {
+          updateAdminSemifinalBonusSummaries({});
+          return;
+        }
+
+        updateAdminSemifinalBonusSummaries(
+          deriveSemifinalBonusResultsFromStats(statResult.matchStats, statResult.teamStats)
+        );
+      });
+    });
+}
+
+function updateAdminSemifinalBonusSummaries(results = {}) {
+  const key = getSemifinalBonusScoringKey(results);
+  const setSummary = (id, text) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.className = text ? "answer-result answer-result-correct" : "answer-result answer-result-pending";
+    el.textContent = text ? `Correct answer: ${text}` : "Enter all stat totals to calculate the correct answer.";
+  };
+
+  const correctAnswers = semifinalBonusCorrectAnswersFor(key);
+  const answerRows = [
+    ["More total goals", renderPlainCorrectAnswer(correctAnswers.moreGoalsMatch)],
+    ["More corner kicks", renderPlainCorrectAnswer(correctAnswers.moreCornerKicksMatch)],
+    ["Most shots on target", renderPlainCorrectAnswer(correctAnswers.mostShotsOnTargetTeam)],
+    ["Most yellow cards", renderPlainCorrectAnswer(correctAnswers.mostYellowCardsTeam)],
+    ["Most completed passes", renderPlainCorrectAnswer(correctAnswers.mostPassesTeam)]
+  ];
+
+  setSummary("result-semifinal-bonus-moreGoalsMatch-summary", answerRows[0][1]);
+  setSummary("result-semifinal-bonus-moreCornerKicksMatch-summary", answerRows[1][1]);
+  setSummary("result-semifinal-bonus-mostShotsOnTargetTeam-summary", answerRows[2][1]);
+  setSummary("result-semifinal-bonus-mostYellowCardsTeam-summary", answerRows[3][1]);
+  setSummary("result-semifinal-bonus-mostPassesTeam-summary", answerRows[4][1]);
+  renderAdminSemifinalBonusFinalAnswers(answerRows);
+}
+
+function renderPlainCorrectAnswer(value) {
+  if (Array.isArray(value)) return value.join(", ");
+  return value || "";
+}
+
+function renderAdminSemifinalBonusFinalAnswers(answerRows = []) {
+  const box = document.getElementById("adminSemifinalBonusFinalAnswers");
+  if (!box) return;
+
+  const hasAllAnswers = answerRows.every(([, answer]) => !!answer);
+
+  if (!hasAllAnswers) {
+    box.innerHTML = `<p class="answer-result answer-result-pending">Enter all stat totals to calculate every correct answer.</p>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="admin-final-answer-grid">
+      ${answerRows.map(([label, answer], index) => `
+        <div class="admin-final-answer-row">
+          <span>${index + 1}. ${escapeHTML(label)}</span>
+          <strong>${escapeHTML(answer)}</strong>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+saveSemifinalBonusResultsBtn?.addEventListener("click", async () => {
+  const statResult = readAdminSemifinalBonusStats({ requireComplete: true });
+  if (statResult.error) return alert(statResult.error);
+
+  const results = deriveSemifinalBonusResultsFromStats(statResult.matchStats, statResult.teamStats);
 
   semifinalBonusResultsStatus.className = "status-message status-info";
   semifinalBonusResultsStatus.textContent = "Saving Semifinal bonus answer key...";
@@ -3898,6 +4127,7 @@ saveSemifinalBonusResultsBtn?.addEventListener("click", async () => {
     semifinalBonusResultsStatus.className = "status-message status-success";
     semifinalBonusResultsStatus.textContent = "✅ Semifinal bonus answer key saved!";
     showSaveNotification("Semifinal bonus key saved!");
+    updateAdminSemifinalBonusSummaries(results);
     await applySemifinalBonusIndicators();
     await renderLeaderboardFromFirestore();
   } catch (error) {
@@ -3919,35 +4149,36 @@ function semifinalPickPointsFor(matchId, pick, results = {}) {
 }
 
 function scoreSemifinalBonusAnswers(answers, results) {
-  if (!answers || !semifinalBonusKeyIsComplete(results)) return 0;
+  const key = getSemifinalBonusScoringKey(results);
+  if (!answers || !semifinalBonusKeyIsComplete(key)) return 0;
 
   let points = 0;
 
-  if (answers.moreGoalsMatch && results.moreGoalsMatch !== "tie" && answers.moreGoalsMatch === results.moreGoalsMatch) {
+  if (answers.moreGoalsMatch && key.moreGoalsMatch !== "tie" && answers.moreGoalsMatch === key.moreGoalsMatch) {
     points += SEMIFINAL_BONUS_POINTS;
   }
 
-  if (answers.moreCornerKicksMatch && results.moreCornerKicksMatch !== "tie" && answers.moreCornerKicksMatch === results.moreCornerKicksMatch) {
+  if (answers.moreCornerKicksMatch && key.moreCornerKicksMatch !== "tie" && answers.moreCornerKicksMatch === key.moreCornerKicksMatch) {
     points += SEMIFINAL_BONUS_POINTS;
   }
 
   if (
     answers.mostShotsOnTargetTeam &&
-    results.mostShotsOnTargetTeams.some(team => sameCountryOption(answers.mostShotsOnTargetTeam, team))
+    key.mostShotsOnTargetTeams.some(team => sameCountryOption(answers.mostShotsOnTargetTeam, team))
   ) {
     points += SEMIFINAL_BONUS_POINTS;
   }
 
   if (
     answers.mostYellowCardsTeam &&
-    results.mostYellowCardsTeams.some(team => sameCountryOption(answers.mostYellowCardsTeam, team))
+    key.mostYellowCardsTeams.some(team => sameCountryOption(answers.mostYellowCardsTeam, team))
   ) {
     points += SEMIFINAL_BONUS_POINTS;
   }
 
   if (
     answers.mostPassesTeam &&
-    results.mostPassesTeams.some(team => sameCountryOption(answers.mostPassesTeam, team))
+    key.mostPassesTeams.some(team => sameCountryOption(answers.mostPassesTeam, team))
   ) {
     points += SEMIFINAL_BONUS_POINTS;
   }
@@ -4356,14 +4587,7 @@ async function loadExistingSemifinalBonusAnswers() {
 }
 
 function semifinalBonusKeyIsComplete(key = {}) {
-  return !!key.moreGoalsMatch &&
-    !!key.moreCornerKicksMatch &&
-    Array.isArray(key.mostShotsOnTargetTeams) &&
-    key.mostShotsOnTargetTeams.length > 0 &&
-    Array.isArray(key.mostYellowCardsTeams) &&
-    key.mostYellowCardsTeams.length > 0 &&
-    Array.isArray(key.mostPassesTeams) &&
-    key.mostPassesTeams.length > 0;
+  return semifinalBonusDirectKeyIsComplete(getSemifinalBonusScoringKey(key));
 }
 
 async function applySemifinalBonusIndicators() {
@@ -4378,7 +4602,7 @@ async function applySemifinalBonusIndicators() {
   const snap = await getOptionalDoc("semifinalBonusResults", "official");
   if (!snap?.exists()) return;
 
-  const key = snap.data().results || {};
+  const key = getSemifinalBonusScoringKey(snap.data().results || {});
   if (!semifinalBonusKeyIsComplete(key)) return;
 
   setSemifinalMatchBonusIndicator(
@@ -5361,7 +5585,8 @@ function quarterfinalBonusPointDetailsFor(answers = {}, quarterfinalResults = {}
 }
 
 function semifinalBonusCorrectAnswersFor(results = {}) {
-  if (!semifinalBonusKeyIsComplete(results)) return {};
+  const key = getSemifinalBonusScoringKey(results);
+  if (!semifinalBonusKeyIsComplete(key)) return {};
 
   const matchAnswer = matchId => {
     if (matchId === "tie") return "Tie / no points";
@@ -5370,18 +5595,73 @@ function semifinalBonusCorrectAnswersFor(results = {}) {
   };
 
   return {
-    moreGoalsMatch: matchAnswer(results.moreGoalsMatch),
-    moreCornerKicksMatch: matchAnswer(results.moreCornerKicksMatch),
-    mostShotsOnTargetTeam: results.mostShotsOnTargetTeams.map(round32TeamLabel),
-    mostYellowCardsTeam: results.mostYellowCardsTeams.map(round32TeamLabel),
-    mostPassesTeam: results.mostPassesTeams.map(round32TeamLabel)
+    moreGoalsMatch: formatSemifinalMatchCorrectAnswer(key, "moreGoalsMatch", "goals"),
+    moreCornerKicksMatch: formatSemifinalMatchCorrectAnswer(key, "moreCornerKicksMatch", "cornerKicks"),
+    mostShotsOnTargetTeam: key.mostShotsOnTargetTeams.map(team =>
+      formatSemifinalTeamCorrectAnswer(key, team, "shotsOnTarget")
+    ),
+    mostYellowCardsTeam: key.mostYellowCardsTeams.map(team =>
+      formatSemifinalTeamCorrectAnswer(key, team, "yellowCards")
+    ),
+    mostPassesTeam: key.mostPassesTeams.map(team =>
+      formatSemifinalTeamCorrectAnswer(key, team, "passes")
+    )
   };
 }
 
-function semifinalBonusPointDetailsFor(answers = {}, results = {}) {
-  const correctAnswers = semifinalBonusCorrectAnswersFor(results);
+function formatSemifinalMatchCorrectAnswer(key, resultKey, statKey) {
+  const matchId = key[resultKey];
+  const statValue = getSemifinalMatchStatValue(key, matchId, statKey);
 
-  if (!semifinalBonusKeyIsComplete(results)) {
+  if (matchId === "tie") {
+    const tieValue = getSemifinalTieStatValue(key, statKey);
+    return tieValue == null
+      ? "Tie / no points"
+      : `Tie / no points (${tieValue} ${semifinalStatLabel(statKey)})`;
+  }
+
+  const match = semifinalMatches.find(item => item.id === matchId);
+  const label = match ? semifinalMatchupLabel(match) : "";
+  return formatCorrectAnswerWithDetail(
+    label,
+    statValue == null ? "" : `${statValue} ${semifinalStatLabel(statKey)}`
+  );
+}
+
+function formatSemifinalTeamCorrectAnswer(key, team, statKey) {
+  const statValue = key.teamStats?.[team]?.[statKey];
+  return formatCorrectAnswerWithDetail(
+    round32TeamLabel(team),
+    statValue == null ? "" : `${statValue} ${semifinalStatLabel(statKey)}`
+  );
+}
+
+function getSemifinalMatchStatValue(key, matchId, statKey) {
+  return key.matchStats?.[matchId]?.[statKey] ?? null;
+}
+
+function getSemifinalTieStatValue(key, statKey) {
+  const values = semifinalMatches
+    .map(match => getSemifinalMatchStatValue(key, match.id, statKey))
+    .filter(value => value != null);
+  return values.length ? values[0] : null;
+}
+
+function semifinalStatLabel(statKey) {
+  return {
+    goals: "goal(s)",
+    cornerKicks: "corner kick(s)",
+    shotsOnTarget: "shot(s) on target",
+    yellowCards: "yellow card(s)",
+    passes: "pass(es)"
+  }[statKey] || "item(s)";
+}
+
+function semifinalBonusPointDetailsFor(answers = {}, results = {}) {
+  const key = getSemifinalBonusScoringKey(results);
+  const correctAnswers = semifinalBonusCorrectAnswersFor(key);
+
+  if (!semifinalBonusKeyIsComplete(key)) {
     return {
       moreGoalsMatch: null,
       moreCornerKicksMatch: null,
@@ -5394,23 +5674,23 @@ function semifinalBonusPointDetailsFor(answers = {}, results = {}) {
 
   return {
     moreGoalsMatch:
-      answers.moreGoalsMatch && results.moreGoalsMatch !== "tie" && answers.moreGoalsMatch === results.moreGoalsMatch
+      answers.moreGoalsMatch && key.moreGoalsMatch !== "tie" && answers.moreGoalsMatch === key.moreGoalsMatch
         ? SEMIFINAL_BONUS_POINTS
         : 0,
     moreCornerKicksMatch:
-      answers.moreCornerKicksMatch && results.moreCornerKicksMatch !== "tie" && answers.moreCornerKicksMatch === results.moreCornerKicksMatch
+      answers.moreCornerKicksMatch && key.moreCornerKicksMatch !== "tie" && answers.moreCornerKicksMatch === key.moreCornerKicksMatch
         ? SEMIFINAL_BONUS_POINTS
         : 0,
     mostShotsOnTargetTeam:
-      answers.mostShotsOnTargetTeam && results.mostShotsOnTargetTeams.some(team => sameCountryOption(answers.mostShotsOnTargetTeam, team))
+      answers.mostShotsOnTargetTeam && key.mostShotsOnTargetTeams.some(team => sameCountryOption(answers.mostShotsOnTargetTeam, team))
         ? SEMIFINAL_BONUS_POINTS
         : 0,
     mostYellowCardsTeam:
-      answers.mostYellowCardsTeam && results.mostYellowCardsTeams.some(team => sameCountryOption(answers.mostYellowCardsTeam, team))
+      answers.mostYellowCardsTeam && key.mostYellowCardsTeams.some(team => sameCountryOption(answers.mostYellowCardsTeam, team))
         ? SEMIFINAL_BONUS_POINTS
         : 0,
     mostPassesTeam:
-      answers.mostPassesTeam && results.mostPassesTeams.some(team => sameCountryOption(answers.mostPassesTeam, team))
+      answers.mostPassesTeam && key.mostPassesTeams.some(team => sameCountryOption(answers.mostPassesTeam, team))
         ? SEMIFINAL_BONUS_POINTS
         : 0,
     correctAnswers
@@ -7202,7 +7482,7 @@ function buildSemifinalScoringEntries(data) {
 function buildSemifinalBonusScoringEntries(data) {
   const entries = [];
   const answers = data.semifinalBonusAnswers || {};
-  const results = data.semifinalBonusResults || {};
+  const results = getSemifinalBonusScoringKey(data.semifinalBonusResults || {});
   const dateKey = data.semifinalBonusResultsDateKey || data.semifinalResultsDateKey;
   if (!semifinalBonusKeyIsComplete(results)) return entries;
 
@@ -8243,7 +8523,9 @@ const tickerWinnerOverrides = {
 function getNextTickerRefreshDelay(matches) {
   const now = Date.now();
 
-  const hasLiveMatch = matches.some(match => match.status?.type === "live");
+  const hasLiveMatch = matches.some(match =>
+    match.status?.type === "live" || match.status?.type === "started"
+  );
 
   const hasMatchStartingSoon = matches.some(match => {
     const kickoffTime = new Date(match.date).getTime();
@@ -8275,37 +8557,149 @@ async function loadWorldCupTicker() {
   const updated = document.getElementById("tickerUpdated");
   if (!ticker) return;
 
-  const matches = buildSemifinalTickerMatches();
+  const matches = await buildWorldCupTickerMatches();
   latestTickerMatches = matches;
 
   ticker.innerHTML = matches.map(renderTickerMatch).join("");
   scheduleNextTickerRefresh(matches);
 
   if (updated) {
-    updated.textContent = "Semifinals";
+    updated.textContent = "Final weekend";
   }
 }
 
-function buildSemifinalTickerMatches() {
-  return semifinalMatches.map(match => ({
+async function buildWorldCupTickerMatches() {
+  const staticMatches = [
+    ...semifinalMatches.map(buildCompletedSemifinalTickerMatch),
+    buildStaticTickerMatch(thirdPlaceMatch, "3rd Place"),
+    buildStaticTickerMatch(finalMatch, "Final")
+  ];
+  const feedMatches = await loadTickerFeedMatches();
+
+  return staticMatches.map(match =>
+    applyTickerFeedMatch(match, feedMatches) || match
+  );
+}
+
+async function loadTickerFeedMatches() {
+  try {
+    const res = await fetch(MATCH_TICKER_URL);
+    if (!res.ok) throw new Error(`Ticker feed returned ${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data.matches) ? data.matches : [];
+  } catch (err) {
+    console.warn("Using static final-weekend ticker schedule:", err);
+    return [];
+  }
+}
+
+function buildCompletedSemifinalTickerMatch(match) {
+  const result = completedSemifinalTickerResults[match.id] || {};
+
+  return {
     id: match.id,
     round: "SF",
     date: match.startTime,
     venue: match.venue,
+    tickerVenue: match.tickerVenue,
+    tickerLocation: match.tickerLocation,
     status: {
-      type: semifinalMatchIsLocked(match) ? "started" : "scheduled",
-      detail: match.venue
+      type: "final",
+      detail: ""
+    },
+    winnerName: result.winner || "",
+    home: tickerTeamFromCountry(match.home, result.homeScore),
+    away: tickerTeamFromCountry(match.away, result.awayScore)
+  };
+}
+
+function buildStaticTickerMatch(match, round) {
+  return {
+    id: match.id,
+    round,
+    date: match.startTime,
+    venue: match.venue,
+    tickerVenue: match.tickerVenue,
+    tickerLocation: match.tickerLocation,
+    status: {
+      type: matchIsLocked(match) ? "started" : "scheduled",
+      detail: ""
     },
     home: tickerTeamFromCountry(match.home),
     away: tickerTeamFromCountry(match.away)
-  }));
+  };
 }
 
-function tickerTeamFromCountry(country) {
+function matchIsLocked(match) {
+  return new Date() >= new Date(match.startTime);
+}
+
+function applyTickerFeedMatch(staticMatch, feedMatches = []) {
+  const feedMatch = findTickerFeedMatch(staticMatch, feedMatches);
+  if (!feedMatch) return null;
+
+  const feedStatusType = String(feedMatch.status?.type || "").toLowerCase();
+  const shouldUseFeedScore =
+    feedStatusType === "live" ||
+    feedStatusType === "final" ||
+    feedMatch.home?.score != null ||
+    feedMatch.away?.score != null;
+
+  if (!shouldUseFeedScore) return null;
+
+  const feedHomeMatchesStaticHome = sameTickerTeam(feedMatch.home?.name, staticMatch.home.name);
+  const feedHome = feedHomeMatchesStaticHome ? feedMatch.home : feedMatch.away;
+  const feedAway = feedHomeMatchesStaticHome ? feedMatch.away : feedMatch.home;
+
+  return {
+    ...staticMatch,
+    status: {
+      ...staticMatch.status,
+      ...feedMatch.status,
+      detail: feedMatch.status?.detail || staticMatch.status.detail
+    },
+    winner: feedMatch.winner || staticMatch.winner,
+    winnerName: feedMatch.winnerName || feedMatch.winner_name || staticMatch.winnerName,
+    winnerCode: feedMatch.winnerCode || feedMatch.winner_code || staticMatch.winnerCode,
+    penalties: feedMatch.penalties || feedMatch.penaltyScore || feedMatch.penalty_score || feedMatch.shootout || staticMatch.penalties,
+    home: {
+      ...staticMatch.home,
+      ...feedHome,
+      name: staticMatch.home.name,
+      code: staticMatch.home.code,
+      flag: staticMatch.home.flag
+    },
+    away: {
+      ...staticMatch.away,
+      ...feedAway,
+      name: staticMatch.away.name,
+      code: staticMatch.away.code,
+      flag: staticMatch.away.flag
+    }
+  };
+}
+
+function findTickerFeedMatch(staticMatch, feedMatches = []) {
+  return feedMatches.find(feedMatch => {
+    const home = feedMatch.home?.name || "";
+    const away = feedMatch.away?.name || "";
+
+    return (
+      sameTickerTeam(home, staticMatch.home.name) &&
+      sameTickerTeam(away, staticMatch.away.name)
+    ) || (
+      sameTickerTeam(home, staticMatch.away.name) &&
+      sameTickerTeam(away, staticMatch.home.name)
+    );
+  }) || null;
+}
+
+function tickerTeamFromCountry(country, score = null) {
   return {
     name: country,
     code: TICKER_COUNTRY_CODES[country] || cleanCountryName(country).slice(0, 3).toUpperCase(),
-    flag: round32Flags[country] || countryFlagFromOption(country) || ""
+    flag: round32Flags[country] || countryFlagFromOption(country) || "",
+    ...(score !== null && score !== undefined ? { score } : {})
   };
 }
 
@@ -8337,7 +8731,7 @@ function renderTickerMatch(match) {
       ? `<span class="final-pill">FINAL</span>`
       : status.type === "started"
         ? `<span class="started-pill">STARTED</span>`
-        : "UPCOMING";
+        : `<span class="upcoming-pill">UPCOMING</span>`;
 
   const scoreHome = showScore ? Number(match.home.score ?? 0) : "";
   const scoreAway = showScore ? Number(match.away.score ?? 0) : "";
@@ -8345,12 +8739,12 @@ function renderTickerMatch(match) {
   const winnerLabel = winnerName ? getTickerWinnerLabel(match, winnerName) : "";
   const homeIsWinner = winnerName && sameTickerTeam(match.home.name, winnerName);
   const awayIsWinner = winnerName && sameTickerTeam(match.away.name, winnerName);
+  const venueLabel = tickerVenueLabel(match);
 
   return `
     <div class="match-card ${escapeHTML(status.type || "")}">
       <div class="match-card-top">
         <span>${statusLabel}</span>
-        <span>${escapeHTML(status.detail || "")}</span>
       </div>
 
       <div class="matchup ${homeIsWinner ? "match-winner" : ""}">
@@ -8370,10 +8764,20 @@ function renderTickerMatch(match) {
       </div>
 
       <div class="match-footer">
-        ${winnerLabel ? `${escapeHTML(winnerLabel)} · ` : ""}${isLive ? "Ongoing" : isFinal ? "Final" : status.type === "started" ? "Started" : "Kickoff"} · ${dateTimeLabel}${match.venue ? ` · ${escapeHTML(match.venue)}` : ""}
+        <div class="match-footer-line">${escapeHTML(match.round || "")} · ${dateTimeLabel}</div>
+        ${venueLabel ? `<div class="match-footer-line">${escapeHTML(venueLabel)}</div>` : ""}
+        ${winnerLabel ? `<div class="match-footer-line match-winner-footer">${escapeHTML(winnerLabel)}</div>` : ""}
       </div>
     </div>
   `;
+}
+
+function tickerVenueLabel(match) {
+  if (match.tickerVenue && match.tickerLocation) {
+    return `${match.tickerVenue} at ${match.tickerLocation}`;
+  }
+
+  return match.tickerVenue || match.venue || "";
 }
 
 function getTickerWinnerName(match) {
@@ -8506,7 +8910,7 @@ function setValue(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
 
-  const nextValue = value || "";
+  const nextValue = value ?? "";
   el.value = nextValue;
 
   if (el.tagName === "SELECT" && nextValue && el.value !== nextValue) {
