@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=final-status-auto-answerkey-20260715" />
+  <link rel="stylesheet" href="styles.css?v=finals-survey-bars-20260715" />
 </head>
 <body>
   <div class="home-link">
@@ -38,11 +38,11 @@
   </header>
 
   <main class="container">
-    <section class="card announcement-card semifinal-announcement-card">
-      <h2>🚨 Semifinals Picks are open!</h2>
+    <section class="card announcement-card final-announcement-card">
+      <h2>🚨 Finals Picks are open!</h2>
       <p>
-        ✅ Make your Semifinals picks and predict every final score.<br>
-        ⭐ Semifinal bonus questions are live too.<br>
+        ✅ Make your Third-place and World Cup Final picks.<br>
+        ⭐ Finals bonus questions and the quick website survey are live too.<br>
         Good luck! ⚽
       </p>
     </section>
@@ -93,6 +93,46 @@
       <div class="card"><span id="lastUpdated">—</span><label>Last Updated</label></div>
     </section>
 
+    <section class="card" id="finalsPicksSection" style="display:none;">
+      <div class="section-header">
+        <h2>🏆 Finals Pick’em</h2>
+        <button id="toggleFinalsPicksBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="finalsPicksContent">
+        <p>
+          Pick the winner of the Third-place match and World Cup Final, then predict the final score, which <strong>includes extra time</strong> if played.<br>
+          Correct winner = <strong>3 points</strong>. Exact final score = <strong>2 points</strong>.<br>
+          Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
+        </p>
+        <p class="pickem-note">
+          Please note: exact score points require the correct winner pick.<br>
+          For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.
+        </p>
+
+        <div id="finalsPicksForm"></div>
+        <button id="saveFinalsPicksBtn">Save Finals Picks</button>
+        <p id="finalsPicksStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card" id="finalsBonusSection" style="display:none;">
+      <div class="section-header">
+        <h2>🎯 Finals Bonus Questions</h2>
+        <button id="toggleFinalsBonusBtn" class="secondary-btn">Minimize</button>
+      </div>
+      <div id="finalsBonusContent">
+        <p class="lock-note">Finals bonus answers lock when the Third-place match begins.</p>
+        <p class="finals-bonus-instructions">
+          <strong>Questions 1-2 include both the Third-place match and World Cup Final.</strong><br>
+          <strong>Questions 3-4 are only about the World Cup Final.</strong>
+        </p>
+
+        <div id="finalsBonusForm"></div>
+        <button id="saveFinalsBonusBtn">Save Finals Bonus Answers</button>
+        <p id="finalsBonusStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
     <section class="card" id="semifinalPicksSection" style="display:none;">
       <div class="section-header">
         <h2>🏟️ Semifinals Pick’em</h2>
@@ -104,10 +144,10 @@
           Correct winner = <strong>3 points</strong>. Exact final score = <strong>2 points</strong>.<br>
           Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
         </p>
-        <div class="score-rule-callout">
-          <strong>Please note:</strong> Exact score points require the correct winner pick.
-        </div>
-        <p class="lock-note">For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+        <p class="pickem-note">
+          Please note: exact score points require the correct winner pick.<br>
+          For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.
+        </p>
 
         <div id="semifinalPicksForm"></div>
         <button id="saveSemifinalPicksBtn">Save Semifinals Picks</button>
@@ -144,10 +184,10 @@
           Correct winner = <strong>3 points</strong>. Exact final score = <strong>2 points</strong>.<br>
           Extra time / penalties correct = <strong>+1 point</strong>; incorrect = <strong>-1 point</strong>.
         </p>
-        <div class="score-rule-callout">
-          <strong>Please note:</strong> Exact score points require the correct winner pick.
-        </div>
-        <p class="lock-note">For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.</p>
+        <p class="pickem-note">
+          Please note: exact score points require the correct winner pick.<br>
+          For final scores, do not include penalty shootout goals. Scores must be winner-first, like <strong>2-1</strong>, <strong>3-0</strong>, or <strong>1-1</strong>. Each match locks at kickoff.
+        </p>
 
         <div id="quarterfinalPicksForm"></div>
         <button id="saveQuarterfinalPicksBtn">Save Quarterfinals Picks</button>
@@ -265,6 +305,52 @@
 
     <section class="card" id="adminSection" style="display:none;">
       <h2>🛠️ Admin Results</h2>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Finals</span>
+            <h3>Finals Match Results</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Enter the official Third-place and Final winners and final scores once.</p>
+          <div id="adminFinalsResultsForm"></div>
+          <button id="saveFinalsResultsBtn">Save Finals Results</button>
+          <p id="finalsResultsStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Finals bonus</span>
+            <h3>Finals Bonus Answer Key</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">Enter the official stats for Finals bonus scoring. Tied attempts leaders in the Final can include multiple correct teams.</p>
+          <div id="adminFinalsBonusResultsForm"></div>
+          <button id="saveFinalsBonusResultsBtn">Save Finals Bonus Answer Key</button>
+          <p id="finalsBonusResultsStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-panel admin-primary-panel">
+        <div class="section-header admin-panel-header">
+          <div>
+            <span class="admin-panel-label">Finals survey</span>
+            <h3>Website Feedback Summary</h3>
+          </div>
+          <button class="secondary-btn admin-toggle-btn">Minimize</button>
+        </div>
+        <div class="admin-panel-content">
+          <p class="mini-note">View rating totals, each user's survey selections, and optional improvement comments.</p>
+          <div id="adminFinalsSurveySummary"></div>
+        </div>
+      </div>
 
       <div class="admin-panel admin-primary-panel">
         <div class="section-header admin-panel-header">
@@ -456,6 +542,6 @@
     </a>
   </footer>
 
-  <script type="module" src="app.js?v=final-status-auto-answerkey-20260715"></script>
+  <script type="module" src="app.js?v=finals-survey-bars-20260715"></script>
 </body>
 </html>

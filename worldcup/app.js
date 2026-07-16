@@ -32,6 +32,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -310,8 +311,12 @@ const thirdPlaceMatch = {
   tickerLocation: "Miami Gardens, Florida"
 };
 
+const finalsMatches = [thirdPlaceMatch, finalMatch];
+
 const SEMIFINAL_BONUS_POINTS = 2;
+const FINALS_BONUS_POINTS = 2;
 const SEMIFINAL_TEAM_OPTIONS = ["France", "Spain", "England", "Argentina"];
+const FINAL_TEAM_OPTIONS = ["Spain", "Argentina"];
 const TICKER_COUNTRY_CODES = {
   Argentina: "ARG",
   England: "ENG",
@@ -379,6 +384,18 @@ const quarterfinalBonusForm = document.getElementById("quarterfinalBonusForm");
 const saveQuarterfinalBonusBtn = document.getElementById("saveQuarterfinalBonusBtn");
 const quarterfinalBonusStatus = document.getElementById("quarterfinalBonusStatus");
 const quarterfinalBonusAnswerKey = document.getElementById("quarterfinalBonusAnswerKey");
+const finalsPicksSection = document.getElementById("finalsPicksSection");
+const finalsPicksContent = document.getElementById("finalsPicksContent");
+const toggleFinalsPicksBtn = document.getElementById("toggleFinalsPicksBtn");
+const finalsPicksForm = document.getElementById("finalsPicksForm");
+const saveFinalsPicksBtn = document.getElementById("saveFinalsPicksBtn");
+const finalsPicksStatus = document.getElementById("finalsPicksStatus");
+const finalsBonusSection = document.getElementById("finalsBonusSection");
+const finalsBonusContent = document.getElementById("finalsBonusContent");
+const toggleFinalsBonusBtn = document.getElementById("toggleFinalsBonusBtn");
+const finalsBonusForm = document.getElementById("finalsBonusForm");
+const saveFinalsBonusBtn = document.getElementById("saveFinalsBonusBtn");
+const finalsBonusStatus = document.getElementById("finalsBonusStatus");
 const semifinalPicksSection = document.getElementById("semifinalPicksSection");
 const semifinalPicksContent = document.getElementById("semifinalPicksContent");
 const toggleSemifinalPicksBtn = document.getElementById("toggleSemifinalPicksBtn");
@@ -423,6 +440,13 @@ const semifinalResultsStatus = document.getElementById("semifinalResultsStatus")
 const adminSemifinalBonusResultsForm = document.getElementById("adminSemifinalBonusResultsForm");
 const saveSemifinalBonusResultsBtn = document.getElementById("saveSemifinalBonusResultsBtn");
 const semifinalBonusResultsStatus = document.getElementById("semifinalBonusResultsStatus");
+const adminFinalsResultsForm = document.getElementById("adminFinalsResultsForm");
+const saveFinalsResultsBtn = document.getElementById("saveFinalsResultsBtn");
+const finalsResultsStatus = document.getElementById("finalsResultsStatus");
+const adminFinalsBonusResultsForm = document.getElementById("adminFinalsBonusResultsForm");
+const saveFinalsBonusResultsBtn = document.getElementById("saveFinalsBonusResultsBtn");
+const finalsBonusResultsStatus = document.getElementById("finalsBonusResultsStatus");
+const adminFinalsSurveySummary = document.getElementById("adminFinalsSurveySummary");
 const refreshLeaderboardBtn = document.getElementById("refreshLeaderboardBtn");
 const refreshLeaderboardStatus = document.getElementById("refreshLeaderboardStatus");
 
@@ -443,6 +467,7 @@ let adminRound32PlayerList;
 let adminRound16PlayerList;
 let adminQuarterfinalPlayerList;
 let adminSemifinalPlayerList;
+let adminFinalsPlayerList;
 let adminBonusResultsForm;
 let saveBonusResultsBtn;
 let bonusResultsStatus;
@@ -455,8 +480,10 @@ showUsaCelebrationWhenActive();
 
 setupCollapsibleSection(toggleRound16PicksBtn, round16PicksContent, false);
 setupCollapsibleSection(toggleRound16BonusBtn, round16BonusContent, false);
-setupCollapsibleSection(toggleSemifinalPicksBtn, semifinalPicksContent, true);
-setupCollapsibleSection(toggleSemifinalBonusBtn, semifinalBonusContent, true);
+setupCollapsibleSection(toggleFinalsPicksBtn, finalsPicksContent, true);
+setupCollapsibleSection(toggleFinalsBonusBtn, finalsBonusContent, true);
+setupCollapsibleSection(toggleSemifinalPicksBtn, semifinalPicksContent, false);
+setupCollapsibleSection(toggleSemifinalBonusBtn, semifinalBonusContent, false);
 setupCollapsibleSection(toggleQuarterfinalPicksBtn, quarterfinalPicksContent, false);
 setupCollapsibleSection(toggleQuarterfinalBonusBtn, quarterfinalBonusContent, false);
 setupCollapsibleSection(toggleRound32PicksBtn, round32PicksContent, false);
@@ -511,6 +538,8 @@ function setupAdminPanelToggles(root = adminSection, startsExpanded = false) {
 
 function minimizeAdminDefaultSections() {
   setCollapsibleSectionState(toggleProfileSettingsBtn, profileSettingsContent, false);
+  setCollapsibleSectionState(toggleFinalsPicksBtn, finalsPicksContent, false);
+  setCollapsibleSectionState(toggleFinalsBonusBtn, finalsBonusContent, false);
   setCollapsibleSectionState(toggleSemifinalPicksBtn, semifinalPicksContent, false);
   setCollapsibleSectionState(toggleSemifinalBonusBtn, semifinalBonusContent, false);
   setCollapsibleSectionState(toggleQuarterfinalPicksBtn, quarterfinalPicksContent, false);
@@ -550,7 +579,25 @@ loginBtn.addEventListener("click", async () => {
     await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Login failed:", error);
-    alert("Google login failed. Check console.");
+    const popupFallbackCodes = new Set([
+      "auth/popup-blocked",
+      "auth/popup-closed-by-user",
+      "auth/cancelled-popup-request",
+      "auth/operation-not-supported-in-this-environment"
+    ]);
+
+    if (popupFallbackCodes.has(error.code)) {
+      try {
+        await signInWithRedirect(auth, provider);
+        return;
+      } catch (redirectError) {
+        console.error("Redirect login failed:", redirectError);
+        alert(`Google login failed: ${redirectError.code || redirectError.message}`);
+        return;
+      }
+    }
+
+    alert(`Google login failed: ${error.code || error.message}`);
   }
 });
 
@@ -591,6 +638,8 @@ onAuthStateChanged(auth, async (user) => {
 
     if (profileSettingsBox) profileSettingsBox.style.display = "none";
     groupPicksSection.style.display = "none";
+    finalsPicksSection.style.display = "none";
+    finalsBonusSection.style.display = "none";
     semifinalPicksSection.style.display = "none";
     semifinalBonusSection.style.display = "none";
     round32PicksSection.style.display = "none";
@@ -643,6 +692,8 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   groupPicksSection.style.display = "block";
+  finalsPicksSection.style.display = "block";
+  finalsBonusSection.style.display = "block";
   semifinalPicksSection.style.display = "block";
   semifinalBonusSection.style.display = "block";
   quarterfinalPicksSection.style.display = "block";
@@ -657,6 +708,8 @@ onAuthStateChanged(auth, async (user) => {
   renderGroupPicks();
   renderRound32Picks();
   renderRound32BonusQuestions();
+  renderFinalsPicks();
+  renderFinalsBonusQuestions();
   renderSemifinalPicks();
   renderSemifinalBonusQuestions();
   await renderQuarterfinalPicks();
@@ -673,6 +726,8 @@ onAuthStateChanged(auth, async (user) => {
   await loadExistingRound16BonusAnswers();
   await loadExistingBonusAnswers();
   await loadExistingRootingForCountries(userSnap.data());
+  await loadExistingFinalsPicks();
+  await loadExistingFinalsBonusAnswers();
   await loadExistingSemifinalPicks();
   await loadExistingSemifinalBonusAnswers();
   await loadExistingQuarterfinalPicks();
@@ -688,6 +743,8 @@ onAuthStateChanged(auth, async (user) => {
     renderAdminGroupResults();
     renderAdminRound32Results();
     renderAdminRound32BonusResults();
+    renderAdminFinalsResults();
+    renderAdminFinalsBonusResults();
     renderAdminSemifinalResults();
     renderAdminSemifinalBonusResults();
     await renderAdminQuarterfinalResults();
@@ -699,12 +756,15 @@ onAuthStateChanged(auth, async (user) => {
     await loadExistingGroupResults();
     await loadExistingRound32Results();
     await loadExistingRound32BonusResults();
+    await loadExistingFinalsResults();
+    await loadExistingFinalsBonusResults();
     await loadExistingSemifinalResults();
     await loadExistingSemifinalBonusResults();
     await loadExistingQuarterfinalResults();
     await loadExistingQuarterfinalBonusResults();
     await loadExistingRound16Results();
     await loadExistingBonusResults();
+    await renderAdminFinalsSurveySummary();
     await renderAdminPlayerList();
     await renderLeaderboardFromFirestore();
   } else {
@@ -824,6 +884,20 @@ function injectAdminPlayerManagement() {
         <div id="adminSemifinalPlayerList"></div>
       </div>
     </div>
+
+    <div class="admin-panel">
+      <div class="section-header admin-panel-header">
+        <div>
+          <span class="admin-panel-label">Finals tracking</span>
+          <h3>Finals Pick Status</h3>
+        </div>
+        <button class="secondary-btn admin-toggle-btn">Minimize</button>
+      </div>
+      <div class="admin-panel-content">
+        <p class="mini-note">Quick check for who has saved every Finals match pick, completed the Finals bonus questions, and submitted the survey.</p>
+        <div id="adminFinalsPlayerList"></div>
+      </div>
+    </div>
   `;
 
   const adminTitle = adminSection.querySelector("h2");
@@ -837,6 +911,7 @@ function injectAdminPlayerManagement() {
   adminRound16PlayerList = document.getElementById("adminRound16PlayerList");
   adminQuarterfinalPlayerList = document.getElementById("adminQuarterfinalPlayerList");
   adminSemifinalPlayerList = document.getElementById("adminSemifinalPlayerList");
+  adminFinalsPlayerList = document.getElementById("adminFinalsPlayerList");
   setupAdminPanelToggles(box);
 }
 
@@ -3651,6 +3726,830 @@ saveQuarterfinalResultsBtn?.addEventListener("click", async () => {
   await renderLeaderboardFromFirestore();
 });
 
+function finalsMatchupLabel(match) {
+  return `${round32TeamLabel(match.home)} vs ${round32TeamLabel(match.away)}`;
+}
+
+function finalsMatchIsLocked(match) {
+  return new Date() >= new Date(match.startTime);
+}
+
+function finalsPickIsRevealable(match) {
+  return finalsMatchIsLocked(match);
+}
+
+function allFinalsMatchesAreLocked() {
+  return finalsMatches.every(match => finalsMatchIsLocked(match));
+}
+
+function finalsMatchTimeLabel(match) {
+  return new Date(match.startTime).toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short"
+  });
+}
+
+function renderFinalsWinnerOptions(match, placeholder = "Select winner") {
+  return `
+    <option value="">${escapeHTML(placeholder)}</option>
+    <option value="${escapeHTML(match.home)}">${escapeHTML(round32TeamLabel(match.home))}</option>
+    <option value="${escapeHTML(match.away)}">${escapeHTML(round32TeamLabel(match.away))}</option>
+  `;
+}
+
+function renderFinalsMatchOptions(placeholder = "Select match") {
+  return `
+    <option value="">${escapeHTML(placeholder)}</option>
+    <option value="${escapeHTML(thirdPlaceMatch.id)}">Third-place match</option>
+    <option value="${escapeHTML(finalMatch.id)}">World Cup final</option>
+    <option value="same">Same number for both matches</option>
+  `;
+}
+
+function renderFinalsPicks() {
+  if (!finalsPicksForm) return;
+
+  finalsPicksForm.innerHTML = "";
+
+  finalsMatches.forEach(match => {
+    const locked = finalsMatchIsLocked(match);
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+    wrapper.innerHTML = `
+      <h3>${escapeHTML(match.label)}: ${escapeHTML(finalsMatchupLabel(match))} ${locked ? "🔒" : ""}</h3>
+      <p class="lock-note"><strong>${finalsMatchTimeLabel(match)}</strong></p>
+
+      <label>Winner</label>
+      <select id="finals-${match.id}-winner" ${locked ? "disabled" : ""}>
+        ${renderFinalsWinnerOptions(match)}
+      </select>
+
+      <label class="quarterfinal-score-label">Final score</label>
+      <div class="score-entry-row" aria-label="Final score">
+        <input id="finals-${match.id}-winnerGoals" class="score-number-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="next" data-score-number aria-label="Selected winner final goals" ${locked ? "disabled" : ""} />
+        <span class="score-entry-dash">-</span>
+        <input id="finals-${match.id}-otherGoals" class="score-number-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="done" data-score-number aria-label="Opponent final goals" ${locked ? "disabled" : ""} />
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="finals-${match.id}-extraTimeOrPenalties" ${locked ? "disabled" : ""} />
+        Goes to extra time or penalties
+      </label>
+      <p id="finals-${match.id}-result" class="answer-result"></p>
+    `;
+
+    finalsPicksForm.appendChild(wrapper);
+  });
+
+  setupNumericScoreInputs(finalsPicksForm);
+
+  if (allFinalsMatchesAreLocked()) {
+    finalsPicksStatus.className = "status-message status-locked";
+    finalsPicksStatus.textContent = "🔒 All Finals picks are locked.";
+    saveFinalsPicksBtn.disabled = true;
+    saveFinalsPicksBtn.textContent = "Finals Picks Locked";
+  } else {
+    finalsPicksStatus.className = "";
+    saveFinalsPicksBtn.disabled = false;
+    saveFinalsPicksBtn.textContent = "Save Finals Picks";
+  }
+}
+
+async function loadExistingFinalsPicks() {
+  const snap = await getOptionalDoc("finalsPicks", currentUser.uid);
+  if (!snap?.exists()) return;
+
+  Object.entries(snap.data().picks || {}).forEach(([matchId, pick]) => {
+    setValue(`finals-${matchId}-winner`, pick.winner);
+    setRound16ScoreInputs("finals", matchId, pick.score);
+    const extraTimeOrPenalties = document.getElementById(`finals-${matchId}-extraTimeOrPenalties`);
+    if (extraTimeOrPenalties) extraTimeOrPenalties.checked = !!pick.extraTimeOrPenalties;
+  });
+
+  if (!allFinalsMatchesAreLocked()) {
+    finalsPicksStatus.className = "status-message status-info";
+    finalsPicksStatus.textContent = "Loaded saved Finals picks.";
+  }
+
+  await applyFinalsPickIndicators();
+}
+
+async function applyFinalsPickIndicators() {
+  const snap = await getOptionalDoc("finalsResults", "official");
+  if (!snap?.exists()) return;
+
+  const results = snap.data().results || {};
+
+  finalsMatches.forEach(match => {
+    const indicatorId = `finals-${match.id}-result`;
+    clearScoringIndicator(indicatorId);
+
+    const result = results[match.id];
+    const winner = getValue(`finals-${match.id}-winner`);
+    const score = getRound16ScoreFromInputs("finals", match.id);
+    if (!winner || !result?.winner) return;
+
+    const points = finalsPickPointsFor(match.id, {
+      winner,
+      score,
+      extraTimeOrPenalties: document.getElementById(`finals-${match.id}-extraTimeOrPenalties`)?.checked || false
+    }, results);
+    setScoringIndicator(indicatorId, pointsState(points), points > 0 ? "Scored" : "Wrong", points);
+  });
+}
+
+saveFinalsPicksBtn?.addEventListener("click", async () => {
+  if (!currentUser) return alert("Please sign in first.");
+  if (allFinalsMatchesAreLocked()) return alert("All Finals picks are locked.");
+
+  const existingSnap = await getOptionalDoc("finalsPicks", currentUser.uid);
+  const picks = existingSnap?.exists() ? existingSnap.data().picks || {} : {};
+  let savedAnyUnlockedMatch = false;
+
+  for (const match of finalsMatches) {
+    if (finalsMatchIsLocked(match)) continue;
+
+    const winner = getValue(`finals-${match.id}-winner`);
+    const score = getRound16ScoreFromInputs("finals", match.id);
+    const extraTimeOrPenalties = document.getElementById(`finals-${match.id}-extraTimeOrPenalties`)?.checked || false;
+
+    if (!winner) return alert(`Pick a winner for ${match.label}.`);
+    if (![match.home, match.away].includes(winner)) return alert(`${match.label}: selected winner is not valid for this matchup.`);
+    const scoreError = score === null ? `${match.label}: enter both score numbers.` : validateRound16Score(score, match.label);
+    if (scoreError) return alert(scoreError);
+
+    picks[match.id] = { winner, score, extraTimeOrPenalties };
+    savedAnyUnlockedMatch = true;
+  }
+
+  if (!savedAnyUnlockedMatch) return alert("No unlocked Finals matches are available to save.");
+
+  finalsPicksStatus.className = "status-message status-info";
+  finalsPicksStatus.textContent = "Saving Finals picks...";
+  saveFinalsPicksBtn.disabled = true;
+
+  try {
+    await setDoc(doc(db, "finalsPicks", currentUser.uid), {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      picks,
+      scoring: { winner: 3, score: 2, scoreRequiresCorrectWinner: true, extraTimeOrPenaltiesCorrect: 1, extraTimeOrPenaltiesWrong: -1 },
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    finalsPicksStatus.className = "status-message status-success";
+    finalsPicksStatus.textContent = "✅ Finals picks saved! Now select your Finals bonus answers below.";
+    showSaveNotification("Finals picks saved!");
+    await applyFinalsPickIndicators();
+    finalsBonusSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    console.error("Failed to save Finals picks:", error);
+    finalsPicksStatus.className = "status-message status-error";
+    finalsPicksStatus.textContent = "Finals picks were not saved. Check Firestore rules for finalsPicks.";
+  } finally {
+    if (!allFinalsMatchesAreLocked()) saveFinalsPicksBtn.disabled = false;
+  }
+});
+
+function finalsBonusAnswersAreLocked() {
+  return finalsMatchIsLocked(thirdPlaceMatch);
+}
+
+function finalsBonusAnswersAreRevealable() {
+  return finalsBonusAnswersAreLocked();
+}
+
+function renderRatingOptions(name, labels = ["Bad", "Average", "Good", "Great"]) {
+  return labels.map(label => `
+    <label class="survey-option">
+      <input type="radio" name="${escapeHTML(name)}" value="${escapeHTML(label)}" />
+      <span>${escapeHTML(label)}</span>
+    </label>
+  `).join("");
+}
+
+function renderFinalsBonusQuestions() {
+  if (!finalsBonusForm) return;
+
+  finalsBonusForm.innerHTML = `
+    <div class="pick-card finals-bonus-card finals-bonus-top-one">
+      <label>1. How many combined shots on target will there be across both matches?</label>
+      <p class="mini-note">Exact = 4 points. Within 2 = 2 points.</p>
+      <input id="finals-bonus-combinedShotsOnTarget" type="number" min="0" />
+      <p id="finals-bonus-combinedShotsOnTarget-result" class="answer-result"></p>
+    </div>
+
+    <div class="pick-card finals-bonus-card finals-bonus-top-two">
+      <label>2. Which match will produce more total goals?</label>
+      <p class="mini-note">Correct answer = 2 points.<br>Extra-time goals count, but shootout kicks do not.</p>
+      <select id="finals-bonus-moreGoalsMatch">
+        ${renderFinalsMatchOptions("Select answer")}
+      </select>
+      <p id="finals-bonus-moreGoalsMatch-result" class="answer-result"></p>
+    </div>
+
+    <div class="pick-card finals-bonus-card finals-bonus-bottom-one">
+      <label>3. How many total yellow cards will be shown in the finals match?</label>
+      <p class="mini-note">Exact = 4 points. Within 1 = 2 points.</p>
+      <input id="finals-bonus-finalYellowCards" type="number" min="0" />
+      <p id="finals-bonus-finalYellowCards-result" class="answer-result"></p>
+    </div>
+
+    <div class="pick-card finals-bonus-card finals-bonus-bottom-two">
+      <label>4. Which team will record the most attempts at goal in the finals match?</label>
+      <p class="mini-note">Correct answer = 2 points. No points if there’s a tie.<br>This includes regulation time and any extra time played, not shootout kicks.</p>
+      <select id="finals-bonus-mostAttemptsTeam">
+        <option value="">Select team</option>
+        ${FINAL_TEAM_OPTIONS.map(team => `<option value="${escapeHTML(team)}">${escapeHTML(round32TeamLabel(team))}</option>`).join("")}
+      </select>
+      <p id="finals-bonus-mostAttemptsTeam-result" class="answer-result"></p>
+    </div>
+
+    <div class="pick-card finals-survey-card">
+      <h3>Quick website survey</h3>
+      <p class="mini-note">Not worth points. Click one rating for each category.</p>
+      <label>Appearance</label>
+      <div class="survey-option-grid">${renderRatingOptions("finals-survey-appearance")}</div>
+      <label>Scoring</label>
+      <div class="survey-option-grid">${renderRatingOptions("finals-survey-scoring")}</div>
+      <label>Bonus questions quality</label>
+      <div class="survey-option-grid">${renderRatingOptions("finals-survey-bonusQuality")}</div>
+      <label>Bonus questions amount</label>
+      <div class="survey-option-grid">${renderRatingOptions("finals-survey-bonusAmount", ["Not enough", "Just right", "Too many"])}</div>
+      <label>Feedback and Improvements you want to see next time:</label>
+      <textarea id="finals-survey-improvements" rows="5" placeholder="Optional"></textarea>
+    </div>
+  `;
+
+  if (finalsBonusAnswersAreLocked()) {
+    finalsBonusStatus.className = "status-message status-locked";
+    finalsBonusStatus.textContent = "🔒 Finals bonus answers are locked.";
+    saveFinalsBonusBtn.disabled = true;
+    saveFinalsBonusBtn.textContent = "Finals Bonus Locked";
+    finalsBonusForm.querySelectorAll("input, select, textarea").forEach(el => { el.disabled = true; });
+  } else {
+    finalsBonusStatus.className = "";
+    saveFinalsBonusBtn.disabled = false;
+    saveFinalsBonusBtn.textContent = "Save Finals Bonus Answers";
+  }
+}
+
+function getSurveyRadioValue(name) {
+  return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+}
+
+function setSurveyRadioValue(name, value) {
+  if (!value) return;
+  document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+    input.checked = input.value === value;
+  });
+}
+
+async function loadExistingFinalsBonusAnswers() {
+  const snap = await getOptionalDoc("finalsBonusAnswers", currentUser.uid);
+  if (!snap?.exists()) return;
+
+  const answers = snap.data().answers || {};
+  const survey = answers.survey || {};
+  setValue("finals-bonus-combinedShotsOnTarget", answers.combinedShotsOnTarget);
+  setValue("finals-bonus-moreGoalsMatch", answers.moreGoalsMatch);
+  setValue("finals-bonus-finalYellowCards", answers.finalYellowCards);
+  setValue("finals-bonus-mostAttemptsTeam", answers.mostAttemptsTeam);
+  setSurveyRadioValue("finals-survey-appearance", survey.appearance);
+  setSurveyRadioValue("finals-survey-scoring", survey.scoring);
+  setSurveyRadioValue("finals-survey-bonusQuality", survey.bonusQuality);
+  setSurveyRadioValue("finals-survey-bonusAmount", survey.bonusAmount);
+  setValue("finals-survey-improvements", survey.improvements);
+
+  if (!finalsBonusAnswersAreLocked()) {
+    finalsBonusStatus.className = "status-message status-info";
+    finalsBonusStatus.textContent = "Loaded saved Finals bonus answers.";
+  }
+
+  await applyFinalsBonusIndicators();
+}
+
+async function applyFinalsBonusIndicators() {
+  [
+    "finals-bonus-combinedShotsOnTarget-result",
+    "finals-bonus-moreGoalsMatch-result",
+    "finals-bonus-finalYellowCards-result",
+    "finals-bonus-mostAttemptsTeam-result"
+  ].forEach(clearScoringIndicator);
+
+  const snap = await getOptionalDoc("finalsBonusResults", "official");
+  if (!snap?.exists()) return;
+
+  const results = snap.data().results || {};
+  if (!finalsBonusKeyIsComplete(results)) return;
+
+  const details = finalsBonusPointDetailsFor({
+    combinedShotsOnTarget: getValue("finals-bonus-combinedShotsOnTarget"),
+    moreGoalsMatch: getValue("finals-bonus-moreGoalsMatch"),
+    finalYellowCards: getValue("finals-bonus-finalYellowCards"),
+    mostAttemptsTeam: getValue("finals-bonus-mostAttemptsTeam")
+  }, results);
+
+  setScoringIndicator("finals-bonus-combinedShotsOnTarget-result", partialOrCorrectState(details.combinedShotsOnTarget, 4), pointDetailLabel(details.combinedShotsOnTarget), details.combinedShotsOnTarget);
+  setScoringIndicator("finals-bonus-moreGoalsMatch-result", pointsState(details.moreGoalsMatch), details.moreGoalsMatch ? "Correct" : "Wrong", details.moreGoalsMatch);
+  setScoringIndicator("finals-bonus-finalYellowCards-result", partialOrCorrectState(details.finalYellowCards, 4), pointDetailLabel(details.finalYellowCards), details.finalYellowCards);
+  setScoringIndicator("finals-bonus-mostAttemptsTeam-result", pointsState(details.mostAttemptsTeam), details.mostAttemptsTeam ? "Correct" : "Wrong", details.mostAttemptsTeam);
+}
+
+saveFinalsBonusBtn?.addEventListener("click", async () => {
+  if (!currentUser) return alert("Please sign in first.");
+  if (finalsBonusAnswersAreLocked()) return alert("Finals bonus answers are locked.");
+
+  const survey = {
+    appearance: getSurveyRadioValue("finals-survey-appearance"),
+    scoring: getSurveyRadioValue("finals-survey-scoring"),
+    bonusQuality: getSurveyRadioValue("finals-survey-bonusQuality"),
+    bonusAmount: getSurveyRadioValue("finals-survey-bonusAmount"),
+    improvements: document.getElementById("finals-survey-improvements")?.value || ""
+  };
+
+  const answers = {
+    combinedShotsOnTarget: getValue("finals-bonus-combinedShotsOnTarget"),
+    moreGoalsMatch: getValue("finals-bonus-moreGoalsMatch"),
+    finalYellowCards: getValue("finals-bonus-finalYellowCards"),
+    mostAttemptsTeam: getValue("finals-bonus-mostAttemptsTeam"),
+    survey
+  };
+
+  if (answers.combinedShotsOnTarget === "") return alert("Enter combined shots on target.");
+  if (!answers.moreGoalsMatch) return alert("Select which match will produce more goals.");
+  if (answers.finalYellowCards === "") return alert("Enter Final yellow cards.");
+  if (!answers.mostAttemptsTeam) return alert("Select the team with most attempts at goal.");
+  if (!survey.appearance || !survey.scoring || !survey.bonusQuality || !survey.bonusAmount) {
+    return alert("Select one survey answer for each category.");
+  }
+
+  finalsBonusStatus.className = "status-message status-info";
+  finalsBonusStatus.textContent = "Saving Finals bonus answers...";
+  saveFinalsBonusBtn.disabled = true;
+
+  try {
+    await setDoc(doc(db, "finalsBonusAnswers", currentUser.uid), {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      answers,
+      scoring: { combinedShotsOnTarget: "4 exact / 2 within 2", moreGoalsMatch: 2, finalYellowCards: "4 exact / 2 within 1", mostAttemptsTeam: 2 },
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    finalsBonusStatus.className = "status-message status-success";
+    finalsBonusStatus.textContent = "✅ Finals bonus answers saved!";
+    showSaveNotification("Finals bonus answers saved!");
+    await applyFinalsBonusIndicators();
+    if (currentUserIsAdmin()) await renderAdminFinalsSurveySummary();
+    await renderLeaderboardFromFirestore();
+  } catch (error) {
+    console.error("Failed to save Finals bonus answers:", error);
+    finalsBonusStatus.className = "status-message status-error";
+    finalsBonusStatus.textContent = "Finals bonus answers were not saved. Check Firestore rules for finalsBonusAnswers.";
+  } finally {
+    if (!finalsBonusAnswersAreLocked()) saveFinalsBonusBtn.disabled = false;
+  }
+});
+
+function renderAdminFinalsResults() {
+  if (!adminFinalsResultsForm) return;
+
+  adminFinalsResultsForm.innerHTML = "";
+  finalsMatches.forEach(match => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "pick-card";
+    wrapper.innerHTML = `
+      <h3>${escapeHTML(match.label)}: ${escapeHTML(finalsMatchupLabel(match))} Official Result</h3>
+      <label>Winner</label>
+      <select id="result-finals-${match.id}-winner">${renderFinalsWinnerOptions(match)}</select>
+      <label>Final score</label>
+      <div class="score-entry-row" aria-label="Official final score">
+        <input id="result-finals-${match.id}-winnerGoals" class="score-number-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-score-number />
+        <span class="score-entry-dash">-</span>
+        <input id="result-finals-${match.id}-otherGoals" class="score-number-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-score-number />
+      </div>
+      <p class="mini-note">Final score includes extra time, not shootout penalties. Put the winner's score first; use 1-1 for matches tied after extra time.</p>
+      <label class="checkbox-row">
+        <input type="checkbox" id="result-finals-${match.id}-extraTimeOrPenalties" />
+        Went to extra time or penalties
+      </label>
+    `;
+    adminFinalsResultsForm.appendChild(wrapper);
+  });
+
+  setupNumericScoreInputs(adminFinalsResultsForm);
+}
+
+async function loadExistingFinalsResults() {
+  const snap = await getOptionalDoc("finalsResults", "official");
+  if (!snap?.exists()) return;
+
+  Object.entries(snap.data().results || {}).forEach(([matchId, result]) => {
+    setValue(`result-finals-${matchId}-winner`, result.winner);
+    setRound16ScoreInputs("result-finals", matchId, result.score);
+    const extraTimeOrPenalties = document.getElementById(`result-finals-${matchId}-extraTimeOrPenalties`);
+    if (extraTimeOrPenalties) extraTimeOrPenalties.checked = !!result.extraTimeOrPenalties;
+  });
+}
+
+saveFinalsResultsBtn?.addEventListener("click", async () => {
+  const results = {};
+  for (const match of finalsMatches) {
+    const winner = getValue(`result-finals-${match.id}-winner`);
+    const score = getRound16ScoreFromInputs("result-finals", match.id);
+    const extraTimeOrPenalties = document.getElementById(`result-finals-${match.id}-extraTimeOrPenalties`)?.checked || false;
+
+    if (winner) {
+      if (![match.home, match.away].includes(winner)) return alert(`${match.label}: selected winner is not valid for this matchup.`);
+      const scoreError = score === null ? `${match.label}: enter both score numbers.` : validateRound16Score(score, match.label);
+      if (scoreError) return alert(scoreError);
+    } else if (score !== "") {
+      return alert(`${match.label}: select a winner before entering a score.`);
+    }
+    results[match.id] = { winner, score, extraTimeOrPenalties, participants: [match.home, match.away] };
+  }
+
+  finalsResultsStatus.className = "status-message status-info";
+  finalsResultsStatus.textContent = "Saving Finals results...";
+  saveFinalsResultsBtn.disabled = true;
+  try {
+    await setDoc(doc(db, "finalsResults", "official"), {
+      results,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser.email
+    }, { merge: true });
+    finalsResultsStatus.className = "status-message status-success";
+    finalsResultsStatus.textContent = "✅ Finals results saved!";
+    showSaveNotification("Finals results saved!");
+    await renderFinalsPicks();
+    await loadExistingFinalsPicks();
+    await renderLeaderboardFromFirestore();
+  } catch (error) {
+    console.error("Failed to save Finals results:", error);
+    finalsResultsStatus.className = "status-message status-error";
+    finalsResultsStatus.textContent = "Finals results were not saved. Check Firestore rules for finalsResults.";
+  } finally {
+    saveFinalsResultsBtn.disabled = false;
+  }
+});
+
+function renderAdminFinalsBonusResults() {
+  if (!adminFinalsBonusResultsForm) return;
+
+  adminFinalsBonusResultsForm.innerHTML = `
+    <div class="pick-card">
+      <label>1. How many combined shots on target will there be across both matches?</label>
+      <p class="mini-note">Exact = 4 points. Within 2 = 2 points.</p>
+      <input id="result-finals-bonus-combinedShotsOnTarget" type="number" min="0" />
+    </div>
+    <div class="pick-card">
+      <label>2. Which match will produce more total goals?</label>
+      <p class="mini-note">Correct answer = 2 points.<br>Extra-time goals count, but shootout kicks do not.</p>
+      ${finalsMatches.map(match => `
+        <label>${escapeHTML(match.label)} goals</label>
+        <input id="result-finals-bonus-${escapeHTML(match.id)}-goals" type="number" min="0" />
+      `).join("")}
+      <p id="result-finals-bonus-moreGoalsMatch-summary" class="answer-result answer-result-pending">Enter both goal totals to calculate the correct answer.</p>
+    </div>
+    <div class="pick-card">
+      <label>3. How many total yellow cards will be shown in the finals match?</label>
+      <p class="mini-note">Exact = 4 points. Within 1 = 2 points.</p>
+      <input id="result-finals-bonus-finalYellowCards" type="number" min="0" />
+    </div>
+    <div class="pick-card">
+      <label>4. Which team will record the most attempts at goal in the finals match?</label>
+      <p class="mini-note">Correct answer = 2 points. No points if there’s a tie.<br>This includes regulation time and any extra time played, not shootout kicks.</p>
+      ${FINAL_TEAM_OPTIONS.map(team => `
+        <label>${escapeHTML(round32TeamLabel(team))} attempts</label>
+        <input id="result-finals-bonus-${escapeHTML(team)}-attempts" type="number" min="0" />
+      `).join("")}
+      <p id="result-finals-bonus-mostAttemptsTeam-summary" class="answer-result answer-result-pending">Enter both attempts totals to calculate the correct answer.</p>
+    </div>
+    <div class="pick-card admin-semifinal-answer-key-box finals-answer-key-box">
+      <h3>Finals Bonus Correct Answers</h3>
+      <p class="mini-note">Use this as the final answer key after entering the stat totals above.</p>
+      <div id="adminFinalsBonusFinalAnswers" class="admin-final-answer-list"></div>
+    </div>
+  `;
+
+  adminFinalsBonusResultsForm.querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", updateAdminFinalsBonusSummaries);
+  });
+  updateAdminFinalsBonusSummaries();
+}
+
+function readAdminFinalsBonusResults({ requireComplete = false } = {}) {
+  const numberValue = (id, label) => {
+    const raw = getValue(id);
+    if (raw === "") return requireComplete ? { error: `Enter ${label}.` } : { value: null };
+    const value = Number(raw);
+    if (!Number.isInteger(value) || value < 0) return { error: `${label} must be a whole number of 0 or more.` };
+    return { value };
+  };
+
+  const combined = numberValue("result-finals-bonus-combinedShotsOnTarget", "combined shots on target");
+  if (combined.error) return { error: combined.error };
+  const finalYellowCards = numberValue("result-finals-bonus-finalYellowCards", "Final yellow cards");
+  if (finalYellowCards.error) return { error: finalYellowCards.error };
+
+  const goalsByMatch = {};
+  for (const match of finalsMatches) {
+    const result = numberValue(`result-finals-bonus-${match.id}-goals`, `${match.label} goals`);
+    if (result.error) return { error: result.error };
+    if (result.value != null) goalsByMatch[match.id] = result.value;
+  }
+
+  const attemptsByTeam = {};
+  for (const team of FINAL_TEAM_OPTIONS) {
+    const result = numberValue(`result-finals-bonus-${team}-attempts`, `${team} attempts`);
+    if (result.error) return { error: result.error };
+    if (result.value != null) attemptsByTeam[team] = result.value;
+  }
+
+  const results = {
+    combinedShotsOnTarget: combined.value,
+    finalYellowCards: finalYellowCards.value,
+    goalsByMatch,
+    attemptsByTeam,
+    moreGoalsMatch: deriveFinalsMoreGoalsMatch(goalsByMatch),
+    mostAttemptsTeams: deriveFinalsMostAttemptsTeams(attemptsByTeam)
+  };
+
+  return { results };
+}
+
+function deriveFinalsMoreGoalsMatch(goalsByMatch = {}) {
+  const thirdPlaceGoals = goalsByMatch[thirdPlaceMatch.id];
+  const finalGoals = goalsByMatch[finalMatch.id];
+  if (!Number.isInteger(thirdPlaceGoals) || !Number.isInteger(finalGoals)) return "";
+  if (thirdPlaceGoals === finalGoals) return "same";
+  return thirdPlaceGoals > finalGoals ? thirdPlaceMatch.id : finalMatch.id;
+}
+
+function deriveFinalsMostAttemptsTeams(attemptsByTeam = {}) {
+  const entries = FINAL_TEAM_OPTIONS.map(team => ({ team, value: attemptsByTeam[team] }));
+  if (entries.some(entry => !Number.isInteger(entry.value))) return [];
+  const maxValue = Math.max(...entries.map(entry => entry.value));
+  const leaders = entries.filter(entry => entry.value === maxValue);
+  return leaders.length > 1 ? ["tie"] : leaders.map(entry => entry.team);
+}
+
+function finalsMatchAnswerLabel(matchId) {
+  if (matchId === "same") return "Same number for both matches";
+  if (matchId === thirdPlaceMatch.id) return "Third-place match";
+  if (matchId === finalMatch.id) return "World Cup final";
+  const match = finalsMatches.find(item => item.id === matchId);
+  return match ? match.label : "";
+}
+
+function updateAdminFinalsBonusSummaries() {
+  const { results, error } = readAdminFinalsBonusResults();
+  if (error) return;
+
+  const moreGoalsEl = document.getElementById("result-finals-bonus-moreGoalsMatch-summary");
+  if (moreGoalsEl) {
+    const answer = finalsMatchAnswerLabel(results?.moreGoalsMatch);
+    moreGoalsEl.className = answer ? "answer-result answer-result-correct" : "answer-result answer-result-pending";
+    moreGoalsEl.textContent = answer ? `Correct answer: ${answer}` : "Enter both goal totals to calculate the correct answer.";
+  }
+
+  const attemptsEl = document.getElementById("result-finals-bonus-mostAttemptsTeam-summary");
+  if (attemptsEl) {
+    const teams = (results?.mostAttemptsTeams || []).includes("tie")
+      ? "Tie / no points"
+      : (results?.mostAttemptsTeams || []).map(round32TeamLabel).join(", ");
+    attemptsEl.className = teams ? "answer-result answer-result-correct" : "answer-result answer-result-pending";
+    attemptsEl.textContent = teams ? `Correct answer: ${teams}` : "Enter both attempts totals to calculate the correct answer.";
+  }
+
+  renderAdminFinalsBonusFinalAnswers([
+    ["How many combined shots on target will there be across both matches?", results?.combinedShotsOnTarget == null ? "" : `${results.combinedShotsOnTarget}`],
+    ["Which match will produce more total goals?", results?.moreGoalsMatch ? finalsMatchAnswerLabel(results.moreGoalsMatch) : ""],
+    ["How many total yellow cards will be shown in the finals match?", results?.finalYellowCards == null ? "" : `${results.finalYellowCards}`],
+    [
+      "Which team will record the most attempts at goal in the finals match?",
+      (results?.mostAttemptsTeams || []).includes("tie")
+        ? "Tie / no points"
+        : (results?.mostAttemptsTeams || []).map(round32TeamLabel).join(", ")
+    ]
+  ]);
+}
+
+function renderAdminFinalsBonusFinalAnswers(answerRows = []) {
+  const box = document.getElementById("adminFinalsBonusFinalAnswers");
+  if (!box) return;
+
+  const hasAllAnswers = answerRows.every(([, answer]) => !!answer);
+  if (!hasAllAnswers) {
+    box.innerHTML = `<p class="answer-result answer-result-pending">Enter all stat totals to calculate every correct answer.</p>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="admin-final-answer-grid">
+      ${answerRows.map(([label, answer], index) => `
+        <div class="admin-final-answer-row">
+          <span>${index + 1}. ${escapeHTML(label)}</span>
+          <strong>${escapeHTML(answer)}</strong>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function loadExistingFinalsBonusResults() {
+  const snap = await getOptionalDoc("finalsBonusResults", "official");
+  if (!snap?.exists()) return;
+
+  const results = snap.data().results || {};
+  setValue("result-finals-bonus-combinedShotsOnTarget", results.combinedShotsOnTarget);
+  setValue("result-finals-bonus-finalYellowCards", results.finalYellowCards);
+  finalsMatches.forEach(match => setValue(`result-finals-bonus-${match.id}-goals`, results.goalsByMatch?.[match.id]));
+  FINAL_TEAM_OPTIONS.forEach(team => setValue(`result-finals-bonus-${team}-attempts`, results.attemptsByTeam?.[team]));
+  updateAdminFinalsBonusSummaries();
+}
+
+saveFinalsBonusResultsBtn?.addEventListener("click", async () => {
+  const { results, error } = readAdminFinalsBonusResults({ requireComplete: true });
+  if (error) return alert(error);
+  if (!results.moreGoalsMatch) return alert("Enter both match goal totals.");
+  if (!results.mostAttemptsTeams.length) return alert("Enter both team attempts totals.");
+
+  finalsBonusResultsStatus.className = "status-message status-info";
+  finalsBonusResultsStatus.textContent = "Saving Finals bonus answer key...";
+  saveFinalsBonusResultsBtn.disabled = true;
+  try {
+    await setDoc(doc(db, "finalsBonusResults", "official"), {
+      results,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser.email
+    }, { merge: true });
+    finalsBonusResultsStatus.className = "status-message status-success";
+    finalsBonusResultsStatus.textContent = "✅ Finals bonus answer key saved!";
+    showSaveNotification("Finals bonus key saved!");
+    updateAdminFinalsBonusSummaries();
+    await applyFinalsBonusIndicators();
+    await renderLeaderboardFromFirestore();
+  } catch (error) {
+    console.error("Failed to save Finals bonus answer key:", error);
+    finalsBonusResultsStatus.className = "status-message status-error";
+    finalsBonusResultsStatus.textContent = "Finals bonus answer key was not saved. Check Firestore rules for finalsBonusResults.";
+  } finally {
+    saveFinalsBonusResultsBtn.disabled = false;
+  }
+});
+
+function finalsBonusKeyIsComplete(results = {}) {
+  return Number.isInteger(Number(results.combinedShotsOnTarget)) &&
+    !!results.moreGoalsMatch &&
+    Number.isInteger(Number(results.finalYellowCards)) &&
+    Array.isArray(results.mostAttemptsTeams) &&
+    results.mostAttemptsTeams.length > 0;
+}
+
+function scoreExactOrWithin(answer, result, exactPoints, withinDistance, withinPoints) {
+  if (answer === "" || answer == null || result === "" || result == null) return 0;
+  const guess = Number(answer);
+  const actual = Number(result);
+  if (Number.isNaN(guess) || Number.isNaN(actual)) return 0;
+  if (guess === actual) return exactPoints;
+  if (Math.abs(guess - actual) <= withinDistance) return withinPoints;
+  return 0;
+}
+
+function finalsBonusCorrectAnswersFor(results = {}) {
+  if (!finalsBonusKeyIsComplete(results)) return {};
+  return {
+    combinedShotsOnTarget: String(results.combinedShotsOnTarget),
+    moreGoalsMatch: finalsMatchAnswerLabel(results.moreGoalsMatch),
+    finalYellowCards: String(results.finalYellowCards),
+    mostAttemptsTeam: results.mostAttemptsTeams.includes("tie") ? "Tie / no points" : results.mostAttemptsTeams.map(team => {
+      const attempts = results.attemptsByTeam?.[team];
+      return formatCorrectAnswerWithDetail(round32TeamLabel(team), attempts == null ? "" : `${attempts} attempt(s)`);
+    })
+  };
+}
+
+function finalsBonusPointDetailsFor(answers = {}, results = {}) {
+  const correctAnswers = finalsBonusCorrectAnswersFor(results);
+  if (!finalsBonusKeyIsComplete(results)) {
+    return { combinedShotsOnTarget: null, moreGoalsMatch: null, finalYellowCards: null, mostAttemptsTeam: null, correctAnswers };
+  }
+  return {
+    combinedShotsOnTarget: scoreExactOrWithin(answers.combinedShotsOnTarget, results.combinedShotsOnTarget, 4, 2, 2),
+    moreGoalsMatch: answers.moreGoalsMatch && results.moreGoalsMatch !== "same" && answers.moreGoalsMatch === results.moreGoalsMatch ? 2 : 0,
+    finalYellowCards: scoreExactOrWithin(answers.finalYellowCards, results.finalYellowCards, 4, 1, 2),
+    mostAttemptsTeam: answers.mostAttemptsTeam && !results.mostAttemptsTeams.includes("tie") && results.mostAttemptsTeams.some(team => sameCountryOption(answers.mostAttemptsTeam, team)) ? 2 : 0,
+    correctAnswers
+  };
+}
+
+function scoreFinalsBonusAnswers(answers, results) {
+  const details = finalsBonusPointDetailsFor(answers, results);
+  return ["combinedShotsOnTarget", "moreGoalsMatch", "finalYellowCards", "mostAttemptsTeam"]
+    .reduce((total, key) => total + Number(details[key] || 0), 0);
+}
+
+function scoreFinalsPicks(picks, results) {
+  return scoreRound16Picks(picks, results);
+}
+
+function finalsPickPointsFor(matchId, pick, results = {}) {
+  return round16PickPointsFor(matchId, pick, results);
+}
+
+async function renderAdminFinalsSurveySummary() {
+  if (!adminFinalsSurveySummary) return;
+
+  const [snap, usersSnap] = await Promise.all([
+    getOptionalCollectionDocs("finalsBonusAnswers"),
+    getDocs(collection(db, "users"))
+  ]);
+  const usersByUid = {};
+  usersSnap.forEach(docSnap => {
+    const user = docSnap.data();
+    const uid = user.uid || docSnap.id;
+    usersByUid[uid] = user.username || user.googleDisplayName || user.email || "Player";
+  });
+
+  const rows = [];
+  snap.forEach(docSnap => {
+    const data = docSnap.data();
+    const uid = data.uid || docSnap.id;
+    rows.push({
+      uid,
+      displayName: usersByUid[uid] || data.displayName || data.email || uid,
+      survey: data.answers?.survey || {}
+    });
+  });
+
+  const countBy = key => rows.reduce((acc, row) => {
+    const value = row.survey[key] || "No answer";
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
+  const renderCounts = (title, counts, labels) => {
+    const total = labels.reduce((sum, label) => sum + Number(counts[label] || 0), 0);
+
+    return `
+      <div class="survey-summary-card">
+        <h4>${escapeHTML(title)}</h4>
+        <div class="survey-bar-list">
+          ${labels.map(label => {
+            const count = Number(counts[label] || 0);
+            const percent = total ? Math.round((count / total) * 100) : 0;
+
+            return `
+              <div class="survey-bar-row">
+                <div class="survey-bar-meta">
+                  <span>${escapeHTML(label)}</span>
+                  <strong>${count}</strong>
+                </div>
+                <div class="survey-bar-track" aria-label="${escapeHTML(`${label}: ${count}`)}">
+                  <div class="survey-bar-fill" style="width:${percent}%"></div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  };
+  const noCommentHtml = '<span class="mini-note">No comment.</span>';
+  const emptyResponsesHtml = '<p class="mini-note">No Finals survey responses yet.</p>';
+  const responseRowsHtml = rows.map(row => {
+    const improvementsHtml = row.survey.improvements
+      ? escapeHTML(row.survey.improvements)
+      : noCommentHtml;
+
+    return `
+      <div class="admin-survey-response">
+        <strong>${escapeHTML(row.displayName || row.uid)}</strong>
+        <p>Appearance: ${escapeHTML(row.survey.appearance || "No answer")} · Scoring: ${escapeHTML(row.survey.scoring || "No answer")} · Bonus quality: ${escapeHTML(row.survey.bonusQuality || "No answer")} · Bonus amount: ${escapeHTML(row.survey.bonusAmount || "No answer")}</p>
+        <p><strong>Improvements:</strong> ${improvementsHtml}</p>
+      </div>
+    `;
+  }).join("");
+
+  adminFinalsSurveySummary.innerHTML = `
+    <div class="survey-summary-grid">
+      ${renderCounts("Appearance", countBy("appearance"), ["Bad", "Average", "Good", "Great"])}
+      ${renderCounts("Scoring", countBy("scoring"), ["Bad", "Average", "Good", "Great"])}
+      ${renderCounts("Bonus quality", countBy("bonusQuality"), ["Bad", "Average", "Good", "Great"])}
+      ${renderCounts("Bonus amount", countBy("bonusAmount"), ["Not enough", "Just right", "Too many"])}
+    </div>
+    <h4>User responses</h4>
+    <div class="admin-survey-response-list">
+      ${responseRowsHtml || emptyResponsesHtml}
+    </div>
+  `;
+}
+
 function renderAdminSemifinalResults() {
   if (!adminSemifinalResultsForm) return;
 
@@ -5896,6 +6795,8 @@ async function renderAdminPlayerList() {
   const quarterfinalBonusAnswersSnap = await getOptionalCollectionDocs("quarterfinalBonusAnswers");
   const semifinalPicksSnap = await getOptionalCollectionDocs("semifinalPicks");
   const semifinalBonusAnswersSnap = await getOptionalCollectionDocs("semifinalBonusAnswers");
+  const finalsPicksSnap = await getOptionalCollectionDocs("finalsPicks");
+  const finalsBonusAnswersSnap = await getOptionalCollectionDocs("finalsBonusAnswers");
 
   const unlockedGroups = Object.keys(groups).filter(groupName => !groupIsLocked(groupName));
 
@@ -6076,6 +6977,45 @@ async function renderAdminPlayerList() {
         Number(!!answers.mostPassesTeam) +
         Number(!!answers.rootingForWinner),
       complete
+    };
+  });
+
+  const finalsPickStatusByUserId = {};
+  finalsPicksSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const picks = data.picks || {};
+    const savedCount = finalsMatches.filter(match =>
+      picks[match.id]?.winner && picks[match.id]?.score
+    ).length;
+    const uid = data.uid || docSnap.id;
+
+    finalsPickStatusByUserId[uid] = {
+      savedCount,
+      complete: savedCount === finalsMatches.length
+    };
+  });
+
+  const finalsBonusStatusByUserId = {};
+  finalsBonusAnswersSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const answers = data.answers || {};
+    const survey = answers.survey || {};
+    const bonusAnswerCount =
+      Number(answers.combinedShotsOnTarget !== "" && answers.combinedShotsOnTarget != null) +
+      Number(!!answers.moreGoalsMatch) +
+      Number(answers.finalYellowCards !== "" && answers.finalYellowCards != null) +
+      Number(!!answers.mostAttemptsTeam);
+    const surveyAnswerCount =
+      Number(!!survey.appearance) +
+      Number(!!survey.scoring) +
+      Number(!!survey.bonusQuality) +
+      Number(!!survey.bonusAmount);
+
+    finalsBonusStatusByUserId[data.uid || docSnap.id] = {
+      bonusAnswerCount,
+      surveyAnswerCount,
+      bonusComplete: bonusAnswerCount === 4,
+      surveyComplete: surveyAnswerCount === 4
     };
   });
 
@@ -6282,6 +7222,56 @@ async function renderAdminPlayerList() {
                 <td>
                   <span class="${bonus.complete ? "status-good" : "status-bad"}">
                     ${bonus.complete ? "✅ Complete" : `❌ ${bonus.answerCount}/6`}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  if (adminFinalsPlayerList) {
+    adminFinalsPlayerList.innerHTML = `
+      <table class="admin-player-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Finals Picks</th>
+            <th>Finals Bonus</th>
+            <th>Survey</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map((u, index) => {
+            const uid = u.uid;
+            const picks = finalsPickStatusByUserId[uid] || { savedCount: 0, complete: false };
+            const bonus = finalsBonusStatusByUserId[uid] || {
+              bonusAnswerCount: 0,
+              surveyAnswerCount: 0,
+              bonusComplete: false,
+              surveyComplete: false
+            };
+
+            return `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${escapeHTML(u.username || u.googleDisplayName || "Player")}</td>
+                <td>
+                  <span class="${picks.complete ? "status-good" : "status-bad"}">
+                    ${picks.complete ? "✅ Complete" : `❌ ${picks.savedCount}/${finalsMatches.length}`}
+                  </span>
+                </td>
+                <td>
+                  <span class="${bonus.bonusComplete ? "status-good" : "status-bad"}">
+                    ${bonus.bonusComplete ? "✅ Complete" : `❌ ${bonus.bonusAnswerCount}/4`}
+                  </span>
+                </td>
+                <td>
+                  <span class="${bonus.surveyComplete ? "status-good" : "status-bad"}">
+                    ${bonus.surveyComplete ? "✅ Complete" : `❌ ${bonus.surveyAnswerCount}/4`}
                   </span>
                 </td>
               </tr>
@@ -6606,6 +7596,8 @@ async function renderLeaderboardFromFirestore() {
   const quarterfinalBonusAnswersSnap = await getOptionalCollectionDocs("quarterfinalBonusAnswers");
   const semifinalPicksSnap = await getOptionalCollectionDocs("semifinalPicks");
   const semifinalBonusAnswersSnap = await getOptionalCollectionDocs("semifinalBonusAnswers");
+  const finalsPicksSnap = await getOptionalCollectionDocs("finalsPicks");
+  const finalsBonusAnswersSnap = await getOptionalCollectionDocs("finalsBonusAnswers");
   const bonusAnswersSnap = await getDocs(collection(db, "bonusAnswers"));
 
   const groupResultsSnap = await getDoc(doc(db, "groupResults", "official"));
@@ -6616,6 +7608,8 @@ async function renderLeaderboardFromFirestore() {
   const quarterfinalBonusResultsSnap = await getOptionalDoc("quarterfinalBonusResults", "official");
   const semifinalResultsSnap = await getOptionalDoc("semifinalResults", "official");
   const semifinalBonusResultsSnap = await getOptionalDoc("semifinalBonusResults", "official");
+  const finalsResultsSnap = await getOptionalDoc("finalsResults", "official");
+  const finalsBonusResultsSnap = await getOptionalDoc("finalsBonusResults", "official");
   const bonusResultsSnap = await getDoc(doc(db, "bonusResults", "official"));
 
   const groupResultsDoc = groupResultsSnap.exists() ? groupResultsSnap.data() : {};
@@ -6626,6 +7620,8 @@ async function renderLeaderboardFromFirestore() {
   const quarterfinalBonusResultsDoc = quarterfinalBonusResultsSnap?.exists() ? quarterfinalBonusResultsSnap.data() : {};
   const semifinalResultsDoc = semifinalResultsSnap?.exists() ? semifinalResultsSnap.data() : {};
   const semifinalBonusResultsDoc = semifinalBonusResultsSnap?.exists() ? semifinalBonusResultsSnap.data() : {};
+  const finalsResultsDoc = finalsResultsSnap?.exists() ? finalsResultsSnap.data() : {};
+  const finalsBonusResultsDoc = finalsBonusResultsSnap?.exists() ? finalsBonusResultsSnap.data() : {};
   const bonusResultsDoc = bonusResultsSnap.exists() ? bonusResultsSnap.data() : {};
 
   const groupResults = groupResultsDoc.results || {};
@@ -6662,6 +7658,12 @@ async function renderLeaderboardFromFirestore() {
     .map(match => match.id);
   const publicSemifinalBonusRevealable = semifinalBonusAnswersAreRevealable();
   const semifinalBonusResults = semifinalBonusResultsDoc.results || {};
+  const finalsResults = finalsResultsDoc.results || {};
+  const publicFinalsRevealableMatchIds = finalsMatches
+    .filter(match => finalsPickIsRevealable(match))
+    .map(match => match.id);
+  const publicFinalsBonusRevealable = finalsBonusAnswersAreRevealable();
+  const finalsBonusResults = finalsBonusResultsDoc.results || {};
   const bonusResults = bonusResultsDoc.results || {};
 
   const users = {};
@@ -6713,6 +7715,12 @@ async function renderLeaderboardFromFirestore() {
         publicSemifinalBonusAnswers: {},
         publicSemifinalBonusPointDetails: {},
         publicSemifinalBonusRevealable,
+        publicFinalsPicks: {},
+        publicFinalsRevealableMatchIds,
+        publicFinalsPickPoints: {},
+        publicFinalsBonusAnswers: {},
+        publicFinalsBonusPointDetails: {},
+        publicFinalsBonusRevealable,
         match_points: 0,
         group_points: 0,
         bonus_points: 0,
@@ -6723,10 +7731,12 @@ async function renderLeaderboardFromFirestore() {
           round16Picks: {},
           quarterfinalPicks: {},
           semifinalPicks: {},
+          finalsPicks: {},
           round32BonusAnswers: {},
           round16BonusAnswers: {},
           quarterfinalBonusAnswers: {},
           semifinalBonusAnswers: {},
+          finalsBonusAnswers: {},
           bonusAnswers: {},
           groupResults,
           groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
@@ -6749,6 +7759,12 @@ async function renderLeaderboardFromFirestore() {
           semifinalBonusResults,
           semifinalBonusResultsDateKey:
             dateKeyFromValue(semifinalBonusResultsDoc.updatedAt) || roundLastMatchDateKey(semifinalMatches),
+          finalsResults,
+          finalsResultsDateKey:
+            dateKeyFromValue(finalsResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
+          finalsBonusResults,
+          finalsBonusResultsDateKey:
+            dateKeyFromValue(finalsBonusResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
           bonusResults,
           bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
         }
@@ -6862,6 +7878,26 @@ async function renderLeaderboardFromFirestore() {
     player.match_points += scoreSemifinalPicks(data.picks, semifinalResults);
   });
 
+  finalsPicksSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
+    player.scoringData.finalsPicks = data.picks || {};
+
+    Object.entries(data.picks || {}).forEach(([matchId, pick]) => {
+      if (!pick?.winner) return;
+
+      player.publicFinalsPicks[matchId] = {
+        winner: pick.winner,
+        score: normalizeWinnerFirstScore(pick.score),
+        extraTimeOrPenalties: !!pick.extraTimeOrPenalties
+      };
+      player.publicFinalsPickPoints[matchId] = finalsPickPointsFor(matchId, pick, finalsResults);
+    });
+
+    player.match_points += scoreFinalsPicks(data.picks, finalsResults);
+  });
+
   round32BonusAnswersSnap.forEach(docSnap => {
     const data = docSnap.data();
     const player = ensurePlayer(data.uid, data.email);
@@ -6916,6 +7952,17 @@ async function renderLeaderboardFromFirestore() {
     player.scoringData.semifinalBonusAnswers = data.answers || {};
 
     player.bonus_points += scoreSemifinalBonusAnswers(data.answers, semifinalBonusResults);
+  });
+
+  finalsBonusAnswersSnap.forEach(docSnap => {
+    const data = docSnap.data();
+    const player = ensurePlayer(data.uid, data.email);
+    if (!player) return;
+    player.publicFinalsBonusAnswers = data.answers || {};
+    player.publicFinalsBonusPointDetails = finalsBonusPointDetailsFor(data.answers || {}, finalsBonusResults);
+    player.scoringData.finalsBonusAnswers = data.answers || {};
+
+    player.bonus_points += scoreFinalsBonusAnswers(data.answers, finalsBonusResults);
   });
 
   bonusAnswersSnap.forEach(docSnap => {
@@ -7051,10 +8098,12 @@ async function loadPlayerScoringBreakdownData(uid) {
     round16PicksSnap,
     quarterfinalPicksSnap,
     semifinalPicksSnap,
+    finalsPicksSnap,
     round32BonusAnswersSnap,
     round16BonusAnswersSnap,
     quarterfinalBonusAnswersSnap,
     semifinalBonusAnswersSnap,
+    finalsBonusAnswersSnap,
     bonusAnswersSnap,
     groupResultsSnap,
     round32ResultsSnap,
@@ -7064,6 +8113,8 @@ async function loadPlayerScoringBreakdownData(uid) {
     quarterfinalBonusResultsSnap,
     semifinalResultsSnap,
     semifinalBonusResultsSnap,
+    finalsResultsSnap,
+    finalsBonusResultsSnap,
     bonusResultsSnap
   ] = await Promise.all([
     getDoc(doc(db, "groupPicks", uid)),
@@ -7071,10 +8122,12 @@ async function loadPlayerScoringBreakdownData(uid) {
     getDoc(doc(db, "round16Picks", uid)),
     getOptionalDoc("quarterfinalPicks", uid),
     getOptionalDoc("semifinalPicks", uid),
+    getOptionalDoc("finalsPicks", uid),
     getDoc(doc(db, "round32BonusAnswers", uid)),
     getDoc(doc(db, "round16BonusAnswers", uid)),
     getOptionalDoc("quarterfinalBonusAnswers", uid),
     getOptionalDoc("semifinalBonusAnswers", uid),
+    getOptionalDoc("finalsBonusAnswers", uid),
     getDoc(doc(db, "bonusAnswers", uid)),
     getDoc(doc(db, "groupResults", "official")),
     getDoc(doc(db, "round32Results", "official")),
@@ -7084,6 +8137,8 @@ async function loadPlayerScoringBreakdownData(uid) {
     getOptionalDoc("quarterfinalBonusResults", "official"),
     getOptionalDoc("semifinalResults", "official"),
     getOptionalDoc("semifinalBonusResults", "official"),
+    getOptionalDoc("finalsResults", "official"),
+    getOptionalDoc("finalsBonusResults", "official"),
     getDoc(doc(db, "bonusResults", "official"))
   ]);
 
@@ -7094,6 +8149,8 @@ async function loadPlayerScoringBreakdownData(uid) {
   const quarterfinalBonusResultsDoc = quarterfinalBonusResultsSnap?.exists() ? quarterfinalBonusResultsSnap.data() : {};
   const semifinalResultsDoc = semifinalResultsSnap?.exists() ? semifinalResultsSnap.data() : {};
   const semifinalBonusResultsDoc = semifinalBonusResultsSnap?.exists() ? semifinalBonusResultsSnap.data() : {};
+  const finalsResultsDoc = finalsResultsSnap?.exists() ? finalsResultsSnap.data() : {};
+  const finalsBonusResultsDoc = finalsBonusResultsSnap?.exists() ? finalsBonusResultsSnap.data() : {};
   const bonusResultsDoc = bonusResultsSnap.exists() ? bonusResultsSnap.data() : {};
 
   return {
@@ -7102,10 +8159,12 @@ async function loadPlayerScoringBreakdownData(uid) {
     round16Picks: round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {},
     quarterfinalPicks: quarterfinalPicksSnap?.exists() ? quarterfinalPicksSnap.data().picks || {} : {},
     semifinalPicks: semifinalPicksSnap?.exists() ? semifinalPicksSnap.data().picks || {} : {},
+    finalsPicks: finalsPicksSnap?.exists() ? finalsPicksSnap.data().picks || {} : {},
     round32BonusAnswers: round32BonusAnswersSnap.exists() ? round32BonusAnswersSnap.data().answers || {} : {},
     round16BonusAnswers: round16BonusAnswersSnap.exists() ? round16BonusAnswersSnap.data().answers || {} : {},
     quarterfinalBonusAnswers: quarterfinalBonusAnswersSnap?.exists() ? quarterfinalBonusAnswersSnap.data().answers || {} : {},
     semifinalBonusAnswers: semifinalBonusAnswersSnap?.exists() ? semifinalBonusAnswersSnap.data().answers || {} : {},
+    finalsBonusAnswers: finalsBonusAnswersSnap?.exists() ? finalsBonusAnswersSnap.data().answers || {} : {},
     bonusAnswers: bonusAnswersSnap.exists() ? bonusAnswersSnap.data().answers || {} : {},
     groupResults: groupResultsDoc.results || {},
     groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
@@ -7128,6 +8187,12 @@ async function loadPlayerScoringBreakdownData(uid) {
     semifinalBonusResults: semifinalBonusResultsDoc.results || {},
     semifinalBonusResultsDateKey:
       dateKeyFromValue(semifinalBonusResultsDoc.updatedAt) || roundLastMatchDateKey(semifinalMatches),
+    finalsResults: finalsResultsDoc.results || {},
+    finalsResultsDateKey:
+      dateKeyFromValue(finalsResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
+    finalsBonusResults: finalsBonusResultsDoc.results || {},
+    finalsBonusResultsDateKey:
+      dateKeyFromValue(finalsBonusResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
     bonusResults: bonusResultsDoc.results || {},
     bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
   };
@@ -7524,6 +8589,93 @@ function buildSemifinalBonusScoringEntries(data) {
   return entries;
 }
 
+function buildFinalsScoringEntries(data) {
+  const entries = [];
+
+  Object.entries(data.finalsPicks || {}).forEach(([matchId, pick]) => {
+    const match = finalsMatches.find(item => item.id === matchId);
+    const result = data.finalsResults[matchId];
+    if (!match || !pick || !result?.winner) return;
+
+    const item = finalsMatchupLabel(match);
+    const winnerCorrect = sameCountryOption(pick.winner, result.winner);
+    if (winnerCorrect) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Winner pick", 3);
+    }
+
+    const pickScore = normalizeWinnerFirstScore(pick.score);
+    const resultScore = normalizeWinnerFirstScore(result.score);
+    if (
+      winnerCorrect &&
+      parseWinnerFirstScore(pickScore) &&
+      parseWinnerFirstScore(resultScore) &&
+      pickScore === resultScore
+    ) {
+      addScoringEntry(entries, matchDateKey(match), "Match", item, "Exact final score", 2);
+    }
+
+    if (pick.extraTimeOrPenalties) {
+      addScoringEntry(
+        entries,
+        matchDateKey(match),
+        "Match",
+        item,
+        "Extra time / penalties pick",
+        result.extraTimeOrPenalties ? 1 : -1
+      );
+    }
+  });
+
+  return entries;
+}
+
+function buildFinalsBonusScoringEntries(data) {
+  const entries = [];
+  const answers = data.finalsBonusAnswers || {};
+  const results = data.finalsBonusResults || {};
+  const dateKey = data.finalsBonusResultsDateKey || data.finalsResultsDateKey;
+  const details = finalsBonusPointDetailsFor(answers, results);
+  if (!finalsBonusKeyIsComplete(results)) return entries;
+
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Finals bonus: combined shots on target",
+    pointDetailLabel(details.combinedShotsOnTarget),
+    details.combinedShotsOnTarget
+  );
+
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Finals bonus: more total goals match",
+    answers.moreGoalsMatch ? finalsMatchAnswerLabel(answers.moreGoalsMatch) : "No answer",
+    details.moreGoalsMatch
+  );
+
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Finals bonus: Final yellow cards",
+    pointDetailLabel(details.finalYellowCards),
+    details.finalYellowCards
+  );
+
+  addScoringEntry(
+    entries,
+    dateKey,
+    "Bonus",
+    "Finals bonus: most attempts at goal",
+    answers.mostAttemptsTeam ? round32TeamLabel(answers.mostAttemptsTeam) : "No answer",
+    details.mostAttemptsTeam
+  );
+
+  return entries;
+}
+
 function buildOpeningBonusScoringEntries(data) {
   const entries = [];
   const answers = data.bonusAnswers || {};
@@ -7566,10 +8718,12 @@ function buildScoringBreakdownEntries(data) {
     ...buildRound16ScoringEntries(data),
     ...buildQuarterfinalScoringEntries(data),
     ...buildSemifinalScoringEntries(data),
+    ...buildFinalsScoringEntries(data),
     ...buildRound32BonusScoringEntries(data),
     ...buildRound16BonusScoringEntries(data),
     ...buildQuarterfinalBonusScoringEntries(data),
     ...buildSemifinalBonusScoringEntries(data),
+    ...buildFinalsBonusScoringEntries(data),
     ...buildOpeningBonusScoringEntries(data)
   ].sort((a, b) => {
     if (a.dateKey !== b.dateKey) return a.dateKey.localeCompare(b.dateKey);
@@ -8049,6 +9203,84 @@ function renderPublicSemifinalBonusAnswers(answers = {}, isRevealable, pointDeta
   `);
 }
 
+function renderPublicFinalsPickCard(match, pick, isRevealable, points = null) {
+  const matchupLabel = `${match.label}: ${finalsMatchupLabel(match)}`;
+  const hasPick = !!(pick && pick.winner);
+
+  if (!isRevealable) {
+    return `
+      <div class="public-pick-card public-pick-hidden">
+        <h3>${escapeHTML(matchupLabel)}</h3>
+        <p class="hidden-pick-marker">Hidden until match has started</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="public-pick-card">
+      <h3>${escapeHTML(matchupLabel)}</h3>
+      ${
+        hasPick
+          ? `
+            <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
+            <p><strong>Final score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
+            <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
+            ${renderEarnedPoints(points)}
+          `
+          : `<p class="mini-note">No saved pick for this match.</p>`
+      }
+    </div>
+  `;
+}
+
+function renderPublicFinalsBonusAnswers(answers = {}, isRevealable, pointDetails = {}) {
+  if (!isRevealable) {
+    return `
+      <div class="public-pick-card public-pick-hidden">
+        <h3>Finals bonus answers</h3>
+        <p class="hidden-pick-marker">Hidden until the third-place match starts</p>
+      </div>
+    `;
+  }
+
+  const correctAnswers = pointDetails.correctAnswers || {};
+
+  return renderPublicPickGrid(`
+    ${renderPublicAnswerCard(
+      "How many combined shots on target will there be across both matches?",
+      answers.combinedShotsOnTarget !== "" && answers.combinedShotsOnTarget != null
+        ? escapeHTML(String(answers.combinedShotsOnTarget))
+        : "",
+      "Across the third-place match and World Cup Final.",
+      pointDetails.combinedShotsOnTarget,
+      renderCorrectAnswerHtml(correctAnswers.combinedShotsOnTarget)
+    )}
+    ${renderPublicAnswerCard(
+      "Which match will produce more total goals?",
+      answers.moreGoalsMatch ? escapeHTML(finalsMatchAnswerLabel(answers.moreGoalsMatch)) : "",
+      "Extra-time goals count, but shootout kicks do not.",
+      pointDetails.moreGoalsMatch,
+      renderCorrectAnswerHtml(correctAnswers.moreGoalsMatch)
+    )}
+    ${renderPublicAnswerCard(
+      "How many total yellow cards will be shown in the finals match?",
+      answers.finalYellowCards !== "" && answers.finalYellowCards != null
+        ? escapeHTML(String(answers.finalYellowCards))
+        : "",
+      "World Cup Final only.",
+      pointDetails.finalYellowCards,
+      renderCorrectAnswerHtml(correctAnswers.finalYellowCards)
+    )}
+    ${renderPublicAnswerCard(
+      "Which team will record the most attempts at goal in the finals match?",
+      answers.mostAttemptsTeam ? escapeHTML(round32TeamLabel(answers.mostAttemptsTeam)) : "",
+      "No points if there’s a tie. This includes regulation time and any extra time played, not shootout kicks.",
+      pointDetails.mostAttemptsTeam,
+      renderCorrectAnswerHtml(correctAnswers.mostAttemptsTeam)
+    )}
+  `);
+}
+
 function renderRootingForFlags(rootingForCountries = []) {
   if (!Array.isArray(rootingForCountries) || !rootingForCountries.length) {
     return `<span class="rooting-flags-empty">—</span>`;
@@ -8079,11 +9311,13 @@ async function showPlayerRound32Picks(uid, displayName) {
     round16PicksSnap,
     quarterfinalPicksSnap,
     semifinalPicksSnap,
+    finalsPicksSnap,
     round16ResultsSnap,
     semifinalResultsSnap,
     round16BonusAnswersSnap,
     quarterfinalBonusAnswersSnap,
     semifinalBonusAnswersSnap,
+    finalsBonusAnswersSnap,
     scoringBreakdownData
   ] = await Promise.all([
     getDoc(doc(db, "round32Picks", uid)),
@@ -8091,11 +9325,13 @@ async function showPlayerRound32Picks(uid, displayName) {
     getDoc(doc(db, "round16Picks", uid)),
     getOptionalDoc("quarterfinalPicks", uid),
     getOptionalDoc("semifinalPicks", uid),
+    getOptionalDoc("finalsPicks", uid),
     getDoc(doc(db, "round16Results", "official")),
     getOptionalDoc("semifinalResults", "official"),
     getDoc(doc(db, "round16BonusAnswers", uid)),
     getOptionalDoc("quarterfinalBonusAnswers", uid),
     getOptionalDoc("semifinalBonusAnswers", uid),
+    getOptionalDoc("finalsBonusAnswers", uid),
     loadPlayerScoringBreakdownData(uid)
   ]);
 
@@ -8104,6 +9340,7 @@ async function showPlayerRound32Picks(uid, displayName) {
   const round16Picks = round16PicksSnap.exists() ? round16PicksSnap.data().picks || {} : {};
   const quarterfinalPicks = quarterfinalPicksSnap?.exists() ? quarterfinalPicksSnap.data().picks || {} : {};
   const semifinalPicks = semifinalPicksSnap?.exists() ? semifinalPicksSnap.data().picks || {} : {};
+  const finalsPicks = finalsPicksSnap?.exists() ? finalsPicksSnap.data().picks || {} : {};
   const round16Results = round16ResultsSnap.exists() ? round16ResultsSnap.data().results || {} : {};
   const semifinalResults = semifinalResultsSnap?.exists() ? semifinalResultsSnap.data().results || {} : {};
   const round16BonusAnswers = round16BonusAnswersSnap.exists() ? round16BonusAnswersSnap.data().answers || {} : {};
@@ -8113,10 +9350,34 @@ async function showPlayerRound32Picks(uid, displayName) {
   const semifinalBonusAnswers = semifinalBonusAnswersSnap?.exists()
     ? semifinalBonusAnswersSnap.data().answers || {}
     : {};
+  const finalsBonusAnswers = finalsBonusAnswersSnap?.exists()
+    ? finalsBonusAnswersSnap.data().answers || {}
+    : {};
 
   playerPicksTitle.textContent = `${displayName}'s Knockout Picks`;
   playerPicksContent.innerHTML = `
     ${renderAdminDailyPointsPanel(scoringBreakdownData)}
+    ${renderPlayerDrawerSection("Finals Picks", renderPublicPickGrid(
+      finalsMatches.map(match =>
+        renderPublicFinalsPickCard(
+          match,
+          finalsPicks[match.id],
+          revealAllSavedAnswers || finalsPickIsRevealable(match),
+          finalsPickPointsFor(match.id, finalsPicks[match.id], scoringBreakdownData.finalsResults)
+        )
+      ).join("")
+    ))}
+    ${renderPlayerDrawerSection(
+      "Finals Bonus Questions",
+      renderPublicFinalsBonusAnswers(
+        finalsBonusAnswers,
+        revealAllSavedAnswers || finalsBonusAnswersAreRevealable(),
+        finalsBonusPointDetailsFor(
+          finalsBonusAnswers,
+          scoringBreakdownData.finalsBonusResults
+        )
+      )
+    )}
     ${renderPlayerDrawerSection("Semifinals Picks", renderPublicPickGrid(
       semifinalMatches.map(match =>
         renderPublicSemifinalPickCard(
@@ -8137,7 +9398,7 @@ async function showPlayerRound32Picks(uid, displayName) {
           scoringBreakdownData.semifinalBonusResults
         )
       )
-    )}
+    , false)}
     ${renderPlayerDrawerSection("Quarterfinals Picks", renderPublicPickGrid(
       quarterfinalMatches.map(match =>
         renderPublicQuarterfinalPickCard(
@@ -8292,9 +9553,38 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
       typeof row.publicSemifinalBonusRevealable === "boolean"
         ? row.publicSemifinalBonusRevealable
         : semifinalBonusAnswersAreRevealable();
+    const finalsPicks = row.publicFinalsPicks || {};
+    const finalsPickPoints = row.publicFinalsPickPoints || {};
+    const finalsRevealableMatchIds = Array.isArray(row.publicFinalsRevealableMatchIds)
+      ? row.publicFinalsRevealableMatchIds
+      : [];
+    const finalsBonusAnswers = row.publicFinalsBonusAnswers || {};
+    const finalsBonusPointDetails = row.publicFinalsBonusPointDetails || {};
+    const finalsBonusRevealable =
+      typeof row.publicFinalsBonusRevealable === "boolean"
+        ? row.publicFinalsBonusRevealable
+        : finalsBonusAnswersAreRevealable();
 
     playerPicksContent.innerHTML = `
       ${renderPublicDailyPointsPanel(row)}
+      ${renderPlayerDrawerSection("Finals Picks", renderPublicPickGrid(
+        finalsMatches.map(match =>
+          renderPublicFinalsPickCard(
+            match,
+            finalsPicks[match.id],
+            finalsRevealableMatchIds.includes(match.id),
+            finalsPickPoints[match.id]
+          )
+        ).join("")
+      ))}
+      ${renderPlayerDrawerSection(
+        "Finals Bonus Questions",
+        renderPublicFinalsBonusAnswers(
+          finalsBonusAnswers,
+          finalsBonusRevealable,
+          finalsBonusPointDetails
+        )
+      )}
       ${renderPlayerDrawerSection("Semifinals Picks", renderPublicPickGrid(
         semifinalMatches.map(match =>
           renderPublicSemifinalPickCard(
@@ -8312,7 +9602,7 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
           semifinalBonusRevealable,
           semifinalBonusPointDetails
         )
-      )}
+      , false)}
       ${renderPlayerDrawerSection("Quarterfinals Picks", renderPublicPickGrid(
         quarterfinalMatches.map(match =>
           renderPublicQuarterfinalPickCard(
@@ -8392,6 +9682,7 @@ function showPublicRound32PicksFromLeaderboard(row, displayName) {
 
 function renderPublicRound32PickCard(match, pick, isRevealable, points = null) {
   const matchupLabel = round32MatchupLabel(match);
+  const hasPick = !!(pick && pick.winner);
 
   if (!isRevealable) {
     return `
@@ -8406,7 +9697,7 @@ function renderPublicRound32PickCard(match, pick, isRevealable, points = null) {
     <div class="public-pick-card">
       <h3>${escapeHTML(matchupLabel)}</h3>
       ${
-        pick?.winner
+        hasPick
           ? `
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Extra time / penalties:</strong> ${pick.extraTimeOrPenalties ? "Yes" : "No"}</p>
@@ -8420,6 +9711,7 @@ function renderPublicRound32PickCard(match, pick, isRevealable, points = null) {
 
 function renderPublicRound16PickCard(match, pick, isRevealable, round32Results = {}, points = null) {
   const matchupLabel = round16MatchupLabel(match, round32Results);
+  const hasPick = !!(pick && pick.winner);
 
   if (!isRevealable) {
     return `
@@ -8434,7 +9726,7 @@ function renderPublicRound16PickCard(match, pick, isRevealable, round32Results =
     <div class="public-pick-card">
       <h3>${escapeHTML(matchupLabel)}</h3>
       ${
-        pick?.winner
+        hasPick
           ? `
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Final score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
@@ -8449,6 +9741,7 @@ function renderPublicRound16PickCard(match, pick, isRevealable, round32Results =
 
 function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Results = {}, round32Results = {}, points = null, matchupLabelOverride = "") {
   const matchupLabel = matchupLabelOverride || quarterfinalMatchupLabel(match, round16Results, round32Results);
+  const hasPick = !!(pick && pick.winner);
 
   if (!isRevealable) {
     return `
@@ -8463,7 +9756,7 @@ function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Resu
     <div class="public-pick-card">
       <h3>${escapeHTML(matchupLabel)}</h3>
       ${
-        pick?.winner
+        hasPick
           ? `
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Final score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
@@ -8478,6 +9771,7 @@ function renderPublicQuarterfinalPickCard(match, pick, isRevealable, round16Resu
 
 function renderPublicSemifinalPickCard(match, pick, isRevealable, points = null) {
   const matchupLabel = semifinalMatchupLabel(match);
+  const hasPick = !!(pick && pick.winner);
 
   if (!isRevealable) {
     return `
@@ -8492,7 +9786,7 @@ function renderPublicSemifinalPickCard(match, pick, isRevealable, points = null)
     <div class="public-pick-card">
       <h3>${escapeHTML(matchupLabel)}</h3>
       ${
-        pick?.winner
+        hasPick
           ? `
             <p><strong>Winner pick:</strong> ${escapeHTML(round32TeamLabel(pick.winner))}</p>
             <p><strong>Final score:</strong> ${escapeHTML(normalizeWinnerFirstScore(pick.score))}</p>
@@ -8868,8 +10162,11 @@ function getTickerPenaltyScore(match) {
 }
 
 function getTickerWinnerOverride(match) {
-  return tickerWinnerOverrides[`${match.home?.name}|${match.away?.name}`] ||
-    tickerWinnerOverrides[`${match.away?.name}|${match.home?.name}`] ||
+  const homeName = match.home && match.home.name ? match.home.name : "";
+  const awayName = match.away && match.away.name ? match.away.name : "";
+
+  return tickerWinnerOverrides[`${homeName}|${awayName}`] ||
+    tickerWinnerOverrides[`${awayName}|${homeName}`] ||
     null;
 }
 

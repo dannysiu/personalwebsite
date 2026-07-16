@@ -273,6 +273,10 @@ footer {
 #adminRound32ResultsForm,
 #adminRound32BonusResultsForm,
 #adminRound16ResultsForm,
+#adminSemifinalResultsForm,
+#adminSemifinalBonusResultsForm,
+#adminFinalsResultsForm,
+#adminFinalsBonusResultsForm,
 #matchPicksForm,
 #adminMatchResultsForm {
   display: grid;
@@ -280,16 +284,23 @@ footer {
   gap: 14px;
 }
 
+.finals-answer-key-box {
+  grid-column: 1 / -1;
+}
+
 #quarterfinalPicksForm,
 #quarterfinalBonusForm,
 #semifinalPicksForm,
-#semifinalBonusForm {
+#semifinalBonusForm,
+#finalsPicksForm,
+#finalsBonusForm {
   display: grid;
   gap: 14px;
 }
 
 #quarterfinalPicksForm,
-#semifinalPicksForm {
+#semifinalPicksForm,
+#finalsPicksForm {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -301,8 +312,20 @@ footer {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+#finalsBonusForm {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .semifinal-bonus-card {
   grid-column: span 2;
+}
+
+.finals-bonus-card {
+  grid-column: span 2;
+}
+
+.finals-survey-card {
+  grid-column: 1 / -1;
 }
 
 .semifinal-bonus-top-one {
@@ -327,6 +350,15 @@ footer {
   text-align: center;
 }
 
+.finals-bonus-instructions {
+  color: #dbeafe;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 6px 0 14px;
+  text-align: center;
+}
+
 .semifinal-bonus-note {
   border: 1px solid rgba(59, 130, 246, 0.34);
   border-radius: 10px;
@@ -341,41 +373,50 @@ footer {
 }
 
 #quarterfinalPicksForm .quarterfinal-score-label,
-#semifinalPicksForm .quarterfinal-score-label {
+#semifinalPicksForm .quarterfinal-score-label,
+#finalsPicksForm .quarterfinal-score-label {
   text-align: center;
 }
 
 #quarterfinalPicksForm .score-entry-row,
-#semifinalPicksForm .score-entry-row {
+#semifinalPicksForm .score-entry-row,
+#finalsPicksForm .score-entry-row {
   margin-left: auto;
   margin-right: auto;
 }
 
 #quarterfinalPicksForm .checkbox-row,
-#semifinalPicksForm .checkbox-row {
+#semifinalPicksForm .checkbox-row,
+#finalsPicksForm .checkbox-row {
   justify-content: center;
   text-align: center;
 }
 
 .score-rule-callout {
-  border: 2px solid rgba(250, 204, 21, 0.88);
+  border: 1px solid rgba(250, 204, 21, 0.48);
   border-radius: 10px;
   background:
-    linear-gradient(135deg, rgba(250, 204, 21, 0.25), rgba(239, 68, 68, 0.20)),
-    rgba(120, 53, 15, 0.46);
-  box-shadow: 0 12px 26px rgba(250, 204, 21, 0.16);
+    linear-gradient(135deg, rgba(250, 204, 21, 0.16), rgba(239, 68, 68, 0.10)),
+    rgba(120, 53, 15, 0.28);
   color: #fef3c7;
-  font-size: 22px;
-  font-weight: 900;
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1.25;
-  margin: 14px 0 10px;
-  padding: 14px 16px;
-  text-align: center;
-  text-transform: uppercase;
+  margin: 10px 0;
+  padding: 9px 12px;
+  text-align: left;
 }
 
 .score-rule-callout strong {
   color: #fde68a;
+}
+
+.pickem-note {
+  color: #cbd5e1;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.38;
+  margin: 10px 0 14px;
 }
 
 .pick-card {
@@ -480,8 +521,126 @@ footer {
   overflow-wrap: anywhere;
 }
 
+.survey-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 96px);
+  gap: 5px;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.pick-card .survey-option {
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.38);
+  cursor: pointer;
+  display: flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 5px;
+  justify-content: center;
+  line-height: 1.1;
+  margin: 0;
+  min-height: 28px;
+  padding: 4px 7px;
+  text-align: center;
+  width: 96px;
+}
+
+.pick-card .survey-option input {
+  flex: 0 0 auto;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  transform: scale(0.82);
+  width: auto;
+}
+
+.pick-card .survey-option span {
+  font-size: 12px;
+}
+
+.finals-survey-card textarea {
+  background: rgba(30, 41, 59, 0.9);
+  box-sizing: border-box;
+  color: #f8fafc;
+  min-height: 150px;
+  resize: vertical;
+  width: 100%;
+}
+
+.finals-survey-card textarea::placeholder {
+  color: #94a3b8;
+}
+
+.survey-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.survey-summary-card,
+.admin-survey-response {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.54);
+  padding: 12px;
+}
+
+.survey-summary-card h4,
+.admin-survey-response p {
+  margin: 6px 0;
+}
+
+.survey-bar-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.survey-bar-row {
+  display: grid;
+  gap: 4px;
+}
+
+.survey-bar-meta {
+  align-items: center;
+  color: #dbeafe;
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: space-between;
+}
+
+.survey-bar-meta strong {
+  color: #f8fafc;
+}
+
+.survey-bar-track {
+  background: rgba(30, 41, 59, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+
+.survey-bar-fill {
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  border-radius: inherit;
+  height: 100%;
+  min-width: 0;
+}
+
+.admin-survey-response-list {
+  display: grid;
+  gap: 10px;
+}
+
 .pick-card select:disabled,
-.pick-card input:disabled {
+.pick-card input:disabled,
+.pick-card textarea:disabled {
   color: #f8fafc;
   opacity: 1;
   border-color: rgba(148, 163, 184, 0.58);
@@ -523,7 +682,8 @@ footer {
 }
 
 .pick-card input[type="number"],
-.pick-card input[type="text"] {
+.pick-card input[type="text"],
+.pick-card textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
@@ -725,6 +885,18 @@ footer {
   color: #ccfbf1;
 }
 
+.final-announcement-card {
+  border-color: rgba(236, 72, 153, 0.78);
+  background:
+    linear-gradient(135deg, rgba(88, 28, 135, 0.78), rgba(190, 24, 93, 0.56), rgba(236, 72, 153, 0.30)),
+    #111827;
+  box-shadow: 0 14px 34px rgba(236, 72, 153, 0.22);
+}
+
+.final-announcement-card h2 {
+  color: #fce7f3;
+}
+
 .checkbox-row {
   display: flex !important;
   align-items: center;
@@ -829,6 +1001,10 @@ footer {
 #saveSemifinalBonusBtn,
 #saveSemifinalResultsBtn,
 #saveSemifinalBonusResultsBtn,
+#saveFinalsPicksBtn,
+#saveFinalsBonusBtn,
+#saveFinalsResultsBtn,
+#saveFinalsBonusResultsBtn,
 #saveMatchPicksBtn,
 #saveGroupResultsBtn,
 #saveRound32ResultsBtn,
@@ -1467,14 +1643,18 @@ footer {
   #quarterfinalPicksForm,
   #quarterfinalBonusForm,
   #semifinalPicksForm,
-  #semifinalBonusForm {
+  #semifinalBonusForm,
+  #finalsPicksForm,
+  #finalsBonusForm {
     grid-template-columns: 1fr;
   }
 
   .semifinal-bonus-card,
   .semifinal-bonus-top-one,
   .semifinal-bonus-top-two,
-  .semifinal-rooting-card {
+  .semifinal-rooting-card,
+  .finals-bonus-card,
+  .finals-survey-card {
     grid-column: 1;
   }
 
