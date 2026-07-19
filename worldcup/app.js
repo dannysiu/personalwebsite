@@ -7457,6 +7457,41 @@ function roundLastMatchDateKey(matches) {
   return leaderboardDateKey(new Date(Math.max(...timestamps)));
 }
 
+function dayBeforeDateKey(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setDate(date.getDate() - 1);
+  return leaderboardDateKey(date);
+}
+
+function groupResultsScoringDateKey() {
+  return dayBeforeDateKey(round32Matches[0]?.startTime) || dateKeyFromValue(BONUS_LOCK_TIME);
+}
+
+function openingBonusScoringDateKey() {
+  return roundLastMatchDateKey(finalsMatches) || dateKeyFromValue(BONUS_LOCK_TIME);
+}
+
+function round32BonusScoringDateKey() {
+  return roundLastMatchDateKey(round32Matches);
+}
+
+function round16BonusScoringDateKey() {
+  return roundLastMatchDateKey(round16Matches);
+}
+
+function quarterfinalBonusScoringDateKey() {
+  return roundLastMatchDateKey(quarterfinalMatches);
+}
+
+function semifinalBonusScoringDateKey() {
+  return roundLastMatchDateKey(semifinalMatches);
+}
+
+function finalsBonusScoringDateKey() {
+  return roundLastMatchDateKey(finalsMatches);
+}
+
 function signedPointLabel(points) {
   const amount = Number(points || 0);
   return `${amount > 0 ? "+" : ""}${amount}`;
@@ -7786,34 +7821,31 @@ async function renderLeaderboardFromFirestore() {
           finalsBonusAnswers: {},
           bonusAnswers: {},
           groupResults,
-          groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
+          groupResultsDateKey: groupResultsScoringDateKey(),
           round32Results,
           round32BonusResults,
-          round32BonusResultsDateKey:
-            dateKeyFromValue(round32BonusResultsDoc.updatedAt) || roundLastMatchDateKey(round32Matches),
+          round32BonusResultsDateKey: round32BonusScoringDateKey(),
           round16Results,
           round16ResultsDateKey:
             dateKeyFromValue(round16ResultsDoc.updatedAt) || roundLastMatchDateKey(round16Matches),
+          round16BonusResultsDateKey: round16BonusScoringDateKey(),
           quarterfinalResults,
           quarterfinalBonusResults,
           quarterfinalResultsDateKey:
             dateKeyFromValue(quarterfinalResultsDoc.updatedAt) || roundLastMatchDateKey(quarterfinalMatches),
-          quarterfinalBonusResultsDateKey:
-            dateKeyFromValue(quarterfinalBonusResultsDoc.updatedAt) || dateKeyFromValue(quarterfinalResultsDoc.updatedAt) || roundLastMatchDateKey(quarterfinalMatches),
+          quarterfinalBonusResultsDateKey: quarterfinalBonusScoringDateKey(),
           semifinalResults,
           semifinalResultsDateKey:
             dateKeyFromValue(semifinalResultsDoc.updatedAt) || roundLastMatchDateKey(semifinalMatches),
           semifinalBonusResults,
-          semifinalBonusResultsDateKey:
-            dateKeyFromValue(semifinalBonusResultsDoc.updatedAt) || roundLastMatchDateKey(semifinalMatches),
+          semifinalBonusResultsDateKey: semifinalBonusScoringDateKey(),
           finalsResults,
           finalsResultsDateKey:
             dateKeyFromValue(finalsResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
           finalsBonusResults,
-          finalsBonusResultsDateKey:
-            dateKeyFromValue(finalsBonusResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
+          finalsBonusResultsDateKey: finalsBonusScoringDateKey(),
           bonusResults,
-          bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
+          bonusResultsDateKey: openingBonusScoringDateKey()
         }
       };
     }
@@ -8214,34 +8246,31 @@ async function loadPlayerScoringBreakdownData(uid) {
     finalsBonusAnswers: finalsBonusAnswersSnap?.exists() ? finalsBonusAnswersSnap.data().answers || {} : {},
     bonusAnswers: bonusAnswersSnap.exists() ? bonusAnswersSnap.data().answers || {} : {},
     groupResults: groupResultsDoc.results || {},
-    groupResultsDateKey: dateKeyFromValue(groupResultsDoc.updatedAt),
+    groupResultsDateKey: groupResultsScoringDateKey(),
     round32Results: round32ResultsSnap.exists() ? round32ResultsSnap.data().results || {} : {},
     round32BonusResults: round32BonusResultsDoc.results || {},
-    round32BonusResultsDateKey:
-      dateKeyFromValue(round32BonusResultsDoc.updatedAt) || roundLastMatchDateKey(round32Matches),
+    round32BonusResultsDateKey: round32BonusScoringDateKey(),
     round16Results: round16ResultsDoc.results || {},
     round16ResultsDateKey:
       dateKeyFromValue(round16ResultsDoc.updatedAt) || roundLastMatchDateKey(round16Matches),
+    round16BonusResultsDateKey: round16BonusScoringDateKey(),
     quarterfinalResults: quarterfinalResultsDoc.results || {},
     quarterfinalBonusResults: quarterfinalBonusResultsDoc.results || {},
     quarterfinalResultsDateKey:
       dateKeyFromValue(quarterfinalResultsDoc.updatedAt) || roundLastMatchDateKey(quarterfinalMatches),
-    quarterfinalBonusResultsDateKey:
-      dateKeyFromValue(quarterfinalBonusResultsDoc.updatedAt) || dateKeyFromValue(quarterfinalResultsDoc.updatedAt) || roundLastMatchDateKey(quarterfinalMatches),
+    quarterfinalBonusResultsDateKey: quarterfinalBonusScoringDateKey(),
     semifinalResults: semifinalResultsDoc.results || {},
     semifinalResultsDateKey:
       dateKeyFromValue(semifinalResultsDoc.updatedAt) || roundLastMatchDateKey(semifinalMatches),
     semifinalBonusResults: semifinalBonusResultsDoc.results || {},
-    semifinalBonusResultsDateKey:
-      dateKeyFromValue(semifinalBonusResultsDoc.updatedAt) || roundLastMatchDateKey(semifinalMatches),
+    semifinalBonusResultsDateKey: semifinalBonusScoringDateKey(),
     finalsResults: finalsResultsDoc.results || {},
     finalsResultsDateKey:
       dateKeyFromValue(finalsResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
     finalsBonusResults: finalsBonusResultsDoc.results || {},
-    finalsBonusResultsDateKey:
-      dateKeyFromValue(finalsBonusResultsDoc.updatedAt) || roundLastMatchDateKey(finalsMatches),
+    finalsBonusResultsDateKey: finalsBonusScoringDateKey(),
     bonusResults: bonusResultsDoc.results || {},
-    bonusResultsDateKey: dateKeyFromValue(bonusResultsDoc.updatedAt)
+    bonusResultsDateKey: openingBonusScoringDateKey()
   };
 }
 
@@ -8448,7 +8477,7 @@ function buildRound16BonusScoringEntries(data) {
   const entries = [];
   const answers = data.round16BonusAnswers || {};
   const results = data.round16Results || {};
-  const dateKey = data.round16ResultsDateKey;
+  const dateKey = data.round16BonusResultsDateKey || data.round16ResultsDateKey;
   if (!round16BonusResultsAreComplete(results)) return entries;
 
   const mostGoalsMatchIds = calculateRound16MostGoalsMatchIds(results);
