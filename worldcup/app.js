@@ -118,6 +118,19 @@ function sameCountryOption(a, b) {
   return cleanCountryName(a) === cleanCountryName(b);
 }
 
+function openingMostGoalsCountryValues(results = {}) {
+  const values = Array.isArray(results.mostGoalsCountries)
+    ? results.mostGoalsCountries
+    : [results.mostGoalsCountry];
+
+  return [...new Set(values.filter(Boolean).map(canonicalCountryOptionValue))];
+}
+
+function openingMostGoalsCountryIsCorrect(answer, results = {}) {
+  return Boolean(answer) &&
+    openingMostGoalsCountryValues(results).some(country => sameCountryOption(answer, country));
+}
+
 function normalizeCountryOptionValue(country) {
   return cleanCountryName(country) === "England" ? LEGACY_ENGLAND_OPTION : country;
 }
@@ -2998,8 +3011,8 @@ async function applyBonusAnswerIndicators() {
   const results = snap.data().results || {};
 
   const mostGoalsCountry = getValue("bonus-mostGoalsCountry");
-  if (mostGoalsCountry && results.mostGoalsCountry) {
-    const correct = sameCountryOption(mostGoalsCountry, results.mostGoalsCountry);
+  if (mostGoalsCountry && openingMostGoalsCountryValues(results).length) {
+    const correct = openingMostGoalsCountryIsCorrect(mostGoalsCountry, results);
     setScoringIndicator("bonus-mostGoalsCountry-result", correct ? "correct" : "wrong", correct ? "Correct" : "Wrong", correct ? 1 : 0);
   }
 
@@ -3217,10 +3230,15 @@ function renderAdminBonusResults() {
   adminBonusResultsForm.innerHTML = `
     <div class="pick-card">
       <label>1. Country with most tournament goals</label>
-      <select id="result-bonus-mostGoalsCountry">
-        <option value="">Select country</option>
-        ${renderCountryOptions()}
-      </select>
+      <p class="mini-note">Select every country that tied for the most tournament goals. Each matching user pick earns 1 point.</p>
+      <div class="admin-checkbox-grid">
+        ${countryOptions.map(country => `
+          <label class="checkbox-row">
+            <input type="checkbox" data-bonus-most-goals-country="${escapeHTML(country)}" />
+            ${escapeHTML(countryOptionLabel(country))}
+          </label>
+        `).join("")}
+      </div>
     </div>
 
     <div class="pick-card">
@@ -3266,7 +3284,14 @@ async function loadExistingBonusResults() {
 
   const results = snap.data().results || {};
 
-  setValue("result-bonus-mostGoalsCountry", results.mostGoalsCountry);
+  const mostGoalsCountries = openingMostGoalsCountryValues(results);
+  adminBonusResultsForm
+    .querySelectorAll("[data-bonus-most-goals-country]")
+    .forEach(input => {
+      input.checked = mostGoalsCountries.some(country =>
+        sameCountryOption(country, input.dataset.bonusMostGoalsCountry)
+      );
+    });
   setValue("result-bonus-yellowCards", results.yellowCards);
   setValue("result-bonus-usaOut", results.usaOut);
   setValue("result-bonus-winner", results.winner);
@@ -3290,8 +3315,13 @@ async function saveBonusResults() {
     return alert("Duplicate semifinalists selected.");
   }
 
+  const mostGoalsCountries = Array.from(
+    adminBonusResultsForm.querySelectorAll("[data-bonus-most-goals-country]:checked")
+  ).map(input => input.dataset.bonusMostGoalsCountry);
+
   const results = {
-    mostGoalsCountry: getValue("result-bonus-mostGoalsCountry"),
+    mostGoalsCountry: mostGoalsCountries[0] || "",
+    mostGoalsCountries,
     yellowCards: getValue("result-bonus-yellowCards"),
     usaOut: getValue("result-bonus-usaOut"),
     semifinalists,
@@ -3314,7 +3344,7 @@ function scoreBonusAnswers(answers, results) {
 
   let points = 0;
 
-  if (sameCountryOption(answers.mostGoalsCountry, results.mostGoalsCountry)) points += 1;
+  if (openingMostGoalsCountryIsCorrect(answers.mostGoalsCountry, results)) points += 1;
 
   const guessYellow = Number(answers.yellowCards);
   const actualYellow = Number(results.yellowCards);
@@ -6055,16 +6085,32 @@ function round32BonusPointDetailsFor(answers = {}, results = {}, round32Results 
   };
 }
 
+function openingBonusCorrectAnswersFor(results = {}) {
+  return {
+    mostGoalsCountry: openingMostGoalsCountryValues(results).map(countryOptionLabel),
+    yellowCards:
+      results.yellowCards !== "" && results.yellowCards != null
+        ? `${results.yellowCards} (within 10 accepted)`
+        : "",
+    usaOut: results.usaOut || "",
+    semifinalist: Array.isArray(results.semifinalists)
+      ? results.semifinalists.map(countryOptionLabel)
+      : [],
+    winner: results.winner ? countryOptionLabel(results.winner) : ""
+  };
+}
+
 function openingBonusPointDetailsFor(answers = {}, results = {}) {
   const yellowCardsAnswered = answers.yellowCards !== "" && answers.yellowCards != null;
   const yellowCardsResultReady = results.yellowCards !== "" && results.yellowCards != null;
   const yellowCardsGuess = Number(answers.yellowCards);
   const yellowCardsActual = Number(results.yellowCards);
+  const mostGoalsCountries = openingMostGoalsCountryValues(results);
 
   return {
     mostGoalsCountry:
-      answers.mostGoalsCountry && results.mostGoalsCountry
-        ? sameCountryOption(answers.mostGoalsCountry, results.mostGoalsCountry) ? 1 : 0
+      answers.mostGoalsCountry && mostGoalsCountries.length
+        ? openingMostGoalsCountryIsCorrect(answers.mostGoalsCountry, results) ? 1 : 0
         : null,
     yellowCards:
       yellowCardsAnswered && yellowCardsResultReady && !Number.isNaN(yellowCardsGuess) && !Number.isNaN(yellowCardsActual)
@@ -6081,7 +6127,8 @@ function openingBonusPointDetailsFor(answers = {}, results = {}) {
     winner:
       answers.winner && results.winner
         ? sameCountryOption(answers.winner, results.winner) ? 1 : 0
-        : null
+        : null,
+    correctAnswers: openingBonusCorrectAnswersFor(results)
   };
 }
 
@@ -8682,7 +8729,7 @@ function buildOpeningBonusScoringEntries(data) {
   const results = data.bonusResults || {};
   const dateKey = data.bonusResultsDateKey;
 
-  if (sameCountryOption(answers.mostGoalsCountry, results.mostGoalsCountry)) {
+  if (openingMostGoalsCountryIsCorrect(answers.mostGoalsCountry, results)) {
     addScoringEntry(entries, dateKey, "Bonus", "Opening bonus: most goals country", countryOptionLabel(answers.mostGoalsCountry), 1);
   }
 
@@ -8931,36 +8978,43 @@ function renderPublicGroupPicks(picks = {}) {
 }
 
 function renderPublicOpeningBonusAnswers(answers = {}, pointDetails = {}) {
+  const correctAnswers = pointDetails.correctAnswers || {};
+
   return renderPublicPickGrid(`
     ${renderPublicAnswerCard(
       "Most goals country",
       answers.mostGoalsCountry ? escapeHTML(countryOptionLabel(answers.mostGoalsCountry)) : "",
       "",
-      pointDetails.mostGoalsCountry
+      pointDetails.mostGoalsCountry,
+      renderCorrectAnswerHtml(correctAnswers.mostGoalsCountry)
     )}
     ${renderPublicAnswerCard(
       "Yellow cards",
       answers.yellowCards !== "" && answers.yellowCards != null ? escapeHTML(String(answers.yellowCards)) : "",
       "Within 10 counts as correct.",
-      pointDetails.yellowCards
+      pointDetails.yellowCards,
+      renderCorrectAnswerHtml(correctAnswers.yellowCards)
     )}
     ${renderPublicAnswerCard(
       "USA elimination round",
       answers.usaOut ? escapeHTML(answers.usaOut) : "",
       "",
-      pointDetails.usaOut
+      pointDetails.usaOut,
+      renderCorrectAnswerHtml(correctAnswers.usaOut)
     )}
     ${renderPublicAnswerCard(
       "Semifinalist",
       answers.semifinalist ? escapeHTML(countryOptionLabel(answers.semifinalist)) : "",
       "",
-      pointDetails.semifinalist
+      pointDetails.semifinalist,
+      renderCorrectAnswerHtml(correctAnswers.semifinalist)
     )}
     ${renderPublicAnswerCard(
       "World Cup winner",
       answers.winner ? escapeHTML(countryOptionLabel(answers.winner)) : "",
       "",
-      pointDetails.winner
+      pointDetails.winner,
+      renderCorrectAnswerHtml(correctAnswers.winner)
     )}
   `);
 }
