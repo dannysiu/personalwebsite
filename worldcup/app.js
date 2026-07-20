@@ -302,6 +302,11 @@ const completedSemifinalTickerResults = {
   "102": { homeScore: 1, awayScore: 2, winner: "Argentina" }
 };
 
+const completedFinalsTickerResults = {
+  "103": { homeScore: 6, awayScore: 4, winner: "England" },
+  "104": { homeScore: 1, awayScore: 0, winner: "Spain" }
+};
+
 const finalMatch = {
   id: "104",
   label: "Final",
@@ -423,6 +428,7 @@ const saveSemifinalBonusBtn = document.getElementById("saveSemifinalBonusBtn");
 const semifinalBonusStatus = document.getElementById("semifinalBonusStatus");
 const viewLeaderboardBtn = document.getElementById("viewLeaderboardBtn");
 const leaderboardSection = document.getElementById("leaderboardSection");
+const winnerPodium = document.getElementById("winnerPodium");
 
 const adminSection = document.getElementById("adminSection");
 const adminGroupResultsForm = document.getElementById("adminGroupResultsForm");
@@ -8085,12 +8091,15 @@ function renderLeaderboard(rows) {
 
   const sorted = rows.sort(compareLeaderboardRows);
   latestLeaderboardRows = sorted;
+  renderWinnerPodium(sorted);
 
   sorted.forEach((r, i) => {
     const tr = document.createElement("tr");
+    const rankClass = leaderboardRankClass(i);
+    if (rankClass) tr.classList.add(rankClass);
     const matchPoints = r.group_points + r.match_points;
     tr.innerHTML = `
-      <td>${i + 1}</td>
+      <td>${renderLeaderboardRank(i)}</td>
       <td class="leaderboard-country-cell">${renderRootingForFlags(r.rootingForCountries)}</td>
       <td>
         ${
@@ -8120,6 +8129,41 @@ function renderLeaderboard(rows) {
   if (playerCount) playerCount.textContent = sorted.length;
   if (lastUpdated) lastUpdated.textContent = new Date().toLocaleString();
   if (matchCount) matchCount.textContent = "Live";
+}
+
+function leaderboardRankClass(index) {
+  return ["leaderboard-rank-first", "leaderboard-rank-second", "leaderboard-rank-third"][index] || "";
+}
+
+function renderLeaderboardRank(index) {
+  const medals = ["🥇", "🥈", "🥉"];
+  const medal = medals[index] || "";
+  const rank = index + 1;
+
+  if (!medal) return rank;
+  return `<span class="leaderboard-medal-rank"><span class="leaderboard-medal">${medal}</span><span>${rank}</span></span>`;
+}
+
+function renderWinnerPodium(rows = []) {
+  if (!winnerPodium) return;
+
+  const winners = rows.slice(0, 3);
+  if (!winners.length) {
+    if (!winnerPodium.children.length) {
+      winnerPodium.textContent = "Final standings will appear here soon.";
+    }
+    return;
+  }
+
+  const rankLabels = ["1st Place", "2nd Place", "3rd Place"];
+  const rankClasses = ["winner-podium-first", "winner-podium-second", "winner-podium-third"];
+  winnerPodium.innerHTML = winners.map((winner, index) => `
+    <div class="winner-podium-card ${rankClasses[index]}">
+      <span class="winner-podium-rank">${rankLabels[index]}</span>
+      <span class="winner-podium-name">${escapeHTML(winner.display_name || "Player")}</span>
+      <span class="winner-podium-points">${Number(winner.total_points || 0)} pts</span>
+    </div>
+  `).join("");
 }
 
 function renderLeaderboardDisplayName(displayName = "Player") {
@@ -9941,21 +9985,15 @@ async function loadWorldCupTicker() {
   scheduleNextTickerRefresh(matches);
 
   if (updated) {
-    updated.textContent = "Final weekend";
+    updated.textContent = "Final results";
   }
 }
 
 async function buildWorldCupTickerMatches() {
-  const staticMatches = [
-    ...semifinalMatches.map(buildCompletedSemifinalTickerMatch),
-    buildStaticTickerMatch(thirdPlaceMatch, "3rd Place"),
-    buildStaticTickerMatch(finalMatch, "Final")
+  return [
+    buildCompletedFinalsTickerMatch(thirdPlaceMatch, "3rd Place"),
+    buildCompletedFinalsTickerMatch(finalMatch, "World Cup Final")
   ];
-  const feedMatches = await loadTickerFeedMatches();
-
-  return staticMatches.map(match =>
-    applyTickerFeedMatch(match, feedMatches) || match
-  );
 }
 
 async function loadTickerFeedMatches() {
@@ -9983,6 +10021,26 @@ function buildCompletedSemifinalTickerMatch(match) {
     status: {
       type: "final",
       detail: ""
+    },
+    winnerName: result.winner || "",
+    home: tickerTeamFromCountry(match.home, result.homeScore),
+    away: tickerTeamFromCountry(match.away, result.awayScore)
+  };
+}
+
+function buildCompletedFinalsTickerMatch(match, round) {
+  const result = completedFinalsTickerResults[match.id] || {};
+
+  return {
+    id: match.id,
+    round,
+    date: match.startTime,
+    venue: match.venue,
+    tickerVenue: match.tickerVenue,
+    tickerLocation: match.tickerLocation,
+    status: {
+      type: "final",
+      detail: "Finished"
     },
     winnerName: result.winner || "",
     home: tickerTeamFromCountry(match.home, result.homeScore),
