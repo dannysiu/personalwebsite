@@ -1,2 +1,2 @@
-:HL["/helicloud/_next/static/css/d53ce55f327e776e.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"225m6v4NU_8hG6VJonXrs"}
+:HL["/helicloud/_next/static/css/fcfd3100f54dea53.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"sr38J3jrTkPLq-jynKVNN"}

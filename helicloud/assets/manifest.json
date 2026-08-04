@@ -34,7 +34,10 @@
     "boost": null,
     "prune": null,
     "sunseed": null,
-    "magnet": null
+    "magnet": null,
+    "tailwind": "assets/route-sprite-atlas.png#cell-15",
+    "bubble-bloom": "assets/route-sprite-atlas.png#cell-15",
+    "time-dew": "assets/route-sprite-atlas.png#cell-15"
   },
   "backgrounds": {
     "sky": null,
@@ -42,7 +45,8 @@
     "floatingIslands": null,
     "midgroundPlants": null,
     "foregroundLeaves": null,
-    "weather": null
+    "weather": null,
+    "themedRouteAtlas": "assets/route-sprite-atlas.png"
   },
   "missions": {
     "mosslight-meadow": null,
