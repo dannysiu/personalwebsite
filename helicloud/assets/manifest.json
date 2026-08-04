@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "style": "original watercolor and cut-paper storybook",
+  "fallback": "procedural-phaser-graphics",
+  "helicopters": {
+    "petal-post": { "frames": null, "frameWidth": 128, "frameHeight": 80 },
+    "bubble-cab": { "frames": null, "frameWidth": 128, "frameHeight": 80 },
+    "acorn-dart": { "frames": null, "frameWidth": 128, "frameHeight": 80 }
+  },
+  "pilots": {
+    "pip": null,
+    "mizzle": null,
+    "saffron": null
+  },
+  "cargo": {
+    "sunseed": null,
+    "pollen": null,
+    "dew": null,
+    "cloudling": null,
+    "starbloom": null
+  },
+  "plants": {
+    "bellflower": null,
+    "dewfern": null,
+    "bridgevine": null,
+    "lantern-orchid": null,
+    "snapdragon": null,
+    "cloudberry": null,
+    "whistle-reed": null,
+    "starbloom": null
+  },
+  "powerUps": {
+    "shield": null,
+    "boost": null,
+    "prune": null,
+    "sunseed": null,
+    "magnet": null
+  },
+  "backgrounds": {
+    "sky": null,
+    "distantClouds": null,
+    "floatingIslands": null,
+    "midgroundPlants": null,
+    "foregroundLeaves": null,
+    "weather": null
+  },
+  "missions": {
+    "mosslight-meadow": null,
+    "raindrop-terraces": null,
+    "moonpetal-orchard": null,
+    "whistling-boughs": null,
+    "ruins-of-verdelume": null,
+    "starbloom-crown": null
+  },
+  "audio": {
+    "music": null,
+    "wind": null,
+    "rotor": null,
+    "plantGrowth": null,
+    "collection": null,
+    "shield": null,
+    "delivery": null,
+    "creature": null,
+    "weather": null
+  }
+}
