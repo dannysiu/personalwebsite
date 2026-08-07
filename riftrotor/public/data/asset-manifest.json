@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "strategy": "procedural-phaser-placeholders",
+  "pairedAssets": {
+    "gate": { "solar": "gate_solar.png", "void": "gate_void.png", "size": [72, 720], "anchor": [0.5, 0.5], "collision": "gate-slot" },
+    "drone": { "solar": "drone_solar.png", "void": "drone_void.png", "size": [56, 56], "anchor": [0.5, 0.5], "collision": "circle-24" },
+    "city": { "solar": "city_solar.png", "void": "city_void.png", "size": [1280, 720], "anchor": [0, 0], "collision": null },
+    "crystal": { "solar": "crystal_solar.png", "void": "crystal_void.png", "size": [32, 32], "anchor": [0.5, 0.5], "collision": "circle-12" },
+    "serpent": { "solar": "serpent_solar.png", "void": "serpent_void.png", "size": [420, 300], "anchor": [0.5, 0.5], "collision": "segmented" }
+  },
+  "fallback": "All listed textures are represented by runtime-generated Phaser Graphics. No network requests or missing image references are required to play. Drop matching PNGs into public/assets and update the runtime loader to replace the procedural layer."
+}

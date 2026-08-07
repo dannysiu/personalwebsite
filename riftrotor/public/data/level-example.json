@@ -1,0 +1,15 @@
+{
+  "id": "story-01-first-fracture",
+  "title": "The First Fracture",
+  "seed": 104729,
+  "lengthMeters": 2400,
+  "startDimension": "solar",
+  "segments": [
+    { "at": 0, "type": "tutorial", "gap": 270, "dimensions": ["solar", "void"] },
+    { "at": 420, "type": "branch", "solarRoute": "high-crystal-arc", "voidRoute": "low-machine-duct" },
+    { "at": 760, "type": "gravity-zone", "direction": "reverse", "length": 180 },
+    { "at": 1080, "type": "echo-lock", "delaySeconds": 1.25, "reward": "reality-merge" },
+    { "at": 1380, "type": "secret-chamber", "entryDimension": "void", "exitDimension": "solar" },
+    { "at": 1800, "type": "boss", "boss": "twin-world-serpent", "weakPointPattern": ["void", "solar", "void", "solar"] }
+  ]
+}
