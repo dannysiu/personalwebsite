@@ -1,0 +1,12 @@
+{
+  "gravity": 760,
+  "riseAcceleration": 1050,
+  "maximumRiseVelocity": -330,
+  "maximumFallVelocity": 390,
+  "baseGateGap": 235,
+  "minimumGateGap": 155,
+  "pulseEnergy": { "onBeat": 12, "offBeat": 20 },
+  "pulseRadius": { "onBeat": 190, "offBeat": 75 },
+  "combo": { "layerEvery": 8, "multiplierEvery": 8, "maximumMultiplier": 5 },
+  "invulnerabilityMs": 1500
+}

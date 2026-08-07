@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "license": "Original generated tones; no recorded or copyrighted song assets",
+  "songs": [
+    {
+      "id": "neon-airwaves",
+      "title": "Neon Airwaves",
+      "composer": "Rotorhythm Signal Lab",
+      "generator": "Web Audio oscillators",
+      "bpm": 128,
+      "layers": ["pulse drums", "triangle bass", "saw lead", "square arpeggio"],
+      "beatmap": "data/beatmaps/neon-airwaves.json"
+    }
+  ]
+}

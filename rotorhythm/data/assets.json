@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "license": "Original procedural art generated at runtime",
+  "textures": [
+    { "id": "craft", "kind": "phaser-graphics", "description": "Signal Wren player aircraft" },
+    { "id": "spark", "kind": "phaser-graphics", "description": "Musical contrail particle" },
+    { "id": "note", "kind": "phaser-graphics", "description": "Bonus note collectible" },
+    { "id": "hazard", "kind": "phaser-graphics", "description": "Flying instrument hazard" },
+    { "id": "projectile", "kind": "phaser-graphics", "description": "Boss rhythm projectile" }
+  ],
+  "districts": ["synthwave", "jazz", "factory", "storm", "lofi", "volcano"]
+}
