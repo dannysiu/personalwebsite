@@ -1,0 +1,9 @@
+{
+  "physics": { "gravity": 420, "lift": 850, "maxVerticalSpeed": 430, "echoDelaySeconds": 1.25 },
+  "flight": { "baseSpeed": 220, "maxSpeedBonus": 160, "speedRampPerMeter": 0.018 },
+  "phase": { "shiftCost": 18, "rechargePerSecond": 5.8, "forcedShiftCost": 8 },
+  "instability": { "standardPerSecond": 4.3, "practicePerSecond": 2.4, "warningAt": 74, "forcedShiftAt": 100 },
+  "fuel": { "burnPerSecond": 2.2, "pickupRestore": 38 },
+  "difficulty": { "relaxedSpeed": 0.86, "standardSpeed": 1, "expertSpeed": 1.13, "minimumGate": 138, "maximumGate": 270 },
+  "scoring": { "gate": 120, "pickup": 180, "echoRelic": 650, "echoDoor": 400, "bossShiftHit": 750, "bossClear": 5000 }
+}
