@@ -670,6 +670,13 @@ h3 {
   border-top: 1px solid var(--line);
 }
 
+.project-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem 1rem;
+}
+
 .result-chip {
   color: var(--muted);
   font-size: 0.8rem;
@@ -935,6 +942,10 @@ h3 {
     height: 30rem;
   }
 
+  .portrait-frame::before {
+    right: 0.25rem;
+  }
+
   .section {
     padding-block: 4.25rem;
   }
@@ -962,6 +973,10 @@ h3 {
   .footer-bottom {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .project-links {
+    justify-content: flex-start;
   }
 
   .project-media {
