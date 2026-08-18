@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { defaultHud, modes, powerups } from "./gameData";
+import {
+  googleAuthMessage,
+  observeGooglePilot,
+  signInGooglePilot,
+  signOutGooglePilot,
+  type GooglePilot,
+} from "./googleAuth";
 import type { GameMode, HudState, RuntimeApi, Settings } from "./types";
 
 const SETTINGS_KEY = "rift-rotor-settings-v1";
@@ -57,12 +64,43 @@ export default function GameApp() {
   const [tutorial, setTutorial] = useState(0);
   const [stats, setStats] = useState<StoredStats>({ flights: 0, best: 0, shifts: 0, echoes: 0 });
   const [ready, setReady] = useState(false);
+  const [pilot, setPilot] = useState<GooglePilot | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     const savedSettings = loadJson(SETTINGS_KEY, defaults);
     settingsRef.current = savedSettings;
+    // Restore browser-owned preferences after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSettingsState(savedSettings);
     setStats(loadJson(STATS_KEY, { flights: 0, best: 0, shifts: 0, echoes: 0 }));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let stopObserving: (() => void) | undefined;
+
+    observeGooglePilot((nextPilot) => {
+      if (cancelled) return;
+      setPilot(nextPilot);
+      setAuthReady(true);
+      setAuthBusy(false);
+    }).then((unsubscribe) => {
+      if (cancelled) unsubscribe();
+      else stopObserving = unsubscribe;
+    }).catch((error) => {
+      if (cancelled) return;
+      setAuthError(googleAuthMessage(error));
+      setAuthReady(true);
+      setAuthBusy(false);
+    });
+
+    return () => {
+      cancelled = true;
+      stopObserving?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -143,6 +181,28 @@ export default function GameApp() {
     } catch { /* browser may block programmatic fullscreen */ }
   };
 
+  const signIn = async () => {
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      await signInGooglePilot();
+    } catch (error) {
+      setAuthError(googleAuthMessage(error));
+      setAuthBusy(false);
+    }
+  };
+
+  const signOut = async () => {
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      await signOutGooglePilot();
+    } catch (error) {
+      setAuthError(googleAuthMessage(error));
+      setAuthBusy(false);
+    }
+  };
+
   const activeModeInfo = modes.find((mode) => mode.id === activeMode)!;
   const dimensionLabel = hud.dimension === "solar" ? "SOLAR" : "VOID";
 
@@ -156,6 +216,16 @@ export default function GameApp() {
         </button>
         <div className="mission-pill"><span className="signal-dot" /> {activeModeInfo.label.toUpperCase()} <em>01</em></div>
         <nav className="top-actions" aria-label="Game actions">
+          {pilot ? (
+            <button className="pilot-chip" onClick={signOut} disabled={authBusy} title={`Signed in as ${pilot.email}. Click to sign out.`}>
+              {pilot.photoUrl ? <img src={pilot.photoUrl} alt="" referrerPolicy="no-referrer" /> : <span>{pilot.displayName.slice(0, 1).toUpperCase()}</span>}
+              <b>{pilot.displayName}</b><small>SIGN OUT</small>
+            </button>
+          ) : (
+            <button className="pilot-chip signed-out" onClick={signIn} disabled={!authReady || authBusy} title="Sign in with Gmail or Google">
+              <span>G</span><b>{authBusy ? "CONNECTING" : "GMAIL"}</b><small>SIGN IN</small>
+            </button>
+          )}
           <IconButton label="Achievements" onClick={() => { runtimeRef.current?.pause(true); setScreen("achievements"); }}>⌂</IconButton>
           <IconButton label="Toggle fullscreen" onClick={fullscreen}>⛶</IconButton>
           <IconButton label="Settings and pause" onClick={pause}>Ⅱ</IconButton>
@@ -200,6 +270,22 @@ export default function GameApp() {
               <h1><span>RIFT</span> ROTOR</h1>
               <p className="tagline">TWO WORLDS. <b>ONE FLIGHT.</b></p>
               <p className="intro">Hold to rise. Release to fall. Phase between overlapping realities before either one tears you apart.</p>
+              <div className={`pilot-access ${pilot ? "connected" : ""}`}>
+                {pilot ? (
+                  <>
+                    <span className="pilot-avatar">{pilot.photoUrl ? <img src={pilot.photoUrl} alt="" referrerPolicy="no-referrer" /> : pilot.displayName.slice(0, 1).toUpperCase()}</span>
+                    <span><small>GOOGLE PILOT CONNECTED</small><b>{pilot.displayName}</b><em>{pilot.email}</em></span>
+                    <button onClick={signOut} disabled={authBusy}>SIGN OUT</button>
+                  </>
+                ) : (
+                  <>
+                    <span className="google-mark">G</span>
+                    <span><small>OPTIONAL PILOT ID</small><b>Sign in with Gmail</b><em>Use your Google account—no ChatGPT login.</em></span>
+                    <button onClick={signIn} disabled={!authReady || authBusy}>{authBusy ? "CONNECTING…" : "CONNECT"}</button>
+                  </>
+                )}
+              </div>
+              {authError && <p className="auth-error" role="alert">{authError}</p>}
               <div className="primary-actions">
                 <button className="play-button" onClick={() => start("story")} disabled={!ready}><span>▶</span><b>BEGIN CAMPAIGN</b><small>CONTINUE: THE FIRST FRACTURE</small></button>
                 <button className="square-action" onClick={() => setScreen("mode")}><span>◈</span><b>SELECT MODE</b></button>
@@ -263,7 +349,7 @@ export default function GameApp() {
         <div><span>PHASE</span><KeyCap>{settings.controlMode === "keyboard" ? "SHIFT / E" : "SHIFT"}</KeyCap><small>CHANGE DIMENSION</small></div>
         <div className="world-legend"><i className="solar-dot" /> SOLAR <i className="void-dot" /> VOID <i className="echo-dot" /> ECHO</div>
       </footer>
-      <div className="build-label">RIFT NETWORK // LOCAL LINK <i /> STABLE</div>
+      <div className="build-label">RIFT NETWORK // DANNYSIUDATA.COM <i /> STABLE</div>
     </main>
   );
 }

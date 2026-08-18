@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[4441,[],""]
+3:I[4461,[],""]
+:HL["/helicloud/_next/static/css/fcfd3100f54dea53.css","style"]
+0:{"rsc":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/helicloud/_next/static/css/fcfd3100f54dea53.css","precedence":"next"}]],["$","html",null,{"lang":"en","suppressHydrationWarning":true,"children":["$","body",null,{"children":["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"sr38J3jrTkPLq-jynKVNN"}

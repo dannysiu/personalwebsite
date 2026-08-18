@@ -1,0 +1,32 @@
+{
+  "$schema": "../../docs/beatmap.schema.json",
+  "id": "neon-airwaves",
+  "title": "Neon Airwaves",
+  "artist": "Rotorhythm Signal Lab",
+  "bpm": 128,
+  "beatsPerMeasure": 4,
+  "duration": 128,
+  "offset": 0.08,
+  "tempoChanges": [
+    { "beat": 192, "bpm": 136 },
+    { "beat": 256, "bpm": 128 }
+  ],
+  "sections": [
+    { "beat": 0, "name": "Ignition", "district": "synthwave", "layer": 0 },
+    { "beat": 32, "name": "Night Drive", "district": "jazz", "layer": 1 },
+    { "beat": 64, "name": "Assembly", "district": "factory", "layer": 2 },
+    { "beat": 96, "name": "Overture", "district": "storm", "layer": 2 },
+    { "beat": 128, "name": "Cloudbreak", "district": "lofi", "layer": 3 },
+    { "beat": 160, "name": "Eruption", "district": "volcano", "layer": 3 }
+  ],
+  "events": [
+    { "beat": 8, "type": "pickup", "power": "Bass Shield" },
+    { "beat": 24, "type": "remix" },
+    { "beat": 48, "type": "switch" },
+    { "beat": 72, "type": "pickup", "power": "Perfect Pitch" },
+    { "beat": 96, "type": "environment", "action": "lightning" },
+    { "beat": 120, "type": "pickup", "power": "Echo Wave" },
+    { "beat": 144, "type": "remix" },
+    { "beat": 176, "type": "boss", "boss": "The Resonator" }
+  ]
+}

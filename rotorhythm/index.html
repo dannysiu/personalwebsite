@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#090b1b" />
+    <meta name="description" content="Rotorhythm: Neon Airwaves — a one-button rhythm-flight game." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rotorhythm: Neon Airwaves" />
+    <meta property="og:description" content="Ride the neon beat in a responsive rhythm-flight browser game." />
+    <meta property="og:url" content="https://dannysiudata.com/rotorhythm/" />
+    <meta property="og:image" content="https://dannysiudata.com/rotorhythm/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rotorhythm: Neon Airwaves" />
+    <meta name="twitter:description" content="Ride the neon beat in a responsive rhythm-flight browser game." />
+    <meta name="twitter:image" content="https://dannysiudata.com/rotorhythm/og.png" />
+    <title>Rotorhythm: Neon Airwaves</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23090b1b'/%3E%3Cpath d='M17 49V15h18q13 0 13 11 0 8-8 10l10 13H39L30 37h-4v12zm9-20h8q5 0 5-4 0-3-5-3h-8z' fill='%2330f2e2'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div id="app" aria-live="polite">
+      <header class="topbar">
+        <button class="brand" id="home-button" aria-label="Return to main menu">
+          <span class="brand-mark">R</span>
+          <span><b>ROTORHYTHM</b><small>NEON AIRWAVES</small></span>
+        </button>
+        <div class="top-actions">
+          <button class="account-button" id="account-button" aria-label="Sign in with Google"><span id="account-avatar">G</span><b id="account-label">SIGN IN</b></button>
+          <button class="icon-button" id="mute-button" aria-label="Mute audio">♫</button>
+          <button class="icon-button" id="fullscreen-button" aria-label="Toggle fullscreen">⛶</button>
+          <button class="icon-button" id="settings-button" aria-label="Open settings">⚙</button>
+        </div>
+      </header>
+
+      <main>
+        <section id="menu-screen" class="screen active">
+          <div class="menu-grid">
+            <div class="hero-copy">
+              <p class="eyebrow"><span></span> SIGNAL LOCKED • 128 BPM</p>
+              <h1>RIDE THE<br /><em>NEON BEAT.</em></h1>
+              <p class="lede">One-button flight. Full-spectrum rhythm. Rise on the pulse, thread the skyline, and build the mix.</p>
+              <div class="menu-actions">
+                <button class="primary-button" id="play-button"><span>▶</span> Launch run</button>
+                <button class="secondary-button" id="practice-button">Practice mode</button>
+              </div>
+              <div class="flight-plan">
+                <label><span>Song</span><select id="song-select"><option value="neon-airwaves">Neon Airwaves — 128 BPM</option></select></label>
+                <label><span>Starting district</span><select id="district-select"><option value="-1">Full district tour</option><option value="0">Synthwave Skyline</option><option value="1">Jazz Rooftop District</option><option value="2">Electronic Factory</option><option value="3">Orchestral Thunderstorm</option><option value="4">Lo-Fi Cloud Garden</option><option value="5">Percussion Volcano</option></select></label>
+              </div>
+              <p class="quick-controls"><kbd>SPACE</kbd> HOLD TO RISE <i></i> <kbd>ENTER</kbd> BEAT PULSE <i></i> <kbd>E</kbd> POWER-UP</p>
+            </div>
+
+            <aside class="mission-card">
+              <div class="mission-art" aria-hidden="true">
+                <div class="sun"></div><div class="city city-back"></div><div class="city city-front"></div>
+                <div class="aircraft-mini">◢</div><div class="flight-line"></div>
+              </div>
+              <div class="mission-body">
+                <p class="eyebrow cyan">NOW PLAYING</p>
+                <h2>Neon Airwaves</h2>
+                <div class="mission-meta"><span>SYNTHWAVE SKYLINE</span><span>02:08</span><span>128 BPM</span></div>
+                <div class="difficulty-row"><span>Intensity</span><span class="difficulty-pips"><i></i><i></i><i></i><i></i><i></i></span></div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="mode-strip" id="mode-strip" aria-label="Game modes">
+            <button class="mode-card selected" data-mode="campaign"><span>01</span><b>Music campaign</b><small>District-by-district journey</small></button>
+            <button class="mode-card" data-mode="endless"><span>∞</span><b>Endless mix</b><small>Survive the evolving set</small></button>
+            <button class="mode-card" data-mode="daily"><span>24</span><b>Daily challenge</b><small>One shared seeded run</small></button>
+            <button class="mode-card" data-mode="boss"><span>⚡</span><b>Boss rush</b><small>Rhythm guardians only</small></button>
+            <button class="mode-card" data-mode="relaxed"><span>☁</span><b>Relaxed flight</b><small>Wide gates, soft timing</small></button>
+            <button class="mode-card" data-mode="nofail"><span>◇</span><b>No-fail visualizer</b><small>Fly freely through the mix</small></button>
+            <button class="mode-card" data-mode="expert"><span>!</span><b>Expert one-life</b><small>One hit ends the signal</small></button>
+            <button class="mode-card" data-mode="accuracy"><span>%</span><b>Accuracy challenge</b><small>Narrow windows, pure timing</small></button>
+          </div>
+          <div class="profile-row">
+            <span>BEST SCORE <b id="best-score">000,000</b></span>
+            <span>BEST ACCURACY <b id="best-accuracy">—</b></span>
+            <span>WINGS <b id="wing-count">1 / 6</b></span>
+          </div>
+        </section>
+
+        <section id="game-screen" class="screen">
+          <div id="game-shell">
+            <div id="game-container" role="application" aria-label="Rotorhythm game canvas"></div>
+            <div id="hud">
+              <div class="hud-left"><small>SCORE</small><b id="hud-score">000000</b><span id="hud-multiplier">×1</span></div>
+              <div class="hud-center"><span class="beat-chevron">‹</span><div class="beat-track"><i id="beat-marker"></i></div><b id="beat-label">BEAT</b><span class="beat-chevron">›</span></div>
+              <div class="hud-right"><small>COMBO</small><b id="hud-combo">0</b><div class="energy-track"><i id="energy-fill"></i></div></div>
+            </div>
+            <div class="district-tag"><small>DISTRICT 01</small><b id="district-name">SYNTHWAVE SKYLINE</b></div>
+            <div class="layer-stack" id="layer-stack"><span class="on">BEAT</span><span>BASS</span><span>LEAD</span><span>ARP</span></div>
+            <div class="power-slot" id="power-slot"><small>POWER-UP</small><b>EMPTY</b><span>Press E</span></div>
+            <div class="touch-controls" id="touch-controls">
+              <div class="flight-zone" id="flight-zone"><span>HOLD TO RISE</span></div>
+              <div class="action-zone">
+                <button id="pulse-button"><b>◉</b><span>BEAT PULSE</span></button>
+                <button id="power-button"><b>⚡</b><span>POWER-UP</span></button>
+              </div>
+            </div>
+            <button id="pause-button" class="pause-button" aria-label="Pause game">Ⅱ</button>
+          </div>
+        </section>
+
+        <section id="results-screen" class="screen results-screen">
+          <p class="eyebrow"><span></span> RUN COMPLETE</p>
+          <h1 id="result-title">SIGNAL HELD</h1>
+          <div class="grade-ring"><small>RHYTHM GRADE</small><b id="result-grade">A</b></div>
+          <div class="result-score"><small>FINAL SCORE</small><b id="result-score">0</b><span id="new-best">NEW BEST</span></div>
+          <div class="result-grid">
+            <div><span>Accuracy</span><b id="result-accuracy">0%</b></div>
+            <div><span>Longest combo</span><b id="result-combo">0</b></div>
+            <div><span>Missed beats</span><b id="result-misses">0</b></div>
+            <div><span>Flight distance</span><b id="result-distance">0 m</b></div>
+          </div>
+          <div class="menu-actions centered"><button class="primary-button" id="retry-button">↻ Fly again</button><button class="secondary-button" id="results-menu-button">Back to menu</button></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="settings-dialog">
+      <form method="dialog" class="settings-panel">
+        <header><div><p class="eyebrow cyan">FLIGHT COMPUTER</p><h2>Settings & calibration</h2></div><button class="icon-button" value="close" aria-label="Close settings">×</button></header>
+        <div class="settings-tabs" role="tablist"><button type="button" class="active" data-tab="controls">Controls</button><button type="button" data-tab="audio">Audio</button><button type="button" data-tab="accessibility">Accessibility</button><button type="button" data-tab="calibration">Calibration</button></div>
+        <div class="settings-content" id="settings-content"></div>
+      </form>
+    </dialog>
+
+    <dialog id="pause-dialog">
+      <div class="pause-panel"><p class="eyebrow cyan">SIGNAL PAUSED</p><h2>Take a breath.</h2><button class="primary-button" id="resume-button">Resume flight</button><button class="secondary-button" id="restart-button">Restart run</button><button class="text-button" id="quit-button">Quit to menu</button></div>
+    </dialog>
+
+    <dialog id="account-dialog">
+      <div class="account-panel">
+        <button class="icon-button account-close" id="account-close" aria-label="Close account dialog">×</button>
+        <div class="google-mark" aria-hidden="true">G</div>
+        <p class="eyebrow cyan">PLAYER PROFILE</p>
+        <h2 id="account-title">Fly under your own signal.</h2>
+        <p id="account-description">Sign in with your Google account to identify your pilot profile. Rotorhythm remains fully playable as a guest.</p>
+        <div id="signed-out-actions">
+          <button class="google-button" id="google-signin-button"><span>G</span> Continue with Google</button>
+          <button class="text-button" id="guest-button">Continue as guest</button>
+        </div>
+        <div id="signed-in-actions" hidden>
+          <div class="pilot-card"><span id="pilot-avatar">R</span><div><b id="pilot-name">Player</b><small id="pilot-email"></small></div></div>
+          <button class="secondary-button" id="google-signout-button">Sign out</button>
+        </div>
+        <p class="auth-note">Authentication is handled by Google. Scores and preferences stay in this browser.</p>
+        <p class="auth-error" id="auth-error" role="alert"></p>
+      </div>
+    </dialog>
+
+    <div id="toast" role="status"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script type="module" src="js/app.js?v=4"></script>
+  </body>
+</html>

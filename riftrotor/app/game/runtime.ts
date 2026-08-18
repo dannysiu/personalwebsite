@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import type { Dimension, GameMode, HudState, RuntimeApi, Settings } from "./types";
-import { defaultHud, powerups } from "./gameData";
+import { powerups } from "./gameData";
 
 type Gate = { x: number; w: number; gapY: number; gap: number; dim: Dimension | "both"; passed: boolean; lock: boolean; pulse: number };
 type Pickup = { x: number; y: number; dim: Dimension | "both"; kind: "phase" | "fuel" | "echo" | "power"; taken: boolean; seed: number };
@@ -16,7 +16,6 @@ const SOLAR_DARK = 0x106f7b;
 const GOLD = 0xf6c453;
 const VOID = 0xff2e97;
 const VOID_DARK = 0x50115f;
-const VIOLET = 0x8b5cf6;
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "dist/**",
     "out/**",
+    "assets/**",
+    "static-dist/**",
     "build/**",
     "next-env.d.ts",
   ]),
@@ -23,6 +25,11 @@ const eslintConfig = defineConfig([
   jsxA11y.flatConfigs.recommended,
   next.configs["core-web-vitals"],
   {
+    rules: {
+      // Google profile photos are remote, optional, and intentionally rendered
+      // without the Next image pipeline so this component stays static-hostable.
+      "@next/next/no-img-element": "off",
+    },
     languageOptions: {
       globals: {
         ...globals.browser,

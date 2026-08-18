@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rotorhythm beat map",
+  "type": "object",
+  "required": ["id", "title", "bpm", "beatsPerMeasure", "sections", "events"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "artist": { "type": "string" },
+    "bpm": { "type": "number", "exclusiveMinimum": 0 },
+    "beatsPerMeasure": { "type": "integer", "minimum": 1 },
+    "duration": { "type": "number", "exclusiveMinimum": 0 },
+    "offset": { "type": "number" },
+    "tempoChanges": { "type": "array", "items": { "$ref": "#/$defs/tempoChange" } },
+    "sections": { "type": "array", "items": { "$ref": "#/$defs/section" } },
+    "events": { "type": "array", "items": { "$ref": "#/$defs/event" } }
+  },
+  "$defs": {
+    "tempoChange": { "type": "object", "required": ["beat", "bpm"], "properties": { "beat": { "type": "number" }, "bpm": { "type": "number" } } },
+    "section": { "type": "object", "required": ["beat", "name", "district"], "properties": { "beat": { "type": "number" }, "name": { "type": "string" }, "district": { "type": "string" }, "layer": { "type": "integer" } } },
+    "event": { "type": "object", "required": ["beat", "type"], "properties": { "beat": { "type": "number" }, "subdivision": { "enum": ["beat", "half", "measure"] }, "type": { "enum": ["pickup", "remix", "switch", "environment", "boss", "gate", "hazard"] }, "power": { "type": "string" }, "action": { "type": "string" }, "boss": { "type": "string" } } }
+  }
+}
