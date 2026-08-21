@@ -903,6 +903,7 @@ h3 {
 
   .nav-links {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 0.35rem;
     font-size: 0.68rem;
