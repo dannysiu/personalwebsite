@@ -651,6 +651,79 @@ h3 {
   transform: scale(1.025);
 }
 
+.usopen-project-media {
+  display: grid;
+  align-content: start;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  color: #fff;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(216, 255, 62, 0.18), transparent 40%),
+    linear-gradient(145deg, #061431, #0d2f66);
+}
+
+.usopen-preview-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.usopen-preview-top span {
+  color: #d8ff3e;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+}
+
+.usopen-preview-top strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.3rem, 2.4vw, 2rem);
+  font-weight: 500;
+}
+
+.usopen-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  padding-top: 1.25rem;
+}
+
+.usopen-preview-round {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.usopen-preview-round small {
+  margin-bottom: 0.1rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+
+.usopen-preview-round span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.3rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 3px solid #d8ff3e;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.usopen-preview-round b { color: #d8ff3e; font-weight: 800; }
+.usopen-preview-shift { padding-top: 2.7rem; }
+.usopen-preview-shift-2 { padding-top: 4.2rem; }
+.usopen-preview-round .usopen-preview-winner { background: #d8ff3e; color: #071837; border-color: #d8ff3e; }
+.usopen-preview-round .usopen-preview-winner b { color: #071837; }
+
 .project-copy h2 {
   margin-bottom: 1.4rem;
   font-size: clamp(2.35rem, 4vw, 3.8rem);
