@@ -6,10 +6,11 @@ An interactive 2026 US Open men's singles bracket forecast for `dannysiudata.com
 
 - The remaining official men's singles draw as of September 3, 2026 at 5:54 PM Central.
 - Central-time conversions of the official Day 5 order of play.
-- User-selectable winners with automatic bracket propagation.
+- A connected, classic tournament-tree bracket with user-selectable winners and automatic propagation.
 - A one-click model projection and exact bracket-based title probabilities.
-- Optional Google sign-in using the Firebase project already configured for `dannysiudata.com`.
-- Device-local bracket saves, separated by Google account when signed in.
+- Optional Gmail sign-in through Google OAuth using the Firebase project already configured for `dannysiudata.com`.
+- Device-local bracket saves, separated by Gmail account when signed in.
+- Clickable player portraits with public biography, ranking, coach, playing hand, and birth information loaded from Wikipedia.
 
 ## Updating the tournament snapshot
 

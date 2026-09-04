@@ -9,7 +9,7 @@
   <link rel="icon" sizes="32x32" href="https://dannysiudata.com/img/favicon-32x32.png">
   <link rel="icon" sizes="16x16" href="https://dannysiudata.com/img/favicon-16x16.png">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20260903a">
+  <link rel="stylesheet" href="styles.css?v=20260903b">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to the draw</a>
@@ -24,7 +24,7 @@
         <a class="back-link" href="https://dannysiudata.com/projects.html">Projects</a>
         <button class="google-button" id="signInBtn" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285f4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.41Z"/><path fill="#34a853" d="M12 22c2.7 0 4.98-.9 6.63-2.36l-3.24-2.54c-.9.6-2.05.96-3.39.96-2.6 0-4.81-1.76-5.6-4.13H3.05v2.62A10 10 0 0 0 12 22Z"/><path fill="#fbbc05" d="M6.4 13.93A6 6 0 0 1 6.08 12c0-.67.12-1.32.32-1.93V7.45H3.05A10 10 0 0 0 2 12c0 1.64.39 3.19 1.05 4.55l3.35-2.62Z"/><path fill="#ea4335" d="M12 5.94c1.47 0 2.79.5 3.82 1.5l2.87-2.87A9.63 9.63 0 0 0 12 2a10 10 0 0 0-8.95 5.45l3.35 2.62C7.19 7.7 9.4 5.94 12 5.94Z"/></svg>
-          <span>Sign in with Google</span>
+          <span>Continue with Gmail</span>
         </button>
         <div class="account hidden" id="accountPanel">
           <button class="account-button" id="accountButton" type="button" aria-expanded="false" aria-controls="accountMenu">
@@ -34,7 +34,7 @@
           </button>
           <div class="account-menu hidden" id="accountMenu">
             <p id="accountEmail"></p>
-            <p class="account-note">Your bracket is saved on this device.</p>
+            <p class="account-note">Signed in with Gmail. Your bracket is saved on this device.</p>
             <button id="signOutBtn" type="button">Sign out</button>
           </div>
         </div>
@@ -72,15 +72,15 @@
       <div class="workspace-main">
         <div class="view-bar">
           <div class="view-tabs" role="tablist" aria-label="Forecast views">
-            <button class="view-tab active" id="bracketTab" role="tab" aria-selected="true" aria-controls="bracketView">Draw board</button>
+            <button class="view-tab active" id="bracketTab" role="tab" aria-selected="true" aria-controls="bracketView">Classic bracket</button>
             <button class="view-tab" id="oddsTab" role="tab" aria-selected="false" aria-controls="oddsView">Title odds</button>
           </div>
           <p id="saveState" aria-live="polite">Picks save automatically on this device.</p>
         </div>
 
         <div id="bracketView" role="tabpanel" aria-labelledby="bracketTab">
-          <div class="bracket-scroll" id="bracketBoard" tabindex="0" aria-label="Horizontally scrollable tournament draw"></div>
-          <p class="scroll-hint">Scroll sideways to follow the draw <span aria-hidden="true">→</span></p>
+          <div class="bracket-scroll" id="bracketBoard" tabindex="0" aria-label="Horizontally scrollable classic tournament bracket"></div>
+          <p class="scroll-hint">Select a name to pick · select a portrait for the player profile · scroll sideways to follow the draw <span aria-hidden="true">→</span></p>
         </div>
 
         <div class="odds-view hidden" id="oddsView" role="tabpanel" aria-labelledby="oddsTab">
@@ -128,6 +128,7 @@
             <a href="https://www.usopen.org/en_US/draws/mens-singles.html" target="_blank" rel="noopener">Official draw ↗</a>
             <a href="https://www.usopen.org/en_US/scores/schedule/schedule12.html" target="_blank" rel="noopener">Order of play ↗</a>
           </div>
+          <p class="profile-source">Player photos and public biographies are loaded from Wikipedia when a profile is opened.</p>
         </section>
       </aside>
     </section>
@@ -135,10 +136,29 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <dialog class="player-dialog" id="playerDialog" aria-labelledby="profileName">
+    <button class="dialog-close" id="closeProfileBtn" type="button" aria-label="Close player profile">×</button>
+    <div class="profile-hero">
+      <div class="profile-photo" id="profilePhoto" aria-hidden="true"></div>
+      <div>
+        <p class="section-kicker">Player profile</p>
+        <h2 id="profileName">Player</h2>
+        <p id="profileDescription">Loading profile…</p>
+      </div>
+    </div>
+    <div class="profile-stats" id="profileStats"></div>
+    <p class="profile-bio" id="profileBio"></p>
+    <div class="profile-actions">
+      <a id="profileWikipedia" href="https://en.wikipedia.org/" target="_blank" rel="noopener">Full biography ↗</a>
+      <a href="https://www.atptour.com/en/players" target="_blank" rel="noopener">ATP player directory ↗</a>
+    </div>
+    <p class="profile-credit">Public profile details and photo from Wikipedia. Tournament seed and title odds are from this forecast.</p>
+  </dialog>
+
   <footer>
     <p>Unofficial fan forecast by Danny Siu. Draw and schedule data sourced from the US Open. Model probabilities are informational only.</p>
   </footer>
 
-  <script type="module" src="app.js?v=20260903a"></script>
+  <script type="module" src="app.js?v=20260903b"></script>
 </body>
 </html>

@@ -9,8 +9,8 @@ const firebaseConfig = {
 
 const players = new Map();
 
-function addPlayer(name, country, seed, rating) {
-  const record = { name, country, seed, rating };
+function addPlayer(name, country, seed, rating, wikipediaTitle = name) {
+  const record = { name, country, seed, rating, wikipediaTitle };
   players.set(name, record);
   return record;
 }
@@ -21,7 +21,7 @@ function addPlayer(name, country, seed, rating) {
   ["Alejandro Tabilo", "CHI", 25, 70],
   ["Luciano Darderi", "ITA", 21, 73],
   ["Dane Sweeny", "AUS", null, 55],
-  ["Yunchaokete Bu", "CHN", null, 56],
+  ["Yunchaokete Bu", "CHN", null, 56, "Bu Yunchaokete"],
   ["Michael Zheng", "USA", null, 52],
   ["Zachary Svajda", "USA", null, 57],
   ["Arthur Gea", "FRA", null, 54],
@@ -33,10 +33,10 @@ function addPlayer(name, country, seed, rating) {
   ["Benjamin Bonzi", "FRA", null, 61],
   ["Ignacio Buse", "PER", 32, 58],
   ["Jakub Mensik", "CZE", 17, 78],
-  ["Gael Monfils", "FRA", null, 61],
+  ["Gael Monfils", "FRA", null, 61, "Gaël Monfils"],
   ["Learner Tien", "USA", 14, 76],
   ["Taylor Fritz", "USA", 9, 83],
-  ["Francisco Cerundolo", "ARG", 24, 72],
+  ["Francisco Cerundolo", "ARG", 24, 72, "Francisco Cerúndolo"],
   ["Alexander Blockx", "BEL", 28, 68],
   ["Flavio Cobolli", "ITA", 5, 87],
   ["Daniil Medvedev", "—", 7, 84],
@@ -44,16 +44,16 @@ function addPlayer(name, country, seed, rating) {
   ["Valentin Vacherot", "MON", 22, 75],
   ["Frances Tiafoe", "USA", 11, 80],
   ["Alex Michelsen", "USA", 16, 73],
-  ["Daniel Merida", "ESP", null, 52],
-  ["Tomas Martin Etcheverry", "ARG", 27, 69],
+  ["Daniel Merida", "ESP", null, 52, "Daniel Mérida"],
+  ["Tomas Martin Etcheverry", "ARG", 27, 69, "Tomás Martín Etcheverry"],
   ["Mariano Navone", "ARG", null, 61],
   ["Ben Shelton", "USA", 8, 85],
   ["Denis Shapovalov", "CAN", null, 70],
-  ["Jiri Lehecka", "CZE", 18, 76],
+  ["Jiri Lehecka", "CZE", 18, 76, "Jiří Lehečka"],
   ["Stefanos Tsitsipas", "GRE", null, 72],
   ["Alexander Bublik", "KAZ", 15, 79],
   ["Tommy Paul", "USA", 20, 77],
-  ["Yibing Wu", "CHN", null, 63],
+  ["Yibing Wu", "CHN", null, 63, "Wu Yibing"],
   ["Carlos Alcaraz", "ESP", 2, 98]
 ].forEach(args => addPlayer(...args));
 
@@ -141,6 +141,10 @@ const oddsList = document.getElementById("oddsList");
 const oddsTableBody = document.getElementById("oddsTableBody");
 const saveState = document.getElementById("saveState");
 const toast = document.getElementById("toast");
+const playerDialog = document.getElementById("playerDialog");
+const profileCache = new Map();
+const profileDetailCache = new Map();
+let photoObserver;
 
 function storageKey() {
   return `usopen-2026-picks:${currentUser?.uid || "guest"}`;
@@ -274,22 +278,176 @@ function escapeHTML(value) {
   })[character]);
 }
 
+function playerInitials(name) {
+  return name.split(" ").map(part => part[0]).slice(0, 2).join("").toUpperCase();
+}
+
+function normalizeImageUrl(url) {
+  return url?.startsWith("//") ? `https:${url}` : url;
+}
+
+function loadPlayerSummary(player) {
+  if (profileCache.has(player.name)) return profileCache.get(player.name);
+  const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(player.wikipediaTitle)}`;
+  const request = fetch(endpoint, { headers: { Accept: "application/json" } })
+    .then(response => {
+      if (!response.ok) throw new Error(`Profile request failed: ${response.status}`);
+      return response.json();
+    })
+    .then(data => ({
+      description: data.description || "Professional tennis player",
+      extract: data.extract || "",
+      image: normalizeImageUrl(data.thumbnail?.source || data.originalimage?.source || ""),
+      article: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(player.wikipediaTitle)}`
+    }));
+  profileCache.set(player.name, request);
+  return request;
+}
+
+function cleanProfileValue(value) {
+  return value.replace(/\[[^\]]*\]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function loadPlayerDetails(player) {
+  if (profileDetailCache.has(player.name)) return profileDetailCache.get(player.name);
+  const params = new URLSearchParams({
+    origin: "*",
+    action: "parse",
+    page: player.wikipediaTitle,
+    prop: "text",
+    format: "json",
+    formatversion: "2"
+  });
+  const request = fetch(`https://en.wikipedia.org/w/api.php?${params}`)
+    .then(response => {
+      if (!response.ok) throw new Error(`Player details request failed: ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      const documentFragment = new DOMParser().parseFromString(data.parse?.text || "", "text/html");
+      const details = {};
+      documentFragment.querySelectorAll("table.infobox tr").forEach(row => {
+        const heading = cleanProfileValue(row.querySelector("th")?.textContent || "").toLowerCase();
+        const value = cleanProfileValue(row.querySelector("td")?.textContent || "");
+        if (heading && value && !details[heading]) details[heading] = value;
+      });
+      return details;
+    });
+  profileDetailCache.set(player.name, request);
+  return request;
+}
+
+function updatePlayerPhotos(player, summary) {
+  if (!summary.image) return;
+  document.querySelectorAll(`[data-player-photo="${CSS.escape(encodeURIComponent(player.name))}"]`).forEach(image => {
+    image.addEventListener("load", () => image.classList.add("loaded"), { once: true });
+    image.src = summary.image;
+    if (image.complete) image.classList.add("loaded");
+  });
+}
+
+function observePlayerPhotos() {
+  if (!("IntersectionObserver" in window)) return;
+  if (!photoObserver) {
+    photoObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const image = entry.target;
+        photoObserver.unobserve(image);
+        const player = players.get(decodeURIComponent(image.dataset.playerPhoto || ""));
+        if (player) loadPlayerSummary(player).then(summary => updatePlayerPhotos(player, summary)).catch(() => {});
+      });
+    }, { rootMargin: "240px" });
+  }
+  document.querySelectorAll("img[data-player-photo]:not([src])").forEach(image => photoObserver.observe(image));
+}
+
+function detailValue(details, labels, fallback = "Not listed") {
+  const key = Object.keys(details).find(candidate => labels.some(label => candidate === label || candidate.startsWith(`${label} `)));
+  return key ? details[key] : fallback;
+}
+
+function profileStat(label, value) {
+  return `<div class="profile-stat"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`;
+}
+
+function renderProfileStats(player, details = null) {
+  const titleChance = titleOdds.find(item => item.player.name === player.name)?.probability || 0;
+  const ranking = details ? detailValue(details, ["current ranking"]) : "Loading…";
+  const coach = details ? detailValue(details, ["coach", "coach(es)"]) : "Loading…";
+  const plays = details ? detailValue(details, ["plays"]) : "Loading…";
+  const born = details ? detailValue(details, ["born"]) : "Loading…";
+  return [
+    profileStat("Tournament entry", player.seed ? `Seed #${player.seed}` : "Unseeded"),
+    profileStat("Model title odds", formatPercent(titleChance)),
+    profileStat("ATP ranking", ranking),
+    profileStat("Coach", coach),
+    profileStat("Plays", plays),
+    profileStat("Born", born)
+  ].join("");
+}
+
+async function openPlayerProfile(name) {
+  const player = players.get(name);
+  if (!player) return;
+  document.getElementById("profileName").textContent = player.name;
+  document.getElementById("profileDescription").textContent = `${player.country} · Loading public profile…`;
+  document.getElementById("profilePhoto").textContent = playerInitials(player.name);
+  document.getElementById("profileStats").innerHTML = renderProfileStats(player);
+  document.getElementById("profileBio").textContent = "Loading biography and current player information…";
+  document.getElementById("profileWikipedia").href = `https://en.wikipedia.org/wiki/${encodeURIComponent(player.wikipediaTitle)}`;
+  if (!playerDialog.open) playerDialog.showModal();
+
+  const [summaryResult, detailsResult] = await Promise.allSettled([
+    loadPlayerSummary(player),
+    loadPlayerDetails(player)
+  ]);
+  if (document.getElementById("profileName").textContent !== player.name) return;
+
+  if (summaryResult.status === "fulfilled") {
+    const summary = summaryResult.value;
+    document.getElementById("profileDescription").textContent = `${player.country} · ${summary.description}`;
+    document.getElementById("profileBio").textContent = summary.extract || "No public biography is available yet.";
+    document.getElementById("profileWikipedia").href = summary.article;
+    if (summary.image) {
+      document.getElementById("profilePhoto").innerHTML = `<img src="${escapeHTML(summary.image)}" alt="${escapeHTML(player.name)}">`;
+      updatePlayerPhotos(player, summary);
+    }
+  } else {
+    document.getElementById("profileDescription").textContent = `${player.country} · Professional tennis player`;
+    document.getElementById("profileBio").textContent = "The public profile could not be loaded right now. Tournament and forecast details are still available below.";
+  }
+
+  document.getElementById("profileStats").innerHTML = renderProfileStats(
+    player,
+    detailsResult.status === "fulfilled" ? detailsResult.value : {}
+  );
+}
+
 function playerRow(match, ref, player) {
   const selected = player && selections[match.id] === player.name;
   const name = player?.name || sourceLabel(ref);
   const country = player?.country || "—";
   const seed = player?.seed ? `#${player.seed}` : "";
   const encodedName = player ? encodeURIComponent(player.name) : "";
+  const initials = player ? player.name.split(" ").map(part => part[0]).slice(0, 2).join("") : "?";
 
   return `
-    <button class="player-pick${selected ? " selected" : ""}" type="button"
-      data-match="${escapeHTML(match.id)}" data-player="${encodedName}" ${player ? "" : "disabled"}
-      aria-pressed="${selected ? "true" : "false"}">
-      <span class="country-badge">${escapeHTML(country)}</span>
-      <span class="player-name">${escapeHTML(name)}</span>
-      <span class="seed">${escapeHTML(seed)}</span>
-      <span class="pick-check" aria-hidden="true">✓</span>
-    </button>`;
+    <div class="player-row">
+      <button class="profile-trigger" type="button" data-profile="${encodedName}" ${player ? "title=\"View player profile\"" : "disabled"}
+        aria-label="${player ? `Open ${escapeHTML(player.name)} profile` : "Player to be decided"}">
+        <span aria-hidden="true">${escapeHTML(initials)}</span>
+        ${player ? `<img data-player-photo="${encodedName}" alt="" loading="lazy">` : ""}
+      </button>
+      <button class="player-pick${selected ? " selected" : ""}" type="button"
+        data-match="${escapeHTML(match.id)}" data-player="${encodedName}" ${player ? "" : "disabled"}
+        aria-pressed="${selected ? "true" : "false"}">
+        <span class="player-name">${escapeHTML(name)}</span>
+        <span class="country-badge">${escapeHTML(country)}</span>
+        <span class="seed">${escapeHTML(seed)}</span>
+        <span class="pick-check" aria-hidden="true">✓</span>
+      </button>
+    </div>`;
 }
 
 function matchMetadata(round, match) {
@@ -325,32 +483,81 @@ function renderMatch(round, match) {
 }
 
 function renderBracket() {
-  bracketBoard.innerHTML = `<div class="bracket-grid">${rounds.map(round => `
-    <section class="round-column" aria-labelledby="heading-${round.id}">
-      <div class="round-header">
-        <h2 id="heading-${round.id}">${escapeHTML(round.title)}</h2>
-        <span>${round.matches.length} ${round.matches.length === 1 ? "match" : "matches"}</span>
+  const openRound = rounds[0];
+  const treeRounds = rounds.slice(1);
+  const cardWidth = 254;
+  const cardHeight = 158;
+  const roundGap = 72;
+  const basePitch = 176;
+  const treeWidth = treeRounds.length * cardWidth + (treeRounds.length - 1) * roundGap;
+  const treeHeight = treeRounds[0].matches.length * basePitch;
+
+  const cardPosition = (depth, index) => {
+    const center = basePitch * Math.pow(2, depth) * (index + .5);
+    return { x: depth * (cardWidth + roundGap), y: center - cardHeight / 2, center };
+  };
+
+  const connectors = treeRounds.slice(0, -1).flatMap((round, depth) =>
+    round.matches.map((match, index) => {
+      const start = cardPosition(depth, index);
+      const parent = cardPosition(depth + 1, Math.floor(index / 2));
+      const x1 = start.x + cardWidth;
+      const x2 = parent.x;
+      const bend = x1 + roundGap / 2;
+      return `<path d="M ${x1} ${start.center} H ${bend} V ${parent.center} H ${x2}" />`;
+    })
+  ).join("");
+
+  const treeCards = treeRounds.flatMap((round, depth) =>
+    round.matches.map((match, index) => {
+      const position = cardPosition(depth, index);
+      return renderMatch(round, match).replace(
+        '<article class="match-card',
+        `<article style="left:${position.x}px;top:${position.y}px" class="match-card`
+      );
+    })
+  ).join("");
+
+  bracketBoard.innerHTML = `
+    <section class="open-round" aria-labelledby="heading-${openRound.id}">
+      <div class="open-round-heading">
+        <h2 id="heading-${openRound.id}">Today’s unfinished matches</h2>
+        <span>${escapeHTML(openRound.date)} · All times Central</span>
       </div>
-      <div class="match-stack">${round.matches.map(match => renderMatch(round, match)).join("")}</div>
-    </section>`).join("")}</div>`;
+      <div class="open-match-grid">${openRound.matches.map(match => renderMatch(openRound, match)).join("")}</div>
+    </section>
+    <section class="bracket-tree" aria-label="Connected tournament bracket"
+      style="--card-width:${cardWidth}px;--card-height:${cardHeight}px;--tree-gap:${roundGap}px;--tree-width:${treeWidth}px;--tree-height:${treeHeight}px">
+      <div class="tree-round-headers" style="grid-template-columns:repeat(${treeRounds.length}, ${cardWidth}px)">
+        ${treeRounds.map(round => `<div class="tree-round-header"><h2>${escapeHTML(round.title)}</h2><span>${escapeHTML(round.date)}</span></div>`).join("")}
+      </div>
+      <div class="tree-stage">
+        <svg class="bracket-connectors" viewBox="0 0 ${treeWidth} ${treeHeight}" aria-hidden="true">${connectors}</svg>
+        ${treeCards}
+      </div>
+    </section>`;
+
+  observePlayerPhotos();
 }
 
 function renderOdds() {
   const maxOdds = titleOdds[0]?.probability || 1;
   oddsList.innerHTML = titleOdds.slice(0, 5).map(({ player, probability }) => `
     <li>
-      <span class="odds-player"><strong>${escapeHTML(player.name)}</strong><span>${escapeHTML(player.country)}${player.seed ? ` · Seed ${player.seed}` : ""}</span></span>
+      <button class="odds-player profile-link" type="button" data-profile="${encodeURIComponent(player.name)}"><strong>${escapeHTML(player.name)}</strong><span>${escapeHTML(player.country)}${player.seed ? ` · Seed ${player.seed}` : ""}</span></button>
       <span class="odds-value">${formatPercent(probability)}</span>
     </li>`).join("");
 
   oddsTableBody.innerHTML = titleOdds.map(({ player, probability }, index) => `
     <tr>
       <td>${index + 1}</td>
-      <td><span class="table-player"><span class="country-badge">${escapeHTML(player.country)}</span>${escapeHTML(player.name)}</span></td>
+      <td><button class="table-player profile-link" type="button" data-profile="${encodeURIComponent(player.name)}"><span class="country-badge">${escapeHTML(player.country)}</span>${escapeHTML(player.name)}</button></td>
       <td>${player.seed || "—"}</td>
       <td><strong>${formatPercent(probability)}</strong><span class="odds-bar" aria-hidden="true"><span style="width:${Math.max(1.5, probability / maxOdds * 100).toFixed(1)}%"></span></span></td>
       <td>${player.rating}</td>
     </tr>`).join("");
+
+  observePlayerPhotos();
 }
 
 function renderSummary() {
@@ -434,6 +641,17 @@ bracketBoard.addEventListener("click", event => {
   const button = event.target.closest(".player-pick[data-player]");
   if (!button || button.disabled) return;
   selectWinner(button.dataset.match, decodeURIComponent(button.dataset.player));
+});
+
+document.addEventListener("click", event => {
+  const trigger = event.target.closest("[data-profile]");
+  if (!trigger || trigger.disabled) return;
+  openPlayerProfile(decodeURIComponent(trigger.dataset.profile));
+});
+
+document.getElementById("closeProfileBtn").addEventListener("click", () => playerDialog.close());
+playerDialog.addEventListener("click", event => {
+  if (event.target === playerDialog) playerDialog.close();
 });
 
 document.getElementById("projectBtn").addEventListener("click", projectDraw);
@@ -523,7 +741,7 @@ async function initializeAuth() {
     await auth.getRedirectResult(instance);
     auth.onAuthStateChanged(instance, updateAccount);
   } catch {
-    signInBtn.title = "Google sign-in is temporarily unavailable";
+    signInBtn.title = "Gmail sign-in is temporarily unavailable";
   }
 }
 
@@ -548,8 +766,8 @@ signInBtn.addEventListener("click", async () => {
     const message = code === "auth/popup-closed-by-user"
       ? "Sign-in was closed before it finished."
       : code === "auth/unauthorized-domain"
-        ? "Google sign-in is not enabled for this web address yet."
-        : "Google sign-in is temporarily unavailable. Please try again.";
+        ? "Gmail sign-in is not enabled for this web address yet."
+        : "Gmail sign-in is temporarily unavailable. Please try again.";
     showToast(message);
   } finally {
     signInBtn.disabled = false;
