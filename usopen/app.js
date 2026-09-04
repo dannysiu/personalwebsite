@@ -59,6 +59,7 @@ function addPlayer(name, country, seed, rating, wikipediaTitle = name) {
 
 const leaf = name => ({ player: name });
 const source = id => ({ source: id });
+const oddsSourceUrl = "https://dknetwork.draftkings.com/2026/09/03/2026-us-open-schedule-odds-thursday-september-3/";
 
 const rounds = [
   {
@@ -66,19 +67,19 @@ const rounds = [
     title: "Round 2 · Open",
     date: "Thu Sep 3",
     matches: [
-      { id: "1201", number: "R2 · M1", refs: [leaf("Alexander Zverev"), leaf("Quentin Halys")], time: "6:00 PM CT", venue: "Arthur Ashe Stadium", timing: "Session start" },
-      { id: "1205", number: "R2 · M5", refs: [leaf("Yunchaokete Bu"), leaf("Michael Zheng")], time: "5:40 PM CT", venue: "Court 12", timing: "Not before" },
-      { id: "1206", number: "R2 · M6", refs: [leaf("Zachary Svajda"), leaf("Arthur Gea")], time: "3:00 PM CT", venue: "Court 6", timing: "Not before" },
-      { id: "1207", number: "R2 · M7", refs: [leaf("Zizou Bergs"), leaf("Jesper de Jong")], time: "3:00 PM CT", venue: "Court 7", timing: "Not before" },
-      { id: "1208", number: "R2 · M8", refs: [leaf("Botic van de Zandschulp"), leaf("Alex de Minaur")], time: "3:30 PM CT", venue: "Grandstand", timing: "Not before" },
-      { id: "1210", number: "R2 · M10", refs: [leaf("Benjamin Bonzi"), leaf("Ignacio Buse")], time: "3:00 PM CT", venue: "Court 13", timing: "Not before" },
-      { id: "1212", number: "R2 · M12", refs: [leaf("Gael Monfils"), leaf("Learner Tien")], time: "6:00 PM CT", venue: "Louis Armstrong", timing: "Session start" }
+      { id: "1201", number: "R2 · M1", refs: [leaf("Alexander Zverev"), leaf("Quentin Halys")], start: "2026-09-03T23:00:00Z", venue: "Arthur Ashe Stadium", timing: "Session start", bookOdds: { "Alexander Zverev": -650, "Quentin Halys": 431 } },
+      { id: "1205", number: "R2 · M5", refs: [leaf("Yunchaokete Bu"), leaf("Michael Zheng")], start: "2026-09-03T22:40:00Z", venue: "Court 12", timing: "Not before", bookOdds: { "Yunchaokete Bu": 141, "Michael Zheng": -180 } },
+      { id: "1206", number: "R2 · M6", refs: [leaf("Zachary Svajda"), leaf("Arthur Gea")], start: "2026-09-03T20:00:00Z", venue: "Court 6", timing: "Not before", bookOdds: { "Zachary Svajda": -132, "Arthur Gea": 105 } },
+      { id: "1207", number: "R2 · M7", refs: [leaf("Zizou Bergs"), leaf("Jesper de Jong")], start: "2026-09-03T20:00:00Z", venue: "Court 7", timing: "Not before", bookOdds: { "Zizou Bergs": -252, "Jesper de Jong": 193 } },
+      { id: "1208", number: "R2 · M8", refs: [leaf("Botic van de Zandschulp"), leaf("Alex de Minaur")], start: "2026-09-03T20:30:00Z", venue: "Grandstand", timing: "Not before", bookOdds: { "Botic van de Zandschulp": 248, "Alex de Minaur": -334 } },
+      { id: "1210", number: "R2 · M10", refs: [leaf("Benjamin Bonzi"), leaf("Ignacio Buse")], start: "2026-09-03T20:00:00Z", venue: "Court 13", timing: "Not before", bookOdds: { "Benjamin Bonzi": 100, "Ignacio Buse": -126 } },
+      { id: "1212", number: "R2 · M12", refs: [leaf("Gael Monfils"), leaf("Learner Tien")], start: "2026-09-03T23:00:00Z", venue: "Louis Armstrong", timing: "Session start", bookOdds: { "Gael Monfils": 344, "Learner Tien": -491 } }
     ]
   },
   {
     id: "r3",
     title: "Round 3",
-    date: "Sep 4–5 · Time TBD CT",
+    date: "Sep 4–5 · Time TBD",
     matches: [
       { id: "1301", number: "R3 · M1", refs: [source("1201"), leaf("Alejandro Tabilo")] },
       { id: "1302", number: "R3 · M2", refs: [leaf("Luciano Darderi"), leaf("Dane Sweeny")] },
@@ -112,14 +113,14 @@ function addKnockoutRound(id, title, date, priorRound, count, metadata = {}) {
   return round;
 }
 
-const r4 = addKnockoutRound("r4", "Round 4", "Sep 6–7 · Time TBD CT", rounds[1], 8, {});
-const qf = addKnockoutRound("qf", "Quarterfinals", "Sep 8–9 · 10:30 AM / 6:00 PM CT", r4, 4, {});
-const sf = addKnockoutRound("sf", "Semifinals", "Fri Sep 11 · Central time", qf, 2, {
-  0: { time: "2:00 PM CT", venue: "Arthur Ashe Stadium", timing: "Scheduled" },
-  1: { time: "6:00 PM CT", venue: "Arthur Ashe Stadium", timing: "Scheduled" }
+const r4 = addKnockoutRound("r4", "Round 4", "Sep 6–7 · Time TBD", rounds[1], 8, {});
+const qf = addKnockoutRound("qf", "Quarterfinals", "Sep 8–9 · Time TBD", r4, 4, {});
+const sf = addKnockoutRound("sf", "Semifinals", "Fri Sep 11 · Local time", qf, 2, {
+  0: { start: "2026-09-11T19:00:00Z", venue: "Arthur Ashe Stadium", timing: "Scheduled" },
+  1: { start: "2026-09-11T23:00:00Z", venue: "Arthur Ashe Stadium", timing: "Scheduled" }
 });
 addKnockoutRound("f", "Final", "Sun Sep 13", sf, 1, {
-  0: { time: "1:00 PM CT", venue: "Arthur Ashe Stadium", timing: "Scheduled" }
+  0: { start: "2026-09-13T18:00:00Z", venue: "Arthur Ashe Stadium", timing: "Scheduled" }
 });
 
 const allMatches = rounds.flatMap(round => round.matches.map(match => ({ ...match, roundId: round.id })));
@@ -139,12 +140,15 @@ const championName = document.getElementById("championName");
 const championMeta = document.getElementById("championMeta");
 const oddsList = document.getElementById("oddsList");
 const oddsTableBody = document.getElementById("oddsTableBody");
+const newsGrid = document.getElementById("newsGrid");
 const saveState = document.getElementById("saveState");
 const toast = document.getElementById("toast");
 const playerDialog = document.getElementById("playerDialog");
 const profileCache = new Map();
+const resolvedProfileCache = new Map();
 const profileDetailCache = new Map();
 let photoObserver;
+let profileBatchPromise;
 
 function storageKey() {
   return `usopen-2026-picks:${currentUser?.uid || "guest"}`;
@@ -266,6 +270,45 @@ const titleOdds = Object.entries(distributionForMatch(finalMatch.id))
   .map(([name, probability]) => ({ player: players.get(name), probability }))
   .sort((a, b) => b.probability - a.probability);
 
+const newsItems = [
+  {
+    player: "Carlos Alcaraz",
+    tag: "Advanced · Round 3",
+    headline: "Alcaraz resets after an early scare",
+    dek: "The defending champion dropped the opening set, then won 18 of the next 23 games to move past Jaime Faria.",
+    score: "Alcaraz def. Faria · 4–6, 6–0, 6–3, 6–2",
+    source: "US Open",
+    url: "https://www.usopen.org/en_US/news/articles/2026-09-02/carlos_alcaraz_advances_at_2026_us_open_after_dropping_first_set.html"
+  },
+  {
+    player: "Yunchaokete Bu",
+    tag: "Upset alert",
+    headline: "Bu knocks out the No. 12 seed",
+    dek: "Qualifier Bu Yunchaokete removed Rafael Jodar in one of Wednesday’s headline men’s results.",
+    score: "Bu advances · Seed No. 12 eliminated",
+    source: "US Open results desk",
+    url: "https://www.usopen.org/en_US/news/articles/2026-09-02/who_won_on_wednesday_at_the_2026_us_open_results_and_highlights.html"
+  },
+  {
+    player: "Frances Tiafoe",
+    tag: "Advanced · Round 3",
+    headline: "Tiafoe finds a cleaner second gear",
+    dek: "The American needed no fifth set this time, sweeping qualifier Rei Sakamoto under the Armstrong lights.",
+    score: "Tiafoe def. Sakamoto · 6–3, 7–6(2), 7–5",
+    source: "US Open",
+    url: "https://www.usopen.org/en_US/news/articles/2026-09-02/frances_tiafoe_sharpens_up_for_round_2_win_at_2026_us_open.html"
+  },
+  {
+    player: "Ben Shelton",
+    tag: "Advanced · Survived",
+    headline: "Shelton withstands the Hurkacz serve",
+    dek: "Shelton held off a dangerous comeback and closed in four sets to keep the home charge moving.",
+    score: "Shelton def. Hurkacz · 6–3, 5–7, 7–6(3), 7–5",
+    source: "US Open results desk",
+    url: "https://www.usopen.org/en_US/news/articles/2026-09-02/who_won_on_wednesday_at_the_2026_us_open_results_and_highlights.html"
+  }
+];
+
 function formatPercent(value) {
   if (value < 0.001) return "<0.1%";
   if (value < 0.01) return `${(value * 100).toFixed(1)}%`;
@@ -282,26 +325,115 @@ function playerInitials(name) {
   return name.split(" ").map(part => part[0]).slice(0, 2).join("").toUpperCase();
 }
 
+function formatAmericanOdds(value) {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+function probabilityToAmerican(probability) {
+  const raw = probability >= .5
+    ? -100 * probability / (1 - probability)
+    : 100 * (1 - probability) / probability;
+  return Math.round(raw / 5) * 5;
+}
+
+function moneylineFor(match, player) {
+  if (!player) return null;
+  if (match.bookOdds?.[player.name] != null) {
+    return { value: match.bookOdds[player.name], source: "DraftKings" };
+  }
+  const [left, right] = matchParticipants(match);
+  if (!left || !right) return null;
+  const probability = player.name === left.name ? winProbability(left, right) : winProbability(right, left);
+  return { value: probabilityToAmerican(probability), source: "Forecast" };
+}
+
+function formatLocalStart(start) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short"
+  }).format(new Date(start));
+}
+
+function updateTimezoneLabel() {
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local time";
+  document.getElementById("timezoneShort").textContent = "Local";
+  document.getElementById("timezoneLabel").textContent = zone.replaceAll("_", " ");
+}
+
 function normalizeImageUrl(url) {
   return url?.startsWith("//") ? `https:${url}` : url;
 }
 
-function loadPlayerSummary(player) {
-  if (profileCache.has(player.name)) return profileCache.get(player.name);
+function fetchPlayerSummary(player) {
   const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(player.wikipediaTitle)}`;
-  const request = fetch(endpoint, { headers: { Accept: "application/json" } })
+  return fetch(endpoint, { headers: { Accept: "application/json" } })
     .then(response => {
       if (!response.ok) throw new Error(`Profile request failed: ${response.status}`);
       return response.json();
     })
-    .then(data => ({
-      description: data.description || "Professional tennis player",
-      extract: data.extract || "",
-      image: normalizeImageUrl(data.thumbnail?.source || data.originalimage?.source || ""),
-      article: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(player.wikipediaTitle)}`
-    }));
+    .then(data => {
+      const summary = {
+        description: data.description || "Professional tennis player",
+        extract: data.extract || "",
+        image: normalizeImageUrl(data.thumbnail?.source || data.originalimage?.source || ""),
+        article: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(player.wikipediaTitle)}`
+      };
+      resolvedProfileCache.set(player.name, summary);
+      return summary;
+    });
+}
+
+function loadPlayerSummary(player) {
+  if (profileCache.has(player.name)) return profileCache.get(player.name);
+  if (profileBatchPromise) {
+    return profileBatchPromise.then(() => profileCache.get(player.name) || fetchPlayerSummary(player));
+  }
+  const request = fetchPlayerSummary(player);
   profileCache.set(player.name, request);
   return request;
+}
+
+function preloadPlayerSummaries() {
+  if (profileBatchPromise) return profileBatchPromise;
+  const playerList = [...players.values()];
+  const params = new URLSearchParams({
+    origin: "*",
+    action: "query",
+    prop: "extracts|pageimages|pageterms",
+    exintro: "1",
+    explaintext: "1",
+    piprop: "thumbnail",
+    pithumbsize: "500",
+    wbptterms: "description",
+    redirects: "1",
+    titles: playerList.map(player => player.wikipediaTitle).join("|"),
+    format: "json",
+    formatversion: "2"
+  });
+  profileBatchPromise = fetch(`https://en.wikipedia.org/w/api.php?${params}`)
+    .then(response => {
+      if (!response.ok) throw new Error(`Profile preload failed: ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      const summariesByTitle = new Map((data.query?.pages || []).map(page => [page.title.toLowerCase(), {
+        description: page.terms?.description?.[0] || "Professional tennis player",
+        extract: page.extract || "",
+        image: normalizeImageUrl(page.thumbnail?.source || ""),
+        article: `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`
+      }]));
+      playerList.forEach(player => {
+        const summary = summariesByTitle.get(player.wikipediaTitle.toLowerCase());
+        if (!summary) return;
+        resolvedProfileCache.set(player.name, summary);
+        profileCache.set(player.name, Promise.resolve(summary));
+        updatePlayerPhotos(player, summary);
+      });
+    })
+    .catch(() => {});
+  return profileBatchPromise;
 }
 
 function cleanProfileValue(value) {
@@ -390,12 +522,17 @@ function renderProfileStats(player, details = null) {
 async function openPlayerProfile(name) {
   const player = players.get(name);
   if (!player) return;
+  const warmSummary = resolvedProfileCache.get(player.name);
   document.getElementById("profileName").textContent = player.name;
-  document.getElementById("profileDescription").textContent = `${player.country} · Loading public profile…`;
-  document.getElementById("profilePhoto").textContent = playerInitials(player.name);
+  document.getElementById("profileDescription").textContent = warmSummary
+    ? `${player.country} · ${warmSummary.description}`
+    : `${player.country} · Loading public profile…`;
+  document.getElementById("profilePhoto").innerHTML = warmSummary?.image
+    ? `<img src="${escapeHTML(warmSummary.image)}" alt="${escapeHTML(player.name)}">`
+    : escapeHTML(playerInitials(player.name));
   document.getElementById("profileStats").innerHTML = renderProfileStats(player);
-  document.getElementById("profileBio").textContent = "Loading biography and current player information…";
-  document.getElementById("profileWikipedia").href = `https://en.wikipedia.org/wiki/${encodeURIComponent(player.wikipediaTitle)}`;
+  document.getElementById("profileBio").textContent = warmSummary?.extract || "Loading biography and current player information…";
+  document.getElementById("profileWikipedia").href = warmSummary?.article || `https://en.wikipedia.org/wiki/${encodeURIComponent(player.wikipediaTitle)}`;
   if (!playerDialog.open) playerDialog.showModal();
 
   const [summaryResult, detailsResult] = await Promise.allSettled([
@@ -431,6 +568,7 @@ function playerRow(match, ref, player) {
   const seed = player?.seed ? `#${player.seed}` : "";
   const encodedName = player ? encodeURIComponent(player.name) : "";
   const initials = player ? player.name.split(" ").map(part => part[0]).slice(0, 2).join("") : "?";
+  const moneyline = moneylineFor(match, player);
 
   return `
     <div class="player-row">
@@ -445,13 +583,14 @@ function playerRow(match, ref, player) {
         <span class="player-name">${escapeHTML(name)}</span>
         <span class="country-badge">${escapeHTML(country)}</span>
         <span class="seed">${escapeHTML(seed)}</span>
+        <span class="moneyline${moneyline?.source === "Forecast" ? " model-line" : ""}" title="${moneyline ? `${moneyline.source} moneyline` : "Odds pending"}">${moneyline ? escapeHTML(formatAmericanOdds(moneyline.value)) : ""}</span>
         <span class="pick-check" aria-hidden="true">✓</span>
       </button>
     </div>`;
 }
 
 function matchMetadata(round, match) {
-  if (match.time) return `${match.timing || "Scheduled"} · ${match.time}`;
+  if (match.start) return `${match.timing || "Scheduled"} · ${formatLocalStart(match.start)}`;
   return round.date;
 }
 
@@ -477,7 +616,9 @@ function renderMatch(round, match) {
       ${playerRow(match, match.refs[1], right)}
       <div class="match-model">
         <strong>${escapeHTML(modelCopy)}</strong>
-        <span>${escapeHTML(match.venue || "Court TBD")}</span>
+        ${match.bookOdds
+          ? `<a href="${oddsSourceUrl}" target="_blank" rel="noopener" title="DraftKings moneyline snapshot from September 3, 2026">DK odds ↗</a>`
+          : `<span>${escapeHTML(match.venue || "Court TBD")}</span>`}
       </div>
     </article>`;
 }
@@ -522,9 +663,10 @@ function renderBracket() {
     <section class="open-round" aria-labelledby="heading-${openRound.id}">
       <div class="open-round-heading">
         <h2 id="heading-${openRound.id}">Today’s unfinished matches</h2>
-        <span>${escapeHTML(openRound.date)} · All times Central</span>
+        <span>${escapeHTML(openRound.date)} · Times shown in your timezone</span>
       </div>
       <div class="open-match-grid">${openRound.matches.map(match => renderMatch(openRound, match)).join("")}</div>
+      <p class="odds-source-note">Moneylines: <a href="${oddsSourceUrl}" target="_blank" rel="noopener">DraftKings snapshot, Sep 3, 2026 ↗</a>. Later-round lines marked as forecast are model estimates, not sportsbook prices.</p>
     </section>
     <section class="bracket-tree" aria-label="Connected tournament bracket"
       style="--card-width:${cardWidth}px;--card-height:${cardHeight}px;--tree-gap:${roundGap}px;--tree-width:${treeWidth}px;--tree-height:${treeHeight}px">
@@ -557,6 +699,28 @@ function renderOdds() {
       <td>${player.rating}</td>
     </tr>`).join("");
 
+  observePlayerPhotos();
+}
+
+function renderNews() {
+  newsGrid.innerHTML = newsItems.map(item => {
+    const player = players.get(item.player);
+    const encodedName = encodeURIComponent(item.player);
+    return `
+      <a class="news-card" href="${escapeHTML(item.url)}" target="_blank" rel="noopener">
+        <div class="news-visual">
+          <span aria-hidden="true">${escapeHTML(playerInitials(item.player))}</span>
+          ${player ? `<img data-player-photo="${encodedName}" alt="" loading="lazy">` : ""}
+          <span class="news-score">${escapeHTML(item.score)}</span>
+        </div>
+        <div class="news-copy">
+          <p class="news-tag">${escapeHTML(item.tag)}</p>
+          <h3>${escapeHTML(item.headline)}</h3>
+          <p class="news-dek">${escapeHTML(item.dek)}</p>
+          <span class="news-source">Source: ${escapeHTML(item.source)} ↗</span>
+        </div>
+      </a>`;
+  }).join("");
   observePlayerPhotos();
 }
 
@@ -628,13 +792,12 @@ function showToast(message) {
 }
 
 function showView(view) {
-  const showBracket = view === "bracket";
-  document.getElementById("bracketView").classList.toggle("hidden", !showBracket);
-  document.getElementById("oddsView").classList.toggle("hidden", showBracket);
-  document.getElementById("bracketTab").classList.toggle("active", showBracket);
-  document.getElementById("oddsTab").classList.toggle("active", !showBracket);
-  document.getElementById("bracketTab").setAttribute("aria-selected", String(showBracket));
-  document.getElementById("oddsTab").setAttribute("aria-selected", String(!showBracket));
+  ["bracket", "odds", "news"].forEach(name => {
+    const active = name === view;
+    document.getElementById(`${name}View`).classList.toggle("hidden", !active);
+    document.getElementById(`${name}Tab`).classList.toggle("active", active);
+    document.getElementById(`${name}Tab`).setAttribute("aria-selected", String(active));
+  });
 }
 
 bracketBoard.addEventListener("click", event => {
@@ -649,6 +812,16 @@ document.addEventListener("click", event => {
   openPlayerProfile(decodeURIComponent(trigger.dataset.profile));
 });
 
+function warmPlayerDetails(event) {
+  const trigger = event.target.closest?.("[data-profile]");
+  if (!trigger) return;
+  const player = players.get(decodeURIComponent(trigger.dataset.profile || ""));
+  if (player) loadPlayerDetails(player).catch(() => {});
+}
+
+document.addEventListener("pointerover", warmPlayerDetails);
+document.addEventListener("focusin", warmPlayerDetails);
+
 document.getElementById("closeProfileBtn").addEventListener("click", () => playerDialog.close());
 playerDialog.addEventListener("click", event => {
   if (event.target === playerDialog) playerDialog.close();
@@ -658,10 +831,28 @@ document.getElementById("projectBtn").addEventListener("click", projectDraw);
 document.getElementById("clearBtn").addEventListener("click", clearPicks);
 document.getElementById("bracketTab").addEventListener("click", () => showView("bracket"));
 document.getElementById("oddsTab").addEventListener("click", () => showView("odds"));
+document.getElementById("newsTab").addEventListener("click", () => showView("news"));
 document.getElementById("openOddsBtn").addEventListener("click", () => {
   showView("odds");
   document.querySelector(".workspace-main").scrollIntoView({ behavior: "smooth", block: "start" });
 });
+
+const themeToggle = document.getElementById("themeToggle");
+
+function setTheme(theme) {
+  const dark = theme === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  themeToggle.setAttribute("aria-pressed", String(dark));
+  themeToggle.setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} mode`);
+  document.getElementById("themeLabel").textContent = dark ? "Light" : "Dark";
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#050d1b" : "#071837";
+  try { localStorage.setItem("usopen-theme", dark ? "dark" : "light"); } catch {}
+}
+
+themeToggle.addEventListener("click", () => {
+  setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+});
+setTheme(document.documentElement.dataset.theme);
 
 const accountPanel = document.getElementById("accountPanel");
 const accountMenu = document.getElementById("accountMenu");
@@ -786,6 +977,9 @@ document.getElementById("signOutBtn").addEventListener("click", async () => {
 });
 
 loadPicks();
+updateTimezoneLabel();
+preloadPlayerSummaries();
 renderOdds();
+renderNews();
 render();
 initializeAuth();
